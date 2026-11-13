@@ -37,9 +37,6 @@ const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 
-// Two sources in one list: Project Tasks (from a project's board) and
-// Assigned Tasks (daily tasks handed out via Business Documents > Staff
-// Tasks). Both are shown together, grouped by how urgent they are.
 const taskStore = useTaskStore();
 const staffTaskStore = useStaffTaskStore();
 const { myStaffTasks } = storeToRefs(staffTaskStore);
@@ -327,9 +324,6 @@ const staffTaskCommentAssignees = computed(() => {
   return people;
 });
 
-// Deep link from a StaffTaskAssigned/StaffTaskCommentMention notification
-// (?staff_task=<id>, optionally &comment=<id>): open that task as soon as it
-// is in the list -- from the cache right away, or after the refresh.
 let deepLinkDone = false;
 watch(
   myStaffTasks,
@@ -344,9 +338,6 @@ watch(
   { immediate: true }
 );
 
-// ?task=<id> (e.g. from My Profile for users without project access):
-// open that project task in the drawer once the list has it, then drop
-// only the `task` key from the URL.
 let taskLinkDone = false;
 watch(
   myProjectTasks,

@@ -119,11 +119,6 @@ const leaderModal = ref(false);
 const searchLeader = ref("");
 const selectedLeader = ref(null);
 
-// "By Team" locks the leader/members to a single Team's own data (see
-// ProjectRepository::applyTeamAssignment on the backend); "By Employee"
-// picks both individually. Switching modes clears whichever fields the
-// other mode owns so a stale pick from before the switch never gets
-// submitted silently.
 const setAssignmentMode = (mode) => {
   form.value.team_assignment_mode = mode;
   if (mode === "team") {
@@ -135,9 +130,6 @@ const setAssignmentMode = (mode) => {
   }
 };
 
-// The Team list (fetchTeams) only carries members_count, not the actual
-// member roster -- fetch the full detail once a team is picked so the
-// preview can show real names.
 const selectedTeamDetail = ref(null);
 watch(
   () => form.value.team_id,
@@ -150,9 +142,6 @@ watch(
 // the Project Leader modal below, which filters it locally.
 const memberCandidates = computed(() => lookups.employees);
 const memberSearch = ref("");
-// The Project Leader shouldn't also be pickable as a Member -- they're
-// already the project's owner, so offering them again here would just be
-// a confusing duplicate pick.
 const selectableMemberCandidates = computed(() =>
   memberCandidates.value.filter((employee) => employee.id !== form.value.project_leader_id)
 );
@@ -191,9 +180,6 @@ const handleSubmit = async () => {
     form.value.retention_period_months === "" || form.value.retention_period_months === null
       ? null
       : parseInt(form.value.retention_period_months);
-  // Drop rows the user started but never finished (only name or only url
-  // filled in) rather than sending a half-empty pair the backend would
-  // reject.
   payload.additional_access = form.value.additional_access.filter((item) => item.name && item.url);
   projectStore.clearMessages();
   const created = await createProject(payload);

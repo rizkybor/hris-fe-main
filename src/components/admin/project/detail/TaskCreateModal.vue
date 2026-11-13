@@ -3,7 +3,8 @@ import { ref, computed, watch } from "vue";
 import { X, ListPlus, ClipboardList, AlignLeft, Flag, Layers, Calendar, Upload, Eye, Tag, ChevronDown } from "lucide-vue-next";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { TASK_TYPE_COLORS, getTaskTypeColorClasses } from "@/utils/styleHelpers";
-import { UiButton, UiInput, UiModal, UiSelect } from "@/components/ui";
+import { UiButton, UiInput, UiSelect } from "@/components/ui";
+import TaskPanel from "./TaskPanel.vue";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
@@ -81,9 +82,6 @@ watch(
   }
 );
 
-// Typing a type name that matches one already used in this project
-// auto-fills its last-used color -- still freely overridable via the
-// swatch picker below.
 watch(
   () => formData.value.type,
   (value) => {
@@ -143,11 +141,10 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <UiModal
+  <TaskPanel
     :open="isOpen"
     :title="$t('projects.tasks.createNew')"
     :description="$t('projects.tasks.form.createDescription')"
-    size="md"
     @update:open="(value) => !value && closeModal()"
   >
     <form id="task-create-form" @submit.prevent="handleSubmit" class="space-y-4">
@@ -265,7 +262,7 @@ const handleSubmit = async () => {
         {{ isSubmitting ? $t("projects.tasks.form.creating") : $t("projects.tasks.form.create") }}
       </UiButton>
     </template>
-  </UiModal>
+  </TaskPanel>
 
   <!-- Image Lightbox -->
   <Teleport to="body">

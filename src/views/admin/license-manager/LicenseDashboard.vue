@@ -1,8 +1,4 @@
 <script setup>
-// Licenses of one product: KPI cards, plan distribution, filters and the
-// license table (stacked cards below md).
-// Permissions: license-manager-list (page, KPIs), -view (open a license),
-// -create, -edit (edit action + status switch), -delete.
 import { ref, computed, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";

@@ -61,7 +61,9 @@
       "attendanceRate": "Attendance Rate",
       "fromLastWeek": "{n} from last week",
       "pendingRequests": "Pending Requests",
-      "awaitingApproval": "Awaiting approval"
+      "awaitingApproval": "Awaiting approval",
+      "showMore": "Show more stats",
+      "hideMore": "Hide more stats"
     },
     "latestLeave": "Latest Leave Requests",
     "latestLeaveHint": "Recent 5 leave applications",

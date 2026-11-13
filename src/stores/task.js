@@ -10,9 +10,6 @@ export const useTaskStore = defineStore("task", {
         // project's board never shows while the new one loads).
         tasksProjectId: null,
         myTasks: [],
-        // fetchMyTasks results per "limit:includeCompleted", so the dashboard
-        // widget (20), profile (5) and My Tasks page (200) don't overwrite
-        // each other. myTasks stays the latest result for older callers.
         myTasksCache: {},
         loading: false,
         error: null,
@@ -85,9 +82,6 @@ export const useTaskStore = defineStore("task", {
             }
         },
 
-        // `localFields` (optional) are merged over the response before it is
-        // stored -- e.g. the picked `assignee`, since the update response
-        // still carries the relation loaded before the change.
         async updateTask(id, payload, localFields = null) {
             this.loading = true;
             this.error = null;
@@ -147,9 +141,6 @@ export const useTaskStore = defineStore("task", {
             }
         },
 
-        // Kanban drag-and-drop persistence -- status change and/or a new
-        // fractional `position` within the target (project_id, status)
-        // column, computed by the caller from the task's new neighbors.
         async moveTask(taskId, { status, position } = {}) {
             this.error = null;
 
@@ -157,11 +148,6 @@ export const useTaskStore = defineStore("task", {
                 const task = this.tasks.find(t => t.id === taskId);
                 if (!task) return;
 
-                // Only send the fields that actually changed -- spreading the
-                // full task object here would forward its resolved `image`
-                // URL string (and other nested objects like `assignee`) back
-                // as if they were raw form fields, which the image upload
-                // validation would then reject.
                 const payload = { _method: 'PUT' };
                 if (status !== undefined) payload.status = status;
                 if (position !== undefined) payload.position = position;

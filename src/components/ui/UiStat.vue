@@ -1,8 +1,4 @@
 <script setup>
-// KPI tile: label, big value, optional hint line. `tone` colours the value
-// only (e.g. "bad" for an overdue count); text stays on text tokens.
-// With `to` the whole tile is a link. With `selectable` it is a filter
-// toggle (button, aria-pressed): emits `select`, `active` highlights it.
 import { computed } from "vue";
 import Skeleton from "../common/skeleton/Skeleton.vue";
 

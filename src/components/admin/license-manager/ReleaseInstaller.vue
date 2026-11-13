@@ -1,8 +1,4 @@
 <script setup>
-// Installer file of one version (OCCA.dmg etc.): name, size, upload date,
-// short SHA-256 and Download (license-release-download); Replace and Remove
-// (license-release-edit; Remove only for drafts). When a Mac version has none: a warning with a drop zone / picker.
-// Emits "updated" with the release from the API.
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { FileArchive, Download, RefreshCw, Trash2, Upload, AlertTriangle } from "lucide-vue-next";

@@ -1,14 +1,3 @@
-// Shows a PDF that needs an authenticated request in a new browser tab.
-//
-// Pop-up blockers only allow window.open() as part of the click, so the
-// caller opens the tab first -- synchronously, before any await -- and this
-// points it at the PDF once it has downloaded:
-//
-//   viewPdf(id, tab = window.open("", "_blank")) {
-//     return openBlobPdf(tab, () => axiosInstance.get(url, { responseType: "blob" }));
-//   }
-//
-// If the request fails the empty tab is closed and the error rethrown.
 export async function openBlobPdf(tab, request) {
   try {
     if (tab) {

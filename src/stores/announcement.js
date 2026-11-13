@@ -2,10 +2,6 @@ import { defineStore } from "pinia";
 import { axiosInstance } from "@/plugins/axios";
 import { handleError } from "@/helpers/errorHelper";
 
-// The axios instance defaults Content-Type to multipart/form-data (see
-// plugins/axios.js) for file-upload endpoints; a plain JSON body sent under
-// that header can't be parsed by Laravel at all, so writes here must
-// override it explicitly.
 const JSON_HEADERS = { headers: { "Content-Type": "application/json" } };
 
 export const useAnnouncementStore = defineStore("announcement", {

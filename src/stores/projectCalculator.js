@@ -93,11 +93,6 @@ export const useProjectCalculatorStore = defineStore("projectCalculator", {
             this.saving = true;
             this.error = null;
             try {
-                // PHP doesn't parse multipart bodies for a literal PUT request
-                // (only POST), and this app's shared axios instance always
-                // sends multipart/form-data -- so updates go through POST with
-                // Laravel's _method spoofing instead, matching every other
-                // store in this codebase.
                 const { data } = await axiosInstance.post("/project-calculator/rate-setting", {
                     ...payload,
                     _method: "PUT",
@@ -210,9 +205,6 @@ export const useProjectCalculatorStore = defineStore("projectCalculator", {
             }
         },
 
-        // Keeps the list, the statistics and the open estimate in step with a
-        // saved/deleted record, so going back to the dashboard needs no reload.
-        // Statistics mirror the API's SUM/AVG/COUNT over grand_total.
         applyStats(record, sign) {
             const s = { ...this.statistics };
             s.total_calculations = Math.max(0, s.total_calculations + sign);

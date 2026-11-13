@@ -21,10 +21,6 @@ const router = useRouter();
 const store = useAttendanceStore();
 const { attendances, meta, loading } = storeToRefs(store);
 
-// Filters live in the URL (?status=absent&from=2026-11-12&to=2026-11-12),
-// so other pages (e.g. the attendance summary tiles) can link to a filtered
-// list. Not remembered per browser: a date range from an earlier visit
-// would be misleading.
 const list = useListState("attendance-records", { q: "", status: "", from: "", to: "", page: 1 }, { remember: false });
 const search = toRef(list, "q");
 const statusFilter = toRef(list, "status");

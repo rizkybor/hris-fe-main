@@ -1,7 +1,4 @@
 <script>
-// One response per (tab, filters, page), kept while the app is open so
-// switching back to a tab or filter shows it at once (refreshed after
-// REPORT_MAX_AGE, on demand or when the browser tab regains focus).
 const reportCache = new Map(); // JSON [tab, params] -> { data, at }
 const loadedTabs = new Set(); // tabs whose report data is in the store
 const shownKey = {}; // tab -> cache key of the data the store holds
@@ -91,12 +88,6 @@ const tabs = computed(() => [
 
 const visibleTabs = computed(() => tabs.value.filter((tab) => !tab.permission || can(tab.permission)));
 
-// Only tabs backed by exactly one real, deletable record -- not Finance
-// (three tables merged into fake rows), PPh 21 or Staff Raport (both
-// purely computed from Payroll/Attendance, no table of their own).
-// Deleting here deletes the underlying real record, so this is gated by
-// role (Superadmin/Manager only), matching the backend's RoleMiddleware
-// check on the same two endpoints.
 const DELETABLE_REPORT_TYPES = ["attendance", "payroll", "employee", "ppn", "pph23", "project", "subscription"];
 const canDeleteReports = computed(() => hasAnyRole(["superadmin", "manager"]));
 const showDeleteColumn = computed(() => canDeleteReports.value && DELETABLE_REPORT_TYPES.includes(activeTab.value));
@@ -166,10 +157,6 @@ const handleDeleteRange = async () => {
   }
 };
 
-// 11 tabs routinely overflow the row at every breakpoint (not just mobile),
-// so unlike other tab bars in the app this hint stays visible on desktop
-// and tablet too -- shown/hidden based on actual scroll position, not a
-// fixed screen-size breakpoint.
 const { scrollRef: tabScrollRef, showLeftFade: showTabLeftFade, showRightFade: showTabRightFade, updateFade: updateTabFade } = useScrollFade();
 
 // Tab, dates, statuses, finance source, month, search and page survive
@@ -256,10 +243,6 @@ const closeRaportDetail = () => {
   showRaportDetail.value = false;
 };
 
-// Subscription detail modal -- the report row already carries everything
-// needed (client, project, bundled services, invoice configuration), so
-// this just opens with the clicked row rather than making another
-// request.
 const showSubscriptionDetail = ref(false);
 const selectedSubscription = ref(null);
 
@@ -286,9 +269,6 @@ const closeInvoiceDetail = () => {
   showInvoiceDetail.value = false;
 };
 
-// PPh 23 receipt detail modal -- same idea again: the report row is
-// already the full PaymentReceipt record (with its invoice relation
-// loaded), so no extra request is needed to show it.
 const showReceiptDetail = ref(false);
 const selectedReceipt = ref(null);
 
@@ -655,9 +635,6 @@ async function fetchReport() {
   }
 }
 
-// Skeleton only for a tab never loaded; otherwise the last data stays on
-// screen (dimmed) while the new one loads. Only the latest request clears
-// the flags (and the store drops older responses).
 const { loading, refreshing, refresh } = useStaleFetch(fetchReport, {
   key: () => ["reports", requestKey.value],
   hasData: () => loadedTabs.has(activeTab.value),

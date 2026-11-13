@@ -1,7 +1,4 @@
 <script setup>
-// Overview panel: the latest tracking events of every product. While the
-// endpoint is missing or failing it shows a quiet "Not available yet"
-// state (no toast).
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";

@@ -51,9 +51,6 @@ const { loading, refreshing, refresh } = useStaleFetch(
   }
 );
 
-// Options for the Type/Field filters: every value in use, from the light
-// /clients/statistic summary (grouped counts) instead of the full client
-// list with its relations. The Statistics strip reads the same data.
 clientsStore.fetchClientStatistics();
 const uniqueValues = (rows, key) =>
   [...new Set((rows || []).map((r) => r[key]).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b)));

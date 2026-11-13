@@ -54,11 +54,6 @@ const activeTab = computed({
 // Only the tabs that have been opened load their list.
 const visited = useVisitedTabs(() => list.tab);
 
-/* =======================
-   TABS -- the three lists share one table layout ("one idea per cell"):
-   item + one muted line · status · amount · expiry · delete. A row click
-   opens Edit (or the read-only view without edit rights).
-======================= */
 const hoursLabel = (row) => t("finance.table.hoursPerMonthValue", { n: row.productive_hours_per_month ?? "-" });
 const TABS = {
   fixed: {
@@ -124,9 +119,6 @@ const formatDate = (date) => {
   return new Date(`${String(date).slice(0, 10)}T00:00:00`).toLocaleDateString(localeTag(), { day: "numeric", month: "short", year: "numeric" });
 };
 
-/* =======================
-   LISTS (one stale-while-revalidate fetch per tab, own loading flags)
-======================= */
 const perPage = 5;
 const LISTS = {
   fixed: { data: () => store.fixedCostData, store: "fixedCostData", fetch: (p) => store.fetchFixedCostPaginated(p), q: "fixedQ", page: "fixedPage" },
@@ -179,10 +171,6 @@ const afterDelete = (key) => {
 };
 const hasRow = (key, id) => LISTS[key].data().items.some((item) => item.id === id);
 
-/* =======================
-   SEARCH (one box for the active tab, debounced into that tab's list
-   state; resets that tab's page)
-======================= */
 const searches = { fixed: ref(list.fixedQ), sdm: ref(list.sdmQ), infra: ref(list.infraQ) };
 TAB_KEYS.forEach((key) =>
   watch(
@@ -201,9 +189,6 @@ const search = computed({
 });
 const searching = computed(() => !!list[LISTS[activeTab.value].q]);
 
-/* =======================
-   ADD / VIEW / EDIT (one modal per category)
-======================= */
 const modal = ref({ tab: null, mode: "add", row: null });
 const saving = ref(false);
 const openModal = (key, mode, row = null) => (modal.value = { tab: key, mode, row });
@@ -246,9 +231,6 @@ const submitFixed = submit("fixed");
 const submitSdm = submit("sdm");
 const submitInfra = submit("infra");
 
-/* =======================
-   DELETE
-======================= */
 const showDeleteModal = ref(false);
 const deleteLoading = ref(false);
 const deleteTarget = ref(null);

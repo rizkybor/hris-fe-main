@@ -22,9 +22,6 @@ const goTo = (name) => {
   router.push({ name });
 };
 
-// Ordered by role-typical priority. Each action only shows if the current
-// user actually holds the permission it leads to, so the list self-adapts
-// per role (manager/hr/finance/employee) without hardcoding role names.
 const allActions = [
   {
     labelKey: "dashboard.quickActions.addEmployee",

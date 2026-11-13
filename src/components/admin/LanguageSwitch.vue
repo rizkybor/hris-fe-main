@@ -1,7 +1,4 @@
 <script setup>
-// Language switch in the top bar: the current language's flag; the menu
-// lists both languages. Flags are inline SVG (emoji flags don't render on
-// Windows).
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useI18n } from "vue-i18n";
 import { Check } from "lucide-vue-next";

@@ -29,9 +29,6 @@ onMounted(async () => {
   await store.fetchSetting();
 });
 
-// Populate the editable geofence form whenever the fetched setting changes
-// (initial load, and after a save round-trips through the API) -- kept
-// separate from the form itself so typing doesn't get clobbered mid-edit.
 watch(
   setting,
   (value) => {

@@ -10,9 +10,6 @@ import SptTahunanAlert from "@/components/admin/dashboard/SptTahunanAlert.vue";
 
     <DashboardWelcome />
 
-    <!-- Which widgets appear and in what order is now driven entirely by
-         the backend (permission-gated per role, position customizable
-         per-user via drag-and-drop) -- no more per-role branching here. -->
     <DashboardWidgetGrid />
   </div>
 </template>

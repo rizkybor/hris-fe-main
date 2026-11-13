@@ -1,15 +1,3 @@
-// Login backdrop: a slow aurora of brand-blue light with drifting motes.
-// Plain WebGL (no library), two layers: the aurora (one full-screen shader,
-// domain-warped noise, kept calm behind the text on the left) renders at a
-// reduced resolution since it's soft anyway; the motes (point sprites,
-// motion computed on the GPU) get their own canvas at full device
-// resolution so they stay crisp on Retina screens. The light leans gently toward the pointer. At most 30 fps, pixel
-// ratio capped, paused while the tab is hidden or the panel is off screen.
-// Loaded on demand from AuthBackdrop.vue.
-//
-// Sky: setSky() (from skyPhase.js, once a minute) retints the aurora for the
-// time of day, fades the motes (stars) out by day and moves a small sun
-// across the sky. All of it is a few uniforms per frame.
 
 const FRAME_MS = 1000 / 30;
 const MOTES = 190;

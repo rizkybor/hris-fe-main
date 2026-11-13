@@ -1,10 +1,4 @@
 <script setup>
-// Sign-in loading screen: the company butterfly beating its wings over the
-// brand navy, with a soft glow and a few rising sparks. Pure CSS 3D (each
-// half of the logo turns on the centre line), so it runs everywhere,
-// including phones that never load the three.js logo. Only transform and
-// opacity animate. A loader is essential motion: with "reduce motion" it
-// keeps going, just slower.
 defineProps({
   show: { type: Boolean, default: false },
   text: { type: String, default: "" },

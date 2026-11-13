@@ -34,9 +34,6 @@ const { screening: s, saving } = storeToRefs(store);
 const loading = ref(true);
 const canEdit = computed(() => can("screening-edit"));
 
-// The tab is in the URL (?tab=answers) so a reload or a shared link opens
-// the same tab. Without one: the recommendation once submitted, otherwise
-// straight to the questions.
 const view = useListState("screening-detail", { tab: "" }, { remember: false });
 const tab = computed({
   get: () => view.tab || (s.value && !s.value.submitted_at ? "answers" : "recommendation"),
@@ -66,9 +63,6 @@ watch(
 const formatDate = (d) => (d ? new Date(d).toLocaleDateString(localeTag(), { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "-");
 const money = (v) => formatRupiah(v ?? 0);
 
-// ----- Status, notes, contact -----
-// The badge is the control: the new status shows at once and is undone if
-// saving fails.
 const setStatus = (status) =>
   optimistic({
     apply: () => {

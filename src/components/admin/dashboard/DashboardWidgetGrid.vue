@@ -1,9 +1,4 @@
 <script setup>
-// Dashboard widgets in a fixed, designed layout (no dragging or resizing).
-// The backend still decides WHICH widgets a user gets (permission-gated per
-// role); this decides where they go: summary numbers full width on top,
-// then related widgets side by side in pairs. A half-width widget without a
-// partner in its row widens to full width, so the grid never has holes.
 import { computed, onMounted } from "vue";
 import { storeToRefs } from "pinia";
 import { AlertCircle, RefreshCw, LayoutGrid } from "lucide-vue-next";

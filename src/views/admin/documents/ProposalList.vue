@@ -27,9 +27,6 @@ const toast = useToastStore();
 const { proposals, meta, saving } = storeToRefs(store);
 const clients = computed(() => lookups.clients);
 
-// Search, status and page live in the URL and are remembered, so coming
-// back from the editor restores the same view; the list shows what the
-// store already has and refreshes quietly.
 const list = useListState("proposals", { q: "", status: "", page: 1 });
 const search = ref(list.q);
 watch(search, debounce((v) => (list.q = v.trim()), 300));

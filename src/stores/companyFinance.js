@@ -206,9 +206,6 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
         const response = await request();
         this.success = response.data.message;
         after?.(response.data.data);
-        // Dashboard summary cards must reflect the true grand total, not
-        // just whatever page of the list happens to be loaded -- refresh
-        // the real aggregate from /company-finances/statistic, quietly.
         this.fetchStatistics({ quiet: true });
         return response.data.data;
       } catch (error) {

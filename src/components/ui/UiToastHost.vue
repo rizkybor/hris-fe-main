@@ -1,6 +1,4 @@
 <script setup>
-// Renders the toast store: bottom-right on desktop, bottom-centre on
-// phones (above the tab bar). Ink background, one line, optional action.
 import { storeToRefs } from "pinia";
 import { CheckCircle2, AlertCircle, Info, X } from "lucide-vue-next";
 import { useToastStore } from "@/stores/toast";
@@ -22,7 +20,7 @@ const runAction = (toast) => {
     aria-live="polite"
     role="status"
   >
-    <TransitionGroup name="ui-list">
+    <TransitionGroup name="ui-toast">
       <div
         v-for="toast in items"
         :key="toast.id"

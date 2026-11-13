@@ -2,9 +2,6 @@ import { defineStore } from "pinia";
 import { axiosInstance } from "@/plugins/axios";
 import { handleError } from "@/helpers/errorHelper";
 
-// Deliberately minimal -- backs only the Company Asset "supplier" picker
-// (who did we buy this from), not a managed module of its own. See
-// hris-api-main's app/Models/Supplier.php for why this isn't Client.
 export const useSupplierStore = defineStore("supplier", {
   state: () => ({
     suppliers: [],

@@ -114,10 +114,6 @@ export const usePaymentReceiptStore = defineStore("paymentReceipt", {
       window.URL.revokeObjectURL(url);
     },
 
-    // Opens the PDF inline in a new tab (browser's own viewer). The API
-    // route needs an auth header, so the tab is opened right away (part of
-    // the click, so pop-up blockers allow it) and pointed at the PDF once
-    // it arrives. Call it straight from the click handler, before any await.
     viewPdf(id, tab = window.open("", "_blank")) {
       return openBlobPdf(tab, () => axiosInstance.get(`/payment-receipts/${id}/export-pdf`, { responseType: "blob" }));
     },

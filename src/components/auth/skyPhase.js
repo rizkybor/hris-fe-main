@@ -1,10 +1,3 @@
-// The sign-in backdrop's sky follows the time of day on the visitor's own
-// clock, in six moments: Subuh, Pagi, Siang, Sore, Senja, Malam. Colours
-// ease from one to the next; a small sun rises after Subuh, is high at
-// midday and sets at Senja. Pure functions, no timers -- the caller
-// re-evaluates once a minute, so this costs nothing per frame.
-//
-// Every palette keeps the panel dark enough for its white text.
 
 const rgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
 
@@ -72,9 +65,6 @@ export function skyAt(now = new Date()) {
   const A = parsed[a[1]];
   const B = parsed[b[1]];
 
-  // The sun crosses the right half of the panel (clear of the text): low
-  // and golden after sunrise, high and white at midday, low and warm again
-  // before sunset.
   const p = Math.min(1, Math.max(0, (minute - SUNRISE) / (SUNSET - SUNRISE)));
   const elevation = Math.sin(Math.PI * p);
   const sun = {

@@ -1,8 +1,5 @@
 import { t } from "@/i18n";
 
-// Usage status shared by Fixed Cost, SDM Resource and Infrastructure Tool
-// (backend: App\Enums\OperationalCostStatus). Only "active" items count
-// toward the Operational Cost totals.
 const STATUS_KEYS = {
   active: "finance.usageStatus.active",
   inactive: "finance.usageStatus.inactive",

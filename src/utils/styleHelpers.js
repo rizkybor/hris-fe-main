@@ -1,8 +1,3 @@
-/**
- * Get Tailwind CSS classes for priority badge
- * @param {string} priority - Priority level (low, medium, high, urgent)
- * @returns {string} Tailwind CSS classes
- */
 export const getPriorityColor = (priority) => {
   const colors = {
     low: "bg-green-100 text-green-700",
@@ -13,11 +8,6 @@ export const getPriorityColor = (priority) => {
   return colors[priority?.toLowerCase()] || "bg-gray-100 text-gray-700";
 };
 
-/**
- * Get Tailwind CSS classes for level badge
- * @param {string} level - Skill level (Expert, Intermediate, Beginner)
- * @returns {string} Tailwind CSS classes
- */
 export const getLevelColor = (level) => {
   const colors = {
     Expert: "bg-purple-100 text-purple-700",
@@ -38,11 +28,6 @@ export const getStatusColor = (status) => {
   return colors[status?.toLowerCase()] || "bg-gray-100 text-gray-700";
 };
 
-/**
- * Get Tailwind CSS classes for an employee's job status (active, on_leave, resigned)
- * @param {string} status - JobStatus enum value
- * @returns {string} Tailwind CSS classes
- */
 export const getJobStatusColor = (status) => {
   const colors = {
     active: "bg-green-100 text-green-700",
@@ -72,13 +57,6 @@ export const getLeaveRequestStatusBadgeClass = (status) => {
   return map[status?.toLowerCase()] || "bg-gray-100 text-gray-700";
 };
 
-/**
- * Fixed swatch palette for a Project Task's Type badge / Task Detail
- * accent color -- a closed set of keys (matches App\Enums\TaskColor on the
- * backend, which only validates the key, not these classes), never a raw
- * hex value, so every task-type badge stays visually consistent with the
- * rest of the app's fixed-palette badges (priority, status, etc).
- */
 export const TASK_TYPE_COLORS = [
   { key: "blue", label: "Blue", bg: "bg-blue-100", text: "text-blue-700", border: "border-blue-500", borderLeft: "border-l-blue-500", dot: "bg-blue-500", ring: "ring-blue-500", accentBg: "bg-blue-50", accentBorder: "border-blue-500" },
   { key: "emerald", label: "Emerald", bg: "bg-emerald-100", text: "text-emerald-700", border: "border-emerald-500", borderLeft: "border-l-emerald-500", dot: "bg-emerald-500", ring: "ring-emerald-500", accentBg: "bg-emerald-50", accentBorder: "border-emerald-500" },
@@ -96,10 +74,6 @@ export const TASK_TYPE_COLORS = [
 
 const DEFAULT_TASK_TYPE_COLOR = { key: "gray", label: "Gray", bg: "bg-gray-100", text: "text-gray-700", border: "border-gray-400", borderLeft: "border-l-gray-400", dot: "bg-gray-400", ring: "ring-gray-400", accentBg: "bg-gray-50", accentBorder: "border-gray-400" };
 
-/**
- * @param {string|null|undefined} colorKey
- * @returns {{key:string,label:string,bg:string,text:string,border:string,borderLeft:string,dot:string,ring:string,accentBg:string,accentBorder:string}}
- */
 export const getTaskTypeColorClasses = (colorKey) => {
   return TASK_TYPE_COLORS.find((c) => c.key === colorKey) || DEFAULT_TASK_TYPE_COLOR;
 };

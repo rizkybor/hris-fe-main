@@ -58,9 +58,6 @@ const tabs = computed(() => [
   { key: "members", label: t("teams.detail.tabs.members"), count: (team.value.members || []).length },
 ]);
 
-// The grid can get long for large teams, so only the first page is shown
-// until "View More" is clicked -- there's no separate members endpoint to
-// paginate against, the full list already comes with the team payload.
 const MEMBERS_PAGE_SIZE = 8;
 const visibleMembers = computed(() => {
   const members = team.value.members || [];

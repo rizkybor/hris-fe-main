@@ -1,10 +1,4 @@
 <script setup>
-// License Manager overview: KPI totals for all products, one card per
-// product (click through to its licenses), product management (add / edit /
-// switch on-off / delete) and the "Expiring soon" / "Recent activity"
-// panels.
-// Permissions: license-manager-list (page), -view (panels), -create
-// (Create license), license-manager-create / -edit / -delete (products too).
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import {

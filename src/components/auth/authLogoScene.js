@@ -1,29 +1,3 @@
-// Login panel: the Jendela Cakra Digital butterfly in 3D (three.js).
-// The traced silhouette (jcdLogoPath.js) is extruded; the front face shows
-// the logo's own colours from the PNG (navy lifted to near-white so it reads
-// on the navy panel, the blue wing tips kept), the edges are a soft metal.
-// Body stays put while the two wings flap on their hinges; the whole logo
-// floats and turns slowly. At most 30 fps, pixel ratio capped at 1.5,
-// paused while the tab is hidden or the panel is off screen. Loaded on
-// demand from AuthLogo3D.vue.
-//
-// Interaction: hovering the logo speeds up and widens the wing beat, lifts
-// the glow, scales it up a touch and tilts it toward the pointer; a click
-// or tap makes it hop and spin once with a quick burst of wing beats and a
-// spray of blue/white sparks. Three quick clicks: it glows white, takes off
-// and flutters around the whole screen like a butterfly for a few seconds with
-// sparks trailing from its wings, then lands back in place.
-//
-// Idle: after 20 s without any activity on the page (pointer, touch, keys,
-// scroll) it does one sudden manoeuvre -- a dart to the side, a backflip or a
-// startled zig-zag spin, never the same one twice in a row -- and repeats
-// roughly every 20 s while the page stays idle. Timed in animation time, so
-// a hidden tab doesn't save one up for when you come back.
-//
-// Wind: every fast movement (idle manoeuvres, the click spin, the flight)
-// leaves thin streaks of air behind the butterfly's outline that stretch and
-// fade in about half a second. Slow motion (the float, the flap, tilting
-// toward the pointer) stays calm.
 import {
   AmbientLight,
   BufferAttribute,
@@ -198,9 +172,6 @@ export async function start(host, onReady) {
     apply("right", rightWing.mesh);
   };
 
-  // ---- Sizing: in its box, or full screen while flying ----
-  // pixels per world unit at the logo's depth, so leaving the box for the
-  // full-screen overlay keeps the logo exactly where and how big it was.
   let ppu = 1;
   // Near/far follow the camera distance (it backs off a lot for the
   // full-screen flight; a fixed far plane would cut the logo off).
@@ -258,10 +229,6 @@ export async function start(host, onReady) {
   sparkGeo.setAttribute("position", new BufferAttribute(sparkPos, 3));
   sparkGeo.setAttribute("color", new BufferAttribute(sparkCol, 3));
   sparkGeo.setAttribute("alpha", new BufferAttribute(sparkAlpha, 1));
-  // Crisp sparks drawn in the shader: a solid, white-hot core with a thin
-  // coloured halo (a soft texture made them look blurred). Each spark fades
-  // through its own alpha, not by darkening its colour, which would leave
-  // dark dots on a transparent canvas over a light page.
   const sparkMat = new ShaderMaterial({
     uniforms: { uSize: { value: 140 }, uScale: { value: 1 } },
     vertexShader: `
@@ -343,13 +310,6 @@ export async function start(host, onReady) {
     sparkGeo.attributes.alpha.needsUpdate = true;
   };
 
-  // ---- Wind: wisps of air shed by the moving butterfly ----
-  // Points around the butterfly's outline keep a short history of where they
-  // have been. When one moves fast during a manoeuvre, a click spin or the
-  // flight, a wisp is laid along the path it actually traced: an arc for a
-  // spin or flip, a straight dash for a dart. Left behind in the air, each
-  // wisp drifts back, wavers a little and widens as it dissolves, fading in
-  // and out softly. Plain pointer tilting never sheds wind.
   const WISPS = 70;
   const SEG = 10; // points per wisp = frames of path history
   const wispPts = new Float32Array(WISPS * SEG * 3);
@@ -553,12 +513,6 @@ export async function start(host, onReady) {
     resetWind();
   };
 
-  // ---- Flight (three quick clicks) ----
-  // The canvas leaves its box for a full-screen layer that lets clicks
-  // through, glows white, flutters around the screen like a butterfly with
-  // sparks trailing from the wing tips, and lands back where it was.
-  // In the air it moves like a butterfly: full wing beats with the odd
-  // glide, a flutter on every stroke, a wandering path, head first.
   const FLIGHT_S = 8;
   const LANDING_S = 2.2;
   const canvas = renderer.domElement;
@@ -583,9 +537,6 @@ export async function start(host, onReady) {
     renderer.setPixelRatio(FLIGHT_DPR);
     overlayResize();
   };
-  // Back into the box. It has already landed and its trail has died out,
-  // so this is invisible: the position is converted to box coordinates in
-  // the same frame (no one-frame jump) and nothing gets cut at the edges.
   const endFlight = () => {
     const home = flight.home;
     flight = null;
@@ -610,9 +561,6 @@ export async function start(host, onReady) {
   const ndc = new Vector2(9, 9);
   let pointerIn = false;
   let hovering = false;
-  // Hit area: an invisible ellipse the size of the butterfly that moves with
-  // it, so clicks in the gaps between the wings (or on a logo that is
-  // mid-spin) still count, and the empty corners of the canvas don't.
   const hitArea = new Mesh(new CircleGeometry(1, 40), new MeshBasicMaterial({ side: DoubleSide }));
   hitArea.scale.set(W * 0.44, H * 0.46, 1);
   hitArea.visible = false;
@@ -644,9 +592,6 @@ export async function start(host, onReady) {
   const onDown = (e) => {
     if (flight) return;
     updatePointer(e);
-    // A chain of quick clicks, like a triple-click: each one within 650 ms
-    // of the previous (timed by when the click happened, not when it got
-    // handled, which can lag on a busy device).
     const now = e.timeStamp;
     if (clicks.length && now - clicks[clicks.length - 1].at > 650) clicks = [];
     // The first click spins the logo (edge-on for a moment), so quick
@@ -766,10 +711,6 @@ export async function start(host, onReady) {
       flash = smooth(0, 0.55, ft) * 1.5 - smooth(0.6, 1.8, ft) * 0.9 - smooth(FLIGHT_S - 1.2, FLIGHT_S, ft) * 0.6;
     }
 
-    // Wing beat. At rest: soft (quick lift, slow settle), faster and wider
-    // on hover and after a click. In flight: a full butterfly beat, wings
-    // swinging from open to almost meeting about 2.5 times a second, with
-    // the odd glide on half-open wings.
     const glide = Math.max(fly * smooth(0.55, 0.9, Math.sin(t * 0.9 + 1.3)), flight ? fly * smooth(FLIGHT_S - 1.0, FLIGHT_S - 0.5, flight.t) : 0);
     phase += dt * (2.1 * (1 + 0.7 * hoverAmt + 2.4 * excite) * (1 - fly) + 15.5 * fly * (1 - 0.75 * glide));
     const beat = Math.sin(phase);
@@ -847,9 +788,6 @@ export async function start(host, onReady) {
         flight.heading * fly
       );
       logo.scale.setScalar(1 - 0.24 * fly);
-      // Sparks from both wing tips while airborne.
-      // The trail thins out while it rises into place and stops early
-      // enough that every spark has faded before it lands.
       const trail = fly * (1 - smooth(landStart + 0.2, FLIGHT_S - 1.6, ft));
       if (trail > 0.02) {
         leftWing.mesh.localToWorld(tipLeft.set(-W * 0.4, H * 0.18, 0));

@@ -83,10 +83,6 @@ const form = ref({
 const submitting = ref(false);
 const errorMessage = ref("");
 const generatingCode = ref(false);
-// True while asset_code still reflects the last auto-generated suggestion --
-// as soon as the user types into the field directly, this flips false so
-// changing category/purchase date afterwards won't silently overwrite
-// whatever they typed.
 const codeAutoFilled = ref(true);
 
 const selectedCategoryExamples = computed(
@@ -137,10 +133,6 @@ const openCreateModal = async () => {
   await generateCode();
 };
 
-// The API returns dates as full ISO timestamps (e.g.
-// "2027-02-28T00:00:00.000000Z") -- a native <input type="date"> only
-// accepts a bare "YYYY-MM-DD" and silently renders blank on anything else,
-// so this trims it down before it reaches a form field.
 const toDateInputValue = (dateString) => (dateString ? dateString.slice(0, 10) : "");
 
 const openEditModal = async (asset) => {
@@ -250,9 +242,6 @@ const submittingMaintenance = ref(false);
 
 const supplierName = (asset) => suppliers.value.find((v) => v.id === asset.supplier_id)?.name;
 
-// The API returns dates as full ISO timestamps (e.g.
-// "2027-02-28T00:00:00.000000Z") even for date-only columns -- this trims
-// that down to a compact "28 Feb 2027" for display.
 const fmtDate = (dateString) => {
   if (!dateString) return "-";
   return new Date(dateString).toLocaleDateString(localeTag(), { day: "numeric", month: "short", year: "numeric" });
@@ -567,9 +556,6 @@ onMounted(async () => {
             </button>
           </div>
 
-          <!-- Quick-add: suppliers aren't a managed module of their own,
-               just a name to remember who an asset was bought from -- no
-               need to leave this form to add one. -->
           <div v-if="showAddSupplier" class="flex items-center gap-2 mt-2">
             <input
               v-model="newSupplierName"

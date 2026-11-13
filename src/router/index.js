@@ -219,9 +219,6 @@ router.beforeEach(async (to, from, next) => {
           await authStore.checkAuth()
         }
 
-        // Routes may declare meta.permission (one name or a list, any of
-        // which is enough); without it, opening the URL directly would show
-        // an empty page while the API answers 403.
         const required = to.meta.permission
         if (required && !canOneOf([].concat(required))) {
           return next({ name: 'admin.dashboard' })

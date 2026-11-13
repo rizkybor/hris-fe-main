@@ -21,9 +21,6 @@ import { UiBadge, UiButton, UiEmpty, UiInput, UiModal, UiPageHeader, UiSpinner, 
 
 const { t, te } = useI18n();
 
-// Display labels for the API's permission groups (same mapping as Roles &
-// Permissions): module key / action suffix -> current language, falling
-// back to the API's English text. Permission names are never translated.
 const camelKey = (value) => String(value).replace(/[-_ ]+([a-z0-9])/gi, (_, c) => c.toUpperCase());
 const translated = (key, fallback) => (te(key) ? t(key) : fallback);
 const moduleLabel = (group) => translated(`settings.permissions.modules.${camelKey(group.key)}`, group.label);

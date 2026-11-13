@@ -67,10 +67,6 @@ watch(collapsed, (value) => {
   localStorage.setItem("sidebar-collapsed", String(value));
 });
 
-// Collapsed nav-links lose their visible label, so a floating tooltip
-// (teleported to <body> to escape the scrollable nav's clipping) shows it
-// on hover instead. Derived from each link's own .nav-label text so no
-// per-item label has to be duplicated here.
 const tooltipText = ref("");
 const tooltipStyle = ref({});
 
@@ -91,14 +87,8 @@ const hideTooltip = () => {
   tooltipText.value = "";
 };
 
-// Each nav section can be individually collapsed via its title. State is
-// keyed by section id and persisted so a user's preference survives reloads;
-// a section defaults to expanded when its key is absent from storage.
 const SECTION_KEYS = ["overview", "myWorkspace", "people", "company", "licenseManager", "finance", "tools", "insights"];
 
-// Every sign-in starts with General, My Workspace and Administration open
-// and the rest collapsed (the login clears the saved state); sections the
-// user opens or closes during the session stay that way.
 const DEFAULT_OPEN = ["overview", "myWorkspace", "people"];
 const defaultCollapsed = (key) => !DEFAULT_OPEN.includes(key);
 

@@ -7,9 +7,6 @@ import { UiModal, UiInput, UiEmpty, UiAlert, UiSpinner } from "@/components/ui";
 import { axiosInstance } from "@/plugins/axios";
 import { errorMessage } from "@/helpers/errorHelper";
 
-// Pick a flowchart (from the Flowchart module) to insert into a document.
-// Only flowcharts with a saved snapshot can be inserted; older ones get one
-// the next time they're saved in the Flowchart editor.
 const emit = defineEmits(["select", "close"]);
 const { t } = useI18n();
 

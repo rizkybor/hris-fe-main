@@ -5,9 +5,6 @@ import Cookies from "js-cookie";
 import { defineStore } from "pinia";
 import router from "@/router";
 
-// Keeps the loading overlay visible for at least `ms`, even when the
-// request itself resolves faster -- otherwise it flashes for a few
-// milliseconds and the user can't tell it's actually there.
 const MIN_LOADING_MS = 900;
 // Sign-in shows the butterfly loader a little longer so it gets to beat its
 // wings a few times (ButterflyLoader.vue).
@@ -23,15 +20,6 @@ const withMinDuration = (promise, ms = MIN_LOADING_MS) => {
 export const useAuthStore = defineStore("auth", {
     state: () => ({
         user: null,
-        // Kept in reactive state (not derived via a getter) and synced
-        // explicitly wherever the cookie changes. A getter like
-        // `token: () => Cookies.get('token')` gets treated by Pinia as a
-        // computed(): since document.cookie isn't a reactive dependency,
-        // Vue caches the first read forever and never re-evaluates it, so
-        // a token set after that first (empty) read is invisible to
-        // anything reading authStore.token -- e.g. the very first login of
-        // a fresh session, where the router guard reads an empty token
-        // before login, then never sees the freshly-set one after.
         token: Cookies.get('token') || null,
         loading: false,
         error: null,
@@ -129,9 +117,6 @@ export const useAuthStore = defineStore("auth", {
                 this.user = null
                 this.error = null
 
-                // Full reload into the login page: clears every cached store
-                // and in-memory cache, so the next person to sign in on this
-                // browser never sees the previous user's data.
                 window.location.assign(router.resolve({ name: 'login' }).href)
             } catch (error) {
                 this.error = handleError(error)

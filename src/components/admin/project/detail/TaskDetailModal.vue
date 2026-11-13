@@ -31,7 +31,8 @@ import { axiosInstance } from "@/plugins/axios";
 import { useTaskStore } from "@/stores/task";
 import { can } from "@/helpers/permissionHelper";
 import { useAlertModalStore } from "@/stores/alertModal";
-import { UiBadge, UiButton, UiInput, UiModal, UiSelect, UiStatusSelect } from "@/components/ui";
+import { UiBadge, UiButton, UiInput, UiSelect, UiStatusSelect } from "@/components/ui";
+import TaskPanel from "./TaskPanel.vue";
 import { optimistic } from "@/utils/optimistic";
 import { useI18n } from "vue-i18n";
 
@@ -97,9 +98,6 @@ const editedColor = ref(null);
 const isSavingDetails = ref(false);
 const detailsError = ref("");
 
-// Assignee picker: this project's people (leader, team and members), loaded
-// once when the picker is first opened -- not when the modal mounts -- and
-// filtered locally while typing. Cached per project for this page session.
 const projectPeople = ref([]);
 const peopleLoading = ref(false);
 const loadProjectPeople = async () => {
@@ -316,9 +314,6 @@ const cancelDueDateEdit = () => {
   editedDueDate.value = props.task?.due_date || "";
 };
 
-// Status straight from the modal (dragging is hard on phones): instant,
-// put back with an error toast if the save fails. The server re-places
-// the card in its new column; the response is stored as is.
 const changeStatus = (value) => {
   const task = props.task;
   if (!task || value === task.status) return;
@@ -382,9 +377,8 @@ watch(
 </script>
 
 <template>
-  <UiModal
+  <TaskPanel
     :open="isOpen && !!task"
-    size="lg"
     :title="task?.name || ''"
     @update:open="(value) => !value && closeModal()"
   >
@@ -413,9 +407,10 @@ watch(
       </div>
     </template>
 
-    <div v-if="task" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <!-- One column in the side panel: details first, then the rest. -->
+    <div v-if="task" class="grid grid-cols-1 gap-6">
       <!-- Main Content (Left Side) -->
-      <div class="md:col-span-2 space-y-5 min-w-0">
+      <div class="space-y-5 min-w-0">
         <!-- Labels/Priority -->
         <div>
           <h3 class="flex items-center gap-1.5 text-ui-over uppercase text-ui-muted mb-2">
@@ -592,7 +587,7 @@ watch(
       </div>
 
       <!-- Sidebar (Right Side): first on phones so the key facts sit on top -->
-      <div class="order-first md:order-none space-y-5 md:border-l md:border-ui-line md:pl-6">
+      <div class="order-first space-y-5 pb-5 border-b border-ui-line">
         <!-- Assignee -->
         <div v-if="!isEditingDetails" class="relative">
           <h3 class="text-ui-over uppercase text-ui-muted mb-2">{{ $t("projects.tasks.detail.assignee") }}</h3>
@@ -729,18 +724,18 @@ watch(
         <!-- Actions -->
         <div v-if="(can('task-edit') && !isEditingDetails) || can('task-delete')">
           <h3 class="text-ui-over uppercase text-ui-muted mb-2">{{ $t("common.labels.actions") }}</h3>
-          <div class="flex md:flex-col gap-2">
-            <UiButton v-if="can('task-edit') && !isEditingDetails" :icon="Pencil" class="flex-1 md:flex-none md:w-full" @click="toggleEditDetails">
+          <div class="flex gap-2">
+            <UiButton v-if="can('task-edit') && !isEditingDetails" :icon="Pencil" class="flex-1" @click="toggleEditDetails">
               {{ $t("projects.tasks.detail.edit") }}
             </UiButton>
-            <UiButton v-if="can('task-delete')" variant="danger" :icon="Trash2" class="flex-1 md:flex-none md:w-full" @click="handleDelete">
+            <UiButton v-if="can('task-delete')" variant="danger" :icon="Trash2" class="flex-1" @click="handleDelete">
               {{ $t("projects.tasks.detail.delete") }}
             </UiButton>
           </div>
         </div>
       </div>
     </div>
-  </UiModal>
+  </TaskPanel>
 
   <!-- Image Lightbox -->
   <Teleport to="body">

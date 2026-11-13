@@ -61,7 +61,9 @@
       "attendanceRate": "Tingkat Kehadiran",
       "fromLastWeek": "{n} dari minggu lalu",
       "pendingRequests": "Pengajuan Menunggu",
-      "awaitingApproval": "Menunggu persetujuan"
+      "awaitingApproval": "Menunggu persetujuan",
+      "showMore": "Lihat statistik lainnya",
+      "hideMore": "Sembunyikan statistik lainnya"
     },
     "latestLeave": "Pengajuan Cuti Terbaru",
     "latestLeaveHint": "5 pengajuan cuti terakhir",

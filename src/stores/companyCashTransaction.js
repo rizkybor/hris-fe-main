@@ -37,9 +37,6 @@ export const useCompanyCashTransactionStore = defineStore("companyCashTransactio
       if (quiet) this.refreshing = true;
       else this.loading = true;
       this.error = null;
-      // Remembered so create/update/delete can refresh the same filtered
-      // page the user is currently looking at, instead of silently
-      // resetting them back to an unfiltered page 1.
       this.lastParams = params;
       try {
         const { data } = await axiosInstance.get("/company-cash-transactions", { params });

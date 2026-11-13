@@ -1,11 +1,4 @@
 <script setup>
-// Data table of the redesign. Every table starts with a "#" column: the
-// row's number, continuing across pages (pass the API `meta`).
-//
-// columns: [{ key, label, align?: 'left'|'right'|'center', width?, class? }]
-// Slots: cell-<key> ({ row, value, index, number }), empty, and `mobile`
-// ({ row, number }) -- when given, phones get that card list instead of
-// the table.
 import { computed } from "vue";
 import { firstRowNumber } from "./table";
 

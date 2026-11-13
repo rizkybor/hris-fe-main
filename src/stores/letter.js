@@ -3,9 +3,6 @@ import { axiosInstance } from "@/plugins/axios";
 import { handleError } from "@/helpers/errorHelper";
 import { openBlobPdf } from "@/utils/pdfTab";
 
-// Letter/division codes change rarely (Settings -> Document Codes keeps
-// these arrays in step when it adds or removes one), so the letter form
-// reuses them for a while instead of refetching on every visit.
 const CODES_TTL_MS = 5 * 60 * 1000;
 let listSeq = 0;
 

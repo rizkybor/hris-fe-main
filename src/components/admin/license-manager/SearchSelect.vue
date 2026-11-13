@@ -1,7 +1,4 @@
 <script setup>
-// Searchable select (combobox): a button showing the choice; opening it
-// shows a search box and a filtered, keyboard-navigable list.
-// options: [{ value, label, hint? }].
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { ChevronDown, Search, Check } from "lucide-vue-next";
 import { UiSpinner } from "@/components/ui";

@@ -17,10 +17,6 @@ const props = defineProps({
     type: String,
     default: "",
   },
-  // Only the Project Leader may write this note -- the backend enforces
-  // the same rule independently (see ProjectController::update()), this
-  // just keeps the UI from offering an edit control that would be
-  // rejected anyway.
   isLeader: {
     type: Boolean,
     default: false,
@@ -85,9 +81,6 @@ const handleSave = async () => {
       </UiButton>
     </div>
 
-    <!-- Editing (Project Leader only) -- left unconstrained (not capped
-         like the read-only view below) so actively writing a long note
-         isn't cramped into a tiny scroll box. -->
     <div v-if="editing">
       <RichTextEditor v-model="draft" :placeholder="$t('projects.inspect.placeholder')" />
       <p v-if="errorMessage" class="text-ui-cap text-ui-bad mt-1.5">{{ errorMessage }}</p>

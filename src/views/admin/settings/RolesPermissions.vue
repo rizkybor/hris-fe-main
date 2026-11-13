@@ -34,10 +34,6 @@ const DEFAULT_COLOR = { bg: "bg-gray-100", text: "text-gray-700" };
 
 const { t, te } = useI18n();
 
-// Display labels for the API's permission groups. The API sends English
-// module/section/action labels; these map them to the current language by
-// module key / action suffix, falling back to the API text for anything new.
-// Permission names (what gets saved) are never translated.
 const camelKey = (value) => String(value).replace(/[-_ ]+([a-z0-9])/gi, (_, c) => c.toUpperCase());
 const translated = (key, fallback) => (te(key) ? t(key) : fallback);
 const moduleLabel = (group) => translated(`settings.permissions.modules.${camelKey(group.key)}`, group.label);
@@ -143,9 +139,6 @@ const filteredGroups = computed(() => {
   return permissionGroups.value.filter((group) => group.permissions.some((p) => matchesQuery(group, p, query)));
 });
 
-// filteredGroups already arrives ordered by section then label (backend
-// sorts it that way), so clustering consecutive same-section entries here
-// preserves that order without needing a separate sort pass.
 const sectionedGroups = computed(() => {
   const sections = [];
   const bySection = new Map();
@@ -218,10 +211,6 @@ function confirmDelete(role) {
   isDeleteModalOpen.value = true;
 }
 
-// Presentation only: the permission matrix lays common actions out as
-// columns; anything else lands in the "Other" column.
-// `label` is the API's action text (used for matching); the display text
-// comes from the i18n keys.
 const MATRIX_ACTIONS = [
   { label: "Menu Access", key: "menu", shortKey: "menuShort" },
   { label: "List", key: "list", shortKey: "list" },
@@ -395,9 +384,6 @@ async function handleDelete() {
 
           <!-- Desktop: module x action matrix -->
           <div v-if="filteredGroups.length" class="hidden sm:block border border-ui-line rounded-ui-card">
-            <!-- Fixed column widths: the table always fits the modal (long
-                 permission names truncate with a tooltip instead of pushing
-                 the table past the modal's edge). -->
             <table class="w-full border-collapse table-fixed">
               <colgroup>
                 <col class="w-10" />

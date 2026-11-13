@@ -48,9 +48,6 @@ const submit = async () => {
   loading.value = true;
   try {
     created.value = await store.createLicense(form.value);
-    // Start the License PDF download right away (a failure is shown, the
-    // button below stays available). A Mac + iPad bundle has one PDF with
-    // both keys.
     if (can("license-manager-view")) downloadPdf();
   } catch (err) {
     errors.value = validationErrors(err);

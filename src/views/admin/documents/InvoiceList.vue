@@ -22,9 +22,6 @@ const alertModal = useAlertModalStore();
 const toast = useToastStore();
 const { invoices, meta } = storeToRefs(store);
 
-// Search, status and page live in the URL and are remembered, so coming
-// back from an invoice restores the same view; the list shows what the
-// store already has and refreshes quietly.
 const list = useListState("invoices", { q: "", status: "", page: 1 });
 const search = ref(list.q);
 watch(search, debounce((v) => (list.q = v.trim()), 300));

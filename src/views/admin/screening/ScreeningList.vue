@@ -21,9 +21,6 @@ const router = useRouter();
 const store = useScreeningStore();
 const { screenings, meta, statusCounts, loading, saving } = storeToRefs(store);
 
-// Status, search and page live in the URL and are remembered, so coming
-// back from a screening restores the same view. The list shows what the
-// store already has and refreshes quietly.
 const list = useListState("screening", { q: "", status: "", page: 1 });
 const search = ref(list.q);
 watch(search, debounce((v) => (list.q = v.trim()), 300));

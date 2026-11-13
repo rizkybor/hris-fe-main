@@ -72,9 +72,6 @@ const { loading: listLoading, refreshing: listRefreshing, refresh: refreshList }
 
 const refreshAllQuietly = () => Promise.all([refreshList({ force: true }), refreshStats({ force: true })]);
 
-// Deleting a paid payroll, or re-generating one that already has details,
-// overrides data that's already been processed/paid out -- restricted to
-// the same trusted roles server-side enforces.
 const canManagePayroll = computed(() => hasAnyRole(["superadmin", "manager", "finance"]));
 
 const typeLabel = (type) => (type === "thr" ? "THR" : t("payroll.common.payroll"));

@@ -112,10 +112,6 @@ export const useProposalStore = defineStore("proposal", {
       return data.data; // { public_id, url }
     },
 
-    // Opens the PDF in the browser's own viewer in a new tab. The tab is
-    // opened as part of the click (pop-up blockers allow that) and pointed
-    // at the PDF once it arrives; a caller that must await something first
-    // (e.g. saving) opens the tab itself and passes it in.
     viewPdf(id, tab = window.open("", "_blank")) {
       return openBlobPdf(tab, () => axiosInstance.get(`/proposals/${id}/export-pdf`, { responseType: "blob" }));
     },

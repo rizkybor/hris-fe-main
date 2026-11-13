@@ -15,9 +15,6 @@ const { projects, loading } = storeToRefs(projectStore);
 const { fetchProjects } = projectStore;
 
 onMounted(() => {
-  // Fetch every non-terminal project (getProjectHealth already excludes
-  // "completed"/"cancelled") rather than hardcoding status: "active", since
-  // a project can be overdue while sitting in "on_hold", "planning", etc.
   fetchProjects({});
 });
 

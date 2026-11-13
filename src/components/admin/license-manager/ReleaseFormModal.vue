@@ -1,9 +1,4 @@
 <script setup>
-// Add / edit a version of the product's app in a modal: version (with the
-// kind it implies), title, platforms, status, release date, build, critical
-// flag, download URL, internal notes, the changes editor and an optional
-// installer file (uploaded after the version is saved). Emits "saved" with
-// the release from the API.
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { Save, Plus, Trash2, ArrowUp, ArrowDown, ListChecks, FileArchive, Upload, ChevronDown } from "lucide-vue-next";

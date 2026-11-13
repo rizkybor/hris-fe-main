@@ -28,10 +28,6 @@ const props = defineProps({
     type: [String, Number],
     required: true,
   },
-  // [{ id, name }] -- the task's assigned staff (id = employee_profile id),
-  // used both to gate the composer (canComment) and to power the @mention
-  // dropdown. The creator is added separately by the caller if not already
-  // an assignee, matching Meeting Note's "attendees + creator" pattern.
   assignees: {
     type: Array,
     default: () => [],
@@ -72,10 +68,6 @@ const mentionStartIndex = ref(null);
 const showMentionDropdown = ref(false);
 const mentionDropdownStyle = ref({});
 
-// Manager, Finance Manager, and Operational Director are always
-// mentionable here regardless of task assignment -- fetched once since
-// this list is the same for every task, then merged with the task's own
-// assignees for the dropdown. The backend enforces the same allowance.
 const alwaysMentionableEmployees = ref(mentionableCache.list);
 
 const fetchAlwaysMentionableEmployees = async () => {
@@ -117,9 +109,6 @@ const loadComments = () => {
   if (props.staffTaskId) commentStore.fetchComments(props.staffTaskId);
 };
 
-// The dropdown is teleported to <body> so it always renders on top of the
-// page (and isn't clipped by any scrollable ancestor), positioned above
-// the textarea and nudged sideways from it.
 const updateMentionDropdownPosition = () => {
   const el = textareaRef.value;
   if (!el) return;
@@ -269,12 +258,6 @@ const handleDelete = async (comment) => {
   }
 };
 
-// A fixed palette of vivid, readable text/background pairs (never plain
-// black or white) -- picked per mentioned name via a stable hash, so the
-// same person always gets the same color across every comment instead of
-// re-randomizing on every render.
-// Mentions read as one quiet accent chip (tokens only); the hash below
-// still picks per name, so more token pairs can be added later.
 const MENTION_COLORS = ["text-ui-accent bg-ui-accent-soft"];
 
 const mentionColorClass = (name) => {
@@ -287,9 +270,6 @@ const mentionColorClass = (name) => {
 
 const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-// Splits a comment body into text/mention/url/email segments so mentions,
-// links, and emails can be rendered as real elements without ever using
-// v-html (avoids XSS entirely).
 const renderSegments = (comment) => {
   const body = comment.body;
   const names = (comment.mentioned_employees || [])
@@ -331,9 +311,6 @@ const sortedComments = computed(() =>
   [...comments.value].sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
 );
 
-// Group into top-level threads with their replies (any depth) flattened
-// chronologically underneath, so replying to an earlier reply still surfaces
-// in the same thread instead of forming deep nested indentation.
 const threads = computed(() => {
   const all = sortedComments.value;
   const byId = new Map(all.map((c) => [c.id, c]));
@@ -355,9 +332,6 @@ const threads = computed(() => {
   }));
 });
 
-// Deep-link support: clicking a mention notification lands here with
-// ?comment=<id> on the task's detail route. Scroll that comment
-// into view and briefly highlight it, once, the first time it appears.
 const highlightCommentId = computed(() => (route.query.comment ? Number(route.query.comment) : null));
 const scrolledToComment = ref(false);
 watch(highlightCommentId, () => {

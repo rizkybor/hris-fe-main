@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { useRouter } from "vue-router";
 import { BellIcon, CheckCheckIcon } from "lucide-vue-next";
@@ -34,8 +34,34 @@ const handleMarkAllRead = async () => {
   await notificationStore.markAllAsRead();
 };
 
-onMounted(() => {
+const POLL_MS = 60_000;
+let timer = 0;
+let lastCheck = 0;
+const refreshCount = () => {
+  if (document.hidden) return;
+  lastCheck = Date.now();
   notificationStore.fetchUnreadCount();
+};
+const onVisible = () => {
+  if (!document.hidden && Date.now() - lastCheck > 15_000) refreshCount();
+};
+
+const ringing = ref(false);
+watch(unreadCount, async (count, previous) => {
+  if (count <= (previous ?? 0)) return;
+  ringing.value = false;
+  await nextTick();
+  ringing.value = true;
+});
+
+onMounted(() => {
+  refreshCount();
+  timer = window.setInterval(refreshCount, POLL_MS);
+  document.addEventListener("visibilitychange", onVisible);
+});
+onBeforeUnmount(() => {
+  window.clearInterval(timer);
+  document.removeEventListener("visibilitychange", onVisible);
 });
 </script>
 
@@ -46,10 +72,11 @@ onMounted(() => {
       :aria-label="$t('common.a11y.notifications')"
       @click="toggle"
     >
-      <BellIcon class="w-[18px] h-[18px]" />
+      <BellIcon class="w-[18px] h-[18px]" :class="{ 'ui-bell-ring': ringing }" @animationend="ringing = false" />
       <span
         v-if="unreadCount > 0"
-        class="absolute top-1 right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-ui-bad text-white text-[10px] font-semibold flex items-center justify-center ring-2 ring-ui-bg"
+        :key="unreadCount"
+        class="ui-badge-pop absolute top-1 right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-ui-bad text-white text-[10px] font-semibold flex items-center justify-center ring-2 ring-ui-bg"
       >
         {{ unreadCount > 9 ? "9+" : unreadCount }}
       </span>

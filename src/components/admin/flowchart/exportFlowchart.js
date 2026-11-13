@@ -99,14 +99,6 @@ const roundRect = (ctx, x, y, w, h, r) => {
   ctx.closePath();
 };
 
-/**
- * One A4 page laid out like JCD's other documents (solid navy/blue, thin
- * rules, no gradients): company header, title, a details row (who made it,
- * when, who it's prepared for, who owns it), the diagram in a light frame,
- * and a copyright/confidentiality footer. Returns the page as a canvas.
- *
- * meta: { id, preparedFor, createdBy, createdAt, updatedAt }
- */
 async function renderA4Page(vueFlowEl, nodes, { name, description, orientation, meta = {} }) {
   if (!nodes.length) throw new Error("The flowchart is empty -- add a shape before exporting.");
 
@@ -299,11 +291,6 @@ export async function exportFlowchartPdf(vueFlowEl, nodes, { name, description, 
 // Penawaran) -- sharp at A4 width without making uploads heavy.
 const PREVIEW_MAX_WIDTH = 1600;
 
-/**
- * PNG snapshot of the whole diagram on white, cropped to the shapes (no
- * page, title or margins) -- stored with the flowchart so other documents
- * can show it. Returns null for an empty diagram.
- */
 export async function renderFlowchartPreview(vueFlowEl, nodes) {
   if (!vueFlowEl || !nodes.length) return null;
 

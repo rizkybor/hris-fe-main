@@ -29,6 +29,7 @@ import {
   Users,
   Check,
   X,
+  ChevronDown,
 } from "lucide-vue-next";
 import { useAttendanceStore } from "@/stores/attendance";
 import { useLeaveRequestStore } from "@/stores/leaveRequest";
@@ -40,6 +41,25 @@ import {
 import { capitalize } from "@/utils/formatUtils.js";
 import { can } from "@/helpers/permissionHelper";
 import { useStaleFetch } from "@/composables/useStaleFetch";
+
+// Second row of KPI tiles: hidden by default, the choice is remembered.
+const MORE_STATS_KEY = "hris-attendance-more-stats";
+const readMoreStats = () => {
+  try {
+    return localStorage.getItem(MORE_STATS_KEY) === "1";
+  } catch {
+    return false;
+  }
+};
+const showMoreStats = ref(readMoreStats());
+const toggleMoreStats = () => {
+  showMoreStats.value = !showMoreStats.value;
+  try {
+    localStorage.setItem(MORE_STATS_KEY, showMoreStats.value ? "1" : "0");
+  } catch {
+    /* storage unavailable */
+  }
+};
 import { optimistic } from "@/utils/optimistic";
 import SkeletonList from "@/components/common/skeleton/SkeletonList.vue";
 import Avatar from "@/components/common/Avatar.vue";
@@ -146,11 +166,6 @@ const leaveStatusTone = (status) => LEAVE_STATUS_TONE[status?.toLowerCase()] || 
 const leaveTypeTone = (type) => LEAVE_TYPE_TONE[type?.toLowerCase()] || "neutral";
 const signed = (n) => `${n >= 0 ? "+" : ""}${n || 0}`;
 
-// ---- Approve (one click) / reject (confirm) -- both optimistic ----
-// The row leaves the pending list at once and shows under recent decisions;
-// a failed request puts it back (with an error toast). Afterwards the
-// counters refresh quietly, and the pending list too when more are waiting
-// than were shown.
 const busyIds = ref(new Set());
 const decide = async (request, action) => {
   if (busyIds.value.has(request.id)) return;
@@ -231,6 +246,20 @@ const confirmReject = () => {
         :hint="$t('attendance.summary.stats.after9')"
         :to="recordsFor('late')"
       />
+    </div>
+
+    <div class="-mt-2 space-y-3">
+      <button
+        type="button"
+        class="inline-flex items-center gap-1.5 h-8 -ml-1 px-1 rounded-ui-control text-ui-cap font-medium text-ui-muted hover:text-ui-ink focus:outline-none focus-visible:shadow-ui-focus"
+        :aria-expanded="showMoreStats"
+        aria-controls="attendance-more-stats"
+        @click="toggleMoreStats"
+      >
+        {{ showMoreStats ? $t("attendance.summary.stats.hideMore") : $t("attendance.summary.stats.showMore") }}
+        <ChevronDown class="w-3.5 h-3.5 transition-transform duration-ui-fast" :class="{ 'rotate-180': showMoreStats }" />
+      </button>
+      <div v-if="showMoreStats" id="attendance-more-stats" class="ui-anim-fade grid grid-cols-2 md:grid-cols-4 gap-3 ui-stagger">
       <UiStat :label="$t('attendance.summary.stats.onLeave')" :value="statistics.on_leave_today || 0" :icon="CalendarX" :hint="$t('attendance.summary.stats.approvedRequests')" />
       <UiStat :label="$t('attendance.summary.stats.remoteWorkers')" :value="statistics.remote_today || 0" :icon="Laptop" :hint="$t('attendance.summary.stats.workingFromHome')" />
       <UiStat
@@ -247,6 +276,7 @@ const confirmReject = () => {
         :hint="$t('attendance.summary.stats.awaitingApproval')"
         :to="{ name: 'admin.leave-requests.dashboard', query: { status: 'pending' } }"
       />
+      </div>
     </div>
 
     <!-- Content Grid -->

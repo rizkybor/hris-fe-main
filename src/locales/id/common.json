@@ -190,5 +190,13 @@
   "presence": {
     "viewing": "{names} sedang melihat",
     "editing": "{names} sedang mengubah"
+  },
+  "pwa": {
+    "updateTitle": "Versi baru tersedia",
+    "updateMessage": "Muat ulang untuk memakai versi terbaru.",
+    "reload": "Muat ulang",
+    "later": "Nanti",
+    "offline": "Tidak ada koneksi internet",
+    "backOnline": "Kembali online"
   }
 }
