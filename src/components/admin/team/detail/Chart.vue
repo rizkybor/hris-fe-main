@@ -17,9 +17,6 @@ const props = defineProps({
     type: Object,
     required: true,
   },
-  // The detail page passes the route id and loads the data itself, in
-  // parallel with the team; without it this component loads it once the
-  // team is known (the old behaviour).
   teamId: {
     type: [String, Number],
     default: null,

@@ -19,12 +19,6 @@ export function handleError(error) {
     }
 }
 
-/**
- * handleError() returns a string for most statuses but the raw
- * {field: [messages]} object for 422 -- this flattens either shape into one
- * display-ready string, so a form's catch block never falls back to axios's
- * generic "Request failed with status code 422" instead of the real reason.
- */
 export function errorMessage(error, fallback = "Something went wrong. Please try again.") {
     const handled = handleError(error)
 

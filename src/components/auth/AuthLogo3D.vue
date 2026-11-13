@@ -1,9 +1,4 @@
 <script setup>
-// The company butterfly in 3D on the auth panel (three.js, loaded on demand
-// only where canAnimate() allows). Until it's ready -- or where it can't
-// run -- the flat logo shows in its place, lifted to white for the navy
-// panel. Emits `ready` once something is on screen (the 3D logo, or the
-// flat one where 3D can't run) so the panel text can follow it in.
 import { onBeforeUnmount, onMounted, ref } from "vue";
 import { canAnimate } from "./canAnimate";
 

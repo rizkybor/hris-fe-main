@@ -1,8 +1,4 @@
 <script setup>
-// One overlay for the whole app: a centred modal from `sm` up, a bottom
-// sheet (grabber, rounded top, sticky footer) on phones. v-model:open.
-// Esc and the backdrop close it unless `persistent`; body scroll is locked
-// while open; focus moves into the panel and back afterwards.
 import { nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { X } from "lucide-vue-next";
 

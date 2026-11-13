@@ -1,7 +1,4 @@
 <script setup>
-// A product's app icon with rounded "app icon" corners. Falls back to the
-// product's initials on a soft background when there is no icon (or it
-// fails to load).
 import { computed, ref, watch } from "vue";
 
 const props = defineProps({

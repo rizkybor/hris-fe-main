@@ -1,7 +1,4 @@
 <script setup>
-// Redesign button. Variants: primary (ink), secondary (outlined), ghost,
-// danger. Renders a RouterLink when `to` is set, an <a> for `href`,
-// otherwise a <button>.
 import { computed } from "vue";
 import { RouterLink } from "vue-router";
 import { Loader2 } from "lucide-vue-next";
@@ -35,9 +32,6 @@ const ICON = { sm: "w-3.5 h-3.5", md: "w-4 h-4", lg: "w-[18px] h-[18px]" };
 
 const tag = computed(() => (props.to ? RouterLink : props.href ? "a" : "button"));
 const inactive = computed(() => props.disabled || props.loading);
-// Only the attributes the rendered element understands. Passing
-// href="undefined" to a RouterLink used to wipe the href it renders, which
-// left an <a> without href: no pointer cursor, no open-in-new-tab.
 const linkAttrs = computed(() => {
   if (tag.value === RouterLink) return { to: props.to };
   if (tag.value === "a") return { href: props.href };

@@ -1,6 +1,3 @@
-// Lucide icon per tracking event type (same mapping as the license
-// tracking timeline). Labels and colours live in licenseHelpers
-// (EVENT_TYPES / eventToneClass).
 import {
   Activity,
   Sparkles,

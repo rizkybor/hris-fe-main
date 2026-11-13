@@ -1,10 +1,6 @@
 <script setup>
 import { SIGNATORIES } from "@/utils/signatories";
 
-// Opt-in for stamping the signatory's scanned signature onto the exported
-// PDF. The backend only has signatures on file for SIGNATORIES (matched
-// with or without titles/degrees); any other signatory name renders the
-// usual blank space even when this is checked.
 const model = defineModel({ type: Boolean, default: false });
 
 defineProps({

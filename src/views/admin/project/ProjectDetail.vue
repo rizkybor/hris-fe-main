@@ -93,10 +93,6 @@ const handleExportProgress = async () => {
   }
 };
 
-// TaskBoard shares this same Pinia store instance and fetches/mutates
-// `tasks` as cards are dragged between columns, so deriving progress from
-// it here keeps the progress card and deadline-risk banner live without a
-// page refresh.
 const taskStore = useTaskStore();
 const { tasks: projectTasks } = storeToRefs(taskStore);
 
@@ -128,11 +124,6 @@ const aboutParagraphs = computed(() => {
   return project.value.description.split("\n\n").map((p) => p.trim());
 });
 
-// ProjectResource only returns a precomputed `progress` percentage, not the
-// raw `tasks` array, so once the Task Board has loaded this project's tasks
-// into the shared task store, progress is recomputed live from there -
-// updating instantly as cards move between To Do/In Progress/Review/Done.
-// Until then (or if there are no tasks), fall back to the API's `progress`.
 const currentProjectTasks = computed(() =>
   projectTasks.value.filter((task) => String(task.project_id) === String(id))
 );
@@ -273,9 +264,6 @@ watch(
 );
 
 onMounted(async () => {
-  // The task list feeds the overview (progress, counts) and the board, so
-  // it loads alongside the project instead of waiting for the board tab.
-  // Same project as last time: the board shows what it has meanwhile.
   taskStore.fetchProjectTasks(id);
   await handleFetchProject();
   pageReady.value = true;

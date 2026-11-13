@@ -99,11 +99,6 @@ const exportOrientation = ref("landscape");
 
 const uid = (prefix) => `${prefix}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
 
-// ---------------------------------------------------------------------------
-// Edges: appearance lives in edge.data (color / dashed / arrow) and is
-// expanded into Vue Flow's style + marker props, so the panel only ever
-// edits a few plain fields.
-// ---------------------------------------------------------------------------
 const DEFAULT_EDGE_DATA = { color: "#475569", dashed: false, arrow: "end" };
 
 const styledEdge = (edge) => {
@@ -130,10 +125,6 @@ onConnect((connection) => {
   addEdges([styledEdge({ ...connection, id: uid("e") })]);
 });
 
-// ---------------------------------------------------------------------------
-// Serialization: only what's needed to redraw the diagram, without Vue
-// Flow's runtime fields (selected, dragging, computed positions...).
-// ---------------------------------------------------------------------------
 const serializeNodes = (list) =>
   list.map((n) => ({ id: n.id, type: n.type, position: { ...n.position }, style: { ...n.style }, data: { ...n.data } }));
 
@@ -158,10 +149,6 @@ const metaState = () => JSON.stringify({ name: name.value, description: descript
 const isDirty = computed(() => !isReadonly.value && savedState.value !== null && (currentState.value !== savedState.value || metaState() !== savedMeta.value));
 const currentState = ref("");
 
-// ---------------------------------------------------------------------------
-// Undo / redo: a snapshot is recorded shortly after the diagram settles, so
-// a drag or a typing burst becomes one step instead of hundreds.
-// ---------------------------------------------------------------------------
 const history = ref([]);
 const historyIndex = ref(-1);
 let restoring = false;
@@ -180,15 +167,6 @@ const recordHistory = debounce(() => {
   historyIndex.value = history.value.length - 1;
 }, 300);
 
-// What can change the diagram, without a deep watcher: a deep watch over
-// the nodes walked every Vue Flow runtime field of every node on each drag
-// frame (most of the drag's CPU time on a 50-shape chart). Instead:
-// - arrays replaced (add, delete, duplicate, undo/redo, load, edge edits);
-// - Vue Flow's own changes (drag, resize, connect, keyboard delete);
-//   selection-only changes never alter the snapshot, so they're skipped;
-// - text / colour edits, which write node.data (small objects) or an
-//   edge's label / ends.
-// recordHistory is debounced, so a drag still becomes one undo step.
 const onFlowChanges = (changes) => {
   if (changes.some((c) => c.type !== "select")) recordHistory();
 };
@@ -221,10 +199,6 @@ const redo = () => {
   restore(history.value[historyIndex.value]);
 };
 
-// ---------------------------------------------------------------------------
-// Adding shapes: click a palette tile to drop it in the middle of the
-// visible canvas, or drag it to a spot.
-// ---------------------------------------------------------------------------
 const addShape = (shape, position) => {
   const size = SHAPES[shape].size;
   let pos = position;
@@ -266,9 +240,6 @@ const onDrop = (event) => {
   addShape(shape, { x: point.x - size.width / 2, y: point.y - size.height / 2 });
 };
 
-// ---------------------------------------------------------------------------
-// Selection actions
-// ---------------------------------------------------------------------------
 const selectedNode = computed(() => (getSelectedNodes.value.length === 1 && !getSelectedEdges.value.length ? getSelectedNodes.value[0] : null));
 const selectedEdge = computed(() => (getSelectedEdges.value.length === 1 && !getSelectedNodes.value.length ? getSelectedEdges.value[0] : null));
 const hasSelection = computed(() => getSelectedNodes.value.length > 0 || getSelectedEdges.value.length > 0);
@@ -300,9 +271,6 @@ const duplicateSelected = () => {
   });
 };
 
-// ---------------------------------------------------------------------------
-// Properties panel
-// ---------------------------------------------------------------------------
 const setNodeData = (patch) => {
   if (selectedNode.value) updateNodeData(selectedNode.value.id, patch);
 };
@@ -331,12 +299,6 @@ const onEdgeDoubleClick = async ({ edge }) => {
   edgeLabelInput.value?.focus();
 };
 
-// ---------------------------------------------------------------------------
-// Load / save
-// ---------------------------------------------------------------------------
-// Frame the diagram once, right after an existing flowchart's shapes have
-// rendered (a brand-new one has nothing to frame -- adding its first shape
-// shouldn't suddenly zoom the canvas).
 let fitOnInit = !!route.params.id;
 onNodesInitialized(() => {
   if (!fitOnInit) return;
@@ -380,9 +342,6 @@ const load = async () => {
   }
 };
 
-// After each save, a PNG snapshot is stored with the flowchart so documents
-// that embed it (Proposal Penawaran) show the latest version. Runs in the
-// background: a failed snapshot never blocks or fails the save itself.
 const refreshPreview = async (id) => {
   try {
     const blob = await renderFlowchartPreview(vueFlowRef.value, getNodes.value);
@@ -459,9 +418,6 @@ const doExport = async (format) => {
   }
 };
 
-// ---------------------------------------------------------------------------
-// Keyboard shortcuts (ignored while typing in a field)
-// ---------------------------------------------------------------------------
 const onKeydown = (event) => {
   const tag = event.target?.tagName;
   if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || event.target?.isContentEditable) return;

@@ -52,19 +52,10 @@ const ICON_BTN =
 const categorySuggestions = computed(() => categories.value.map((c) => c.category));
 const totalSources = computed(() => categories.value.reduce((sum, c) => sum + c.sources.length, 0));
 
-// Each embed is a whole separate third-party page (PostHog/Looker Studio,
-// its own JS, its own API calls) -- loading every source's iframe the
-// moment the page opens means firing all of that at once even for
-// sources the user never scrolls to. Nothing sets a source's `src` until
-// its card is explicitly clicked to load, so the network/CPU cost is
-// only ever paid for what's actually being looked at.
 const loadedSourceIds = ref(new Set());
 const loadSource = (id) => loadedSourceIds.value.add(id);
 const isLoaded = (id) => loadedSourceIds.value.has(id);
 
-// A source's embed gets unloaded (back to the click-to-load placeholder)
-// whenever the list is refetched, since a stale embed_url shouldn't keep
-// rendering under a since-edited source.
 watch(categories, () => {
   loadedSourceIds.value = new Set();
 });
@@ -245,11 +236,6 @@ const handleDelete = async (source) => {
               </div>
             </div>
 
-            <!-- Click-to-load: the embed is a whole separate third-party
-                 page (its own JS, its own API calls to PostHog/Looker
-                 Studio) -- only mount the iframe (and so only fire that
-                 network/CPU cost) once this specific source is actually
-                 requested, not for every source the moment the page opens. -->
             <button
               v-if="!isLoaded(source.id)"
               type="button"
@@ -263,14 +249,6 @@ const handleDelete = async (source) => {
               <span class="text-ui-cap text-ui-faint">{{ $t("analytics.clickToLoadHint") }}</span>
             </button>
 
-            <!-- No padding on the iframe itself: it shrinks the embedded
-                 document's own viewport (padding counts against the fixed
-                 height below), which was clipping PostHog/Looker Studio's
-                 internal layout rather than just adding breathing room
-                 around it. Height grows at each breakpoint since these
-                 embeds are dashboards with several stacked tiles, not a
-                 single chart -- too short and they clip/scroll internally
-                 regardless of width. -->
             <iframe
               v-else
               :src="source.embed_url"

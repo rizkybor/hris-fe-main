@@ -2,10 +2,6 @@ import { defineStore } from "pinia";
 import axios from "axios";
 import { ref } from "vue";
 
-// The company profile ("Tentang Perusahaan"): one record. Saving returns the
-// saved record, which replaces the one shown -- no refetch, no skeleton.
-// Create/update throw on failure so the page can keep the form open and say
-// so (it shows its own translated messages).
 export const useCompanyAboutStore = defineStore("companyAbout", () => {
   const company = ref(null);
   const loading = ref(false);

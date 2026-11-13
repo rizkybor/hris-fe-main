@@ -2,14 +2,6 @@ import { defineStore } from "pinia";
 import { axiosInstance } from '@/plugins/axios';
 import { handleError } from "@/helpers/errorHelper";
 
-// Payroll generation runs on a queue (GeneratePayrollJob / GenerateThrPayrollJob)
-// and the POST only answers { status: "processing" } -- no id. Generations
-// started from this browser are tracked here (and in sessionStorage, so a
-// reload keeps watching) until the API shows the run finished:
-//   - new period: check-period reports it exists and isn't "processing"
-//   - regenerate: GET /payrolls/{id} has a newer updated_at than before
-// The job writes "processing" inside its DB transaction, so other requests
-// usually never see that status; this tracking is what makes "done" visible.
 const PENDING_KEY = "hris-payroll-generations";
 const PENDING_MAX_AGE = 15 * 60 * 1000; // job timeout is 10 min
 const readPending = () => {
@@ -407,9 +399,6 @@ export const usePayrollStore = defineStore("payroll", {
             }
         },
 
-        // Success/error persist across route changes (Pinia stores are
-        // singletons) -- without this, a stale message resurfaces every
-        // time the list remounts, since nothing else ever clears it.
         clearMessages() {
             this.success = null;
             this.error = null;

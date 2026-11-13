@@ -1,7 +1,4 @@
 <script setup>
-// Slim stacked bar of licenses per plan (Trial / Professional / Lifetime /
-// Organization) in the plan colours, with an optional legend. Legend items
-// emit `select` with the plan when `selectable` (used as a plan filter).
 import { computed } from "vue";
 import { PLAN_OPTIONS, planBarClass } from "@/components/admin/license-manager/licenseHelpers";
 

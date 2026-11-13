@@ -70,10 +70,6 @@ export const useAnalyticsSourceStore = defineStore("analyticsSource", {
       }
     },
 
-    // Success/error persist across route changes (Pinia stores are
-    // singletons) -- without this, a stale message resurfaces every time
-    // the page remounts, since fetchSources only ever clears error, not
-    // success.
     clearMessages() {
       this.success = null;
       this.error = null;

@@ -6,10 +6,6 @@ import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
 
-// Union of every operational role's quick links (Manager, HR, Operational
-// Director, Finance Manager) -- DashboardQuickLinks filters each entry by
-// its own `permission`, so a given user only ever sees the subset they
-// actually have access to, regardless of role.
 const quickLinks = computed(() => [
   { to: { name: "admin.employees" }, icon: Users, title: t("dashboard.quickLinks.employees"), permission: "employee-menu" },
   { to: { name: "admin.teams" }, icon: UsersRound, title: t("dashboard.quickLinks.teams"), permission: "team-menu" },

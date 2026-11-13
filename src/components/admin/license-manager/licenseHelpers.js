@@ -57,9 +57,6 @@ export const PLAN_GROUPS = [
   { get label() { return t("licenses.category.organization"); }, plans: [planOption("organization")] },
 ];
 
-// The device platform a license is for, fixed at creation (mirrors
-// License::PLATFORM_*): a Mac key only activates on a Mac, an iPad key only
-// on an iPad. iPad has no Trial.
 export const PLATFORM_OPTIONS = [
   { value: "mac", label: "Mac", note: "macOS", plans: ["trial", "professional", "lifetime", "organization"] },
   { value: "ipad", label: "iPad", get note() { return t("licenses.platform.ipadNote"); }, plans: ["professional", "lifetime", "organization"] },
@@ -118,10 +115,6 @@ export const categoryLabel = (license) => CATEGORY_LABELS[planCategory(license)]
 
 export const planDefaultMaxDevices = (plan) => planOption(plan)?.defaultMaxDevices ?? 2;
 
-// Chip colours: light (tables, forms) and dark (the key hero panels).
-// Plans are identities, not states, so they stay off the ok/warn/bad
-// colours and differ by lightness instead: Trial grey, Professional
-// accent, Lifetime ink, Organization outlined.
 const PLAN_CHIP = {
   trial: "bg-ui-subtle text-ui-text",
   professional: "bg-ui-accent-soft text-ui-accent",
@@ -150,12 +143,6 @@ const PLAN_BAR = {
 
 export const planBarClass = (plan) => PLAN_BAR[normalizePlan(plan)] || "bg-ui-line-strong";
 
-// The license type follows the plan: only the Lifetime plan is lifetime,
-// every other plan (trial, professional, organization) is a term license.
-// Key format {prefix}{platform}{plan}-XXXX-XXXX-XXXX-{sequence}, e.g.
-// OC32-7KQM-2XRT-9HZP-0001 (mirrors License::PLATFORM_CODES / PLAN_DIGITS):
-// Mac 31 Trial, 32 Professional, 33 Lifetime, 34 Organization; iPad 52, 53,
-// 54. A key never changes, so its code is the platform and plan at creation.
 export const PLATFORM_CODES = { mac: "3", ipad: "5" };
 export const PLAN_DIGITS = { trial: "1", professional: "2", lifetime: "3", organization: "4" };
 
@@ -215,11 +202,6 @@ export const organizationTypeLabel = (value) =>
 
 export const DEFAULT_COUNTRY = "Indonesia";
 
-// Licensee details per category (mirrors the API). Shared fields survive a
-// category switch; the other category's own fields are cleared.
-// Location (both categories). For Indonesia the region codes are what the
-// API stores (names are filled from them); elsewhere the names are free
-// text. "regency" is the city / regency (Kota/Kabupaten).
 export const REGION_CODE_FIELDS = ["province_code", "regency_code", "district_code", "village_code"];
 export const LOCATION_FIELDS = [
   "country",
@@ -250,9 +232,6 @@ export const REQUIRED_FIELDS = {
 
 export const isIndonesia = (country) => String(country || "").trim().toLowerCase() === "indonesia";
 
-// Same as the API: Indonesia needs the region chain and a postal code;
-// elsewhere state / province, city and postal code. Organizations also need
-// the street address.
 export const requiredLocationFields = (category, country) => {
   const fields = isIndonesia(country)
     ? ["country", "province_code", "regency_code", "district_code", "village_code", "postal_code"]
@@ -346,10 +325,6 @@ export const previewExpiry = (duration) => {
   return null;
 };
 
-// Turns a license from the API into the editable form shape. An existing
-// term license starts on "custom" with its current expiry, so saving without
-// touching the duration keeps the expiry unchanged. The type always follows
-// the plan.
 export const licenseToForm = (license) => {
   const plan = normalizePlan(license?.plan);
   const hasExpiry = license?.type === "term" && !!license?.expires_at;
@@ -487,10 +462,6 @@ export const validateLicenseForm = (form) => {
 export const validationErrors = (error) =>
   error?.response?.status === 422 ? error.response.data?.errors || {} : {};
 
-/* ------------------------------------------------------------------
- * Active period
- * ------------------------------------------------------------------ */
-
 export const isLifetimeLicense = (license) => license?.type === "lifetime" || !license?.expires_at;
 
 export const remainingLabel = (days) => {
@@ -524,10 +495,6 @@ export const formatDuration = (days) => {
 // "2 hours ago", "in 3 days".
 export const relativeTime = (value) =>
   value ? DateTime.fromISO(value).toRelative({ locale: localeTag() }) || "-" : "-";
-
-/* ------------------------------------------------------------------
- * Tracking events
- * ------------------------------------------------------------------ */
 
 // tone: badge colour; group: used by the timeline filter.
 export const EVENT_TYPES = {
@@ -571,9 +538,6 @@ export const KEY_MODE_OPTIONS = [
   },
 ];
 
-// Keys a one-key certificate can be made for: every key of the license
-// and its bundle that is not used (a used key is dead). Each with
-// { id, position, key, status, platform, platform_label, total }.
 export const certificateKeyOptions = (license) => {
   if (license?.key_mode !== "per_device") return [];
   const members = [
@@ -594,9 +558,6 @@ export const KEY_STATUS = {
   used: { get label() { return t("licenses.keyStatus.used"); }, dot: "bg-ui-faint", text: "text-ui-muted", chip: "bg-ui-subtle text-ui-muted" },
 };
 
-// Activity icon tints: quiet by default; only events that carry a state
-// (created/activated = ok, expiring = warn, revoked/deleted = bad, keys = accent)
-// get a colour.
 const QUIET = "bg-ui-subtle text-ui-muted ring-ui-line";
 export const EVENT_TONE_CLASS = {
   violet: "bg-ui-accent-soft text-ui-accent ring-ui-accent/15",
@@ -646,10 +607,6 @@ export const FIELD_LABELS = translatedMap({
   notes: "licenses.fields.notes",
 });
 
-/* ------------------------------------------------------------------
- * Live preview of the active period (form summary)
- * ------------------------------------------------------------------ */
-
 const PRESET_DURATIONS = {
   "14_days": { days: 14 },
   "30_days": { days: 30 },
@@ -657,9 +614,6 @@ const PRESET_DURATIONS = {
   "1_year": { years: 1 },
 };
 
-// {lifetime: true} for the Lifetime plan, else {start, end, days} with end /
-// days null while no valid date is chosen. Presets count from today (the
-// server computes the stored value).
 export const periodPreview = (form) => {
   if (planType(form?.plan) === "lifetime") return { lifetime: true };
 

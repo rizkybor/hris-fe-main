@@ -43,10 +43,6 @@ export const useFlowchartStore = defineStore("flowchart", {
       }
     },
 
-    // Keeps the list in step with a saved flowchart, so going back to it
-    // needs no reload: an edited card is replaced in place, a new one tops
-    // the unfiltered first page (newest first); otherwise the list refreshes
-    // quietly next time.
     patchSaved(saved, { isNew = false } = {}) {
       const row = listRow(saved);
       const index = this.flowcharts.findIndex((f) => f.id === row.id);

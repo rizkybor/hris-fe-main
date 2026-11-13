@@ -27,10 +27,6 @@ export const useReportStore = defineStore("report", {
   }),
 
   actions: {
-    // Shared by every report fetch. Only the latest request for a report may
-    // write its data or clear `loading`, so a slow older response (e.g. an
-    // earlier search) never overwrites a newer one. Resolves to true when
-    // this response was applied.
     async _load(key, url, params = {}) {
       const id = ++requestSeq.all;
       const own = (requestSeq[key] = id);
@@ -49,9 +45,6 @@ export const useReportStore = defineStore("report", {
       }
     },
 
-    // Show a cached response (the page keeps one per tab + filters). Counts
-    // as the latest for that report, so an older request still in flight
-    // can't overwrite it.
     applyCached(key, data) {
       requestSeq[key] = ++requestSeq.all;
       this[key] = data;
@@ -157,9 +150,6 @@ export const useReportStore = defineStore("report", {
       }
     },
 
-    // Returns { deleted, skipped } -- a row that can't legally be deleted
-    // (e.g. an already-paid Payroll) is skipped rather than aborting the
-    // whole range, so the caller can report both counts to the user.
     async deleteByRange(type, startDate, endDate) {
       this.error = null;
       try {

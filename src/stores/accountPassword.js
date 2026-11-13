@@ -25,9 +25,6 @@ export const useAccountPasswordStore = defineStore("accountPassword", {
   }),
 
   actions: {
-    /* =============================
-     * GET ALL
-     * ============================= */
     async fetchAccounts(params = {}) {
       this.loading = true;
       this.error = null;
@@ -55,9 +52,6 @@ export const useAccountPasswordStore = defineStore("accountPassword", {
       }
     },
 
-    /* =============================
-     * GET BY ID
-     * ============================= */
     async fetchAccount(id) {
       try {
         const { data } = await axiosInstance.get(`/credential-accounts/${id}`);
@@ -69,9 +63,6 @@ export const useAccountPasswordStore = defineStore("accountPassword", {
       }
     },
 
-    /* =============================
-     * CREATE
-     * ============================= */
     async createAccount(payload) {
       this.error = null;
 
@@ -99,9 +90,6 @@ export const useAccountPasswordStore = defineStore("accountPassword", {
       }
     },
 
-    /* =============================
-     * UPDATE (🔥 FIXED)
-     * ============================= */
     async updateAccount(id, payload) {
       this.error = null;
 
@@ -138,9 +126,6 @@ export const useAccountPasswordStore = defineStore("accountPassword", {
     },
     
 
-    /* =============================
-     * DELETE
-     * ============================= */
     async deleteAccount(id) {
       try {
         await axiosInstance.delete(`/credential-accounts/${id}`);
@@ -155,9 +140,6 @@ export const useAccountPasswordStore = defineStore("accountPassword", {
       }
     },
 
-    /* =============================
-     * CLEAR
-     * ============================= */
     clearState() {
       this.accounts = [];
       this.currentAccount = null;

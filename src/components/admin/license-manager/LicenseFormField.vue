@@ -1,7 +1,4 @@
 <script setup>
-// One labelled form field: label (with * when required), an optional
-// leading icon, the input in the default slot, a hint and the error.
-// data-field lets the form scroll to the first field with an error.
 defineProps({
   field: { type: String, required: true },
   label: { type: String, required: true },

@@ -21,9 +21,6 @@ const authStore = useAuthStore();
 const alertModal = useAlertModalStore();
 const { announcements, meta, loading, loadingDetail } = storeToRefs(store);
 
-// Mirrors the backend's canManage() rule: the announcement's own creator,
-// or a manager/superadmin, may edit or delete it -- everyone else shouldn't
-// even see the buttons, since clicking them would just 403.
 const canManage = (announcement) => {
   const roles = authStore.user?.roles || [];
   return (
@@ -60,17 +57,11 @@ const audienceOptions = computed(() => [
 const audienceLabel = (value) =>
   audienceOptions.value.find((o) => o.value === value)?.label ?? value;
 
-// A date-only string in the same YYYY-MM-DD shape the <input type="date">
-// and the backend's date column both use, so this can compare directly
-// without pulling in a date library.
 const todayIso = new Date().toISOString().slice(0, 10);
 const isExpiredForPin = computed(
   () => !!form.value.expires_at && form.value.expires_at < todayIso
 );
 
-// Picking a past date while already pinned leaves a checked-but-disabled
-// box, which reads as "still pinned" -- clear it so the form matches what
-// the backend will actually accept.
 watch(isExpiredForPin, (expired) => {
   if (expired) form.value.is_pinned = false;
 });

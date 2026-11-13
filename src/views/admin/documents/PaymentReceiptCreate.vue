@@ -44,10 +44,6 @@ const form = ref({
   use_signature: false,
 });
 
-// The amount before any PPh 23 withholding -- `form.amount` (what the DB
-// stores) always means "amount actually received", so when PPh 23 applies
-// this is the base the withholding is computed from, kept separately so
-// toggling PPh 23 on/off doesn't lose the original figure.
 const grossAmount = ref(0);
 const applyPph23 = ref(false);
 
@@ -132,26 +128,16 @@ const handlePph23TypeChange = () => {
   recomputePph23();
 };
 
-// Cancelled invoices can't be paid against, so they're left out -- except
-// the one an existing receipt is already linked to, so editing it doesn't
-// silently blank the select.
 const invoiceOptions = computed(() =>
   invoices.value.filter((i) => i.status !== "cancelled" || i.id === Number(form.value.invoice_id))
 );
 
-// Older receipts may carry a free-typed name from before this was a
-// dropdown -- keep it selectable so editing doesn't drop it.
-// A saved name with degrees ("Aldi PP, S.Ikom") stands in for its plain
-// entry instead of showing twice.
 const signatoryOptions = computed(() => {
   const current = form.value.recipient_name;
   if (!current || SIGNATORIES.includes(current)) return SIGNATORIES;
   return [current, ...SIGNATORIES.filter((n) => bareName(n).toLowerCase() !== bareName(current).toLowerCase())];
 });
 
-// The printed receipt adds "berdasarkan Invoice No. ..." for a linked
-// invoice by itself, so the suggestion only describes what's being paid
-// (from the invoice items) -- and never overwrites text the user typed.
 const lastSuggestion = ref("");
 const suggestForPayment = (invoice) => {
   const items = (invoice.items || []).map((i) => i.description).filter(Boolean);
@@ -177,9 +163,6 @@ const selectedInvoiceNumber = computed(
   () => invoices.value.find((i) => i.id === Number(form.value.invoice_id))?.invoice_number || ""
 );
 
-// Same rule as PaymentReceipt::forPaymentLine() on the API, so the preview
-// matches the PDF: a trailing invoice reference is dropped (the PDF adds its
-// own); text naming the invoice mid-sentence is printed as written.
 const escapeRegex = (v) => v.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&");
 const printedForPayment = computed(() => {
   const number = selectedInvoiceNumber.value;

@@ -1,7 +1,4 @@
 <script setup>
-// Overview panel: licenses of every product that expire within `days`
-// days, soonest first. While the endpoint is missing or failing it shows a
-// quiet "Not available yet" state (no toast).
 import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { Hourglass, CalendarClock, PlugZap, RefreshCw, ChevronRight } from "lucide-vue-next";

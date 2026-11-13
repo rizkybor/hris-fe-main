@@ -8,6 +8,8 @@ const props = defineProps({
   meta: { type: Object, required: true },
   itemLabel: { type: String, default: "" },
   disabled: { type: Boolean, default: false },
+  // On the page background (list pages without a frame): no divider, no inset.
+  flat: { type: Boolean, default: false },
 });
 const emit = defineEmits(["change"]);
 
@@ -41,7 +43,7 @@ const btn = "inline-flex items-center justify-center h-8 min-w-8 px-2 rounded-ui
 </script>
 
 <template>
-  <nav class="flex items-center gap-3 px-4 py-3 border-t border-ui-line" aria-label="Pagination">
+  <nav class="flex items-center gap-3" :class="flat ? 'pt-1' : 'px-4 py-3 border-t border-ui-line'" aria-label="Pagination">
     <p class="text-ui-small text-ui-muted tabular-nums">
       <span class="hidden sm:inline">{{ $t("common.pagination.showingItems", { from, to, total, items: itemLabel || $t("common.pagination.items") }) }}</span>
       <span class="sm:hidden">{{ $t("common.pagination.page", { page, last }) }}</span>

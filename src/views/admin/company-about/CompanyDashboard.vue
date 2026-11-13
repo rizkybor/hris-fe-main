@@ -1,9 +1,4 @@
 <script setup>
-// "Tentang Perusahaan": the company's profile page. A brand hero (logo,
-// name, what it does, a few facts), the vision as a quote, the mission as
-// numbered cards, and a contact card where every detail can be used
-// directly (mail, call, open the map, copy). Editing is a modal; missions
-// and branches are edited as rows. Saving shows the saved record at once.
 import { useCompanyAboutStore } from "@/stores/companyAbout";
 import { ref, reactive, computed, onMounted } from "vue";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";

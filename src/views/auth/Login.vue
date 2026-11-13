@@ -11,12 +11,6 @@ const authStore = useAuthStore();
 const { loading } = storeToRefs(authStore);
 const { login } = authStore;
 
-// authStore is a plain (untyped) JS Pinia store initialized with
-// `error: null`, so TypeScript infers `error` as `never` inside this
-// <script setup lang="ts"> block once it's narrowed -- cast to `any` here
-// rather than typing the store itself. At runtime `error` is either a
-// plain string message or a Laravel validation-errors object
-// (`{ email: string[], password: string[] }`), both handled below.
 const error = computed(() => authStore.error as any);
 
 const form = ref({

@@ -1,10 +1,4 @@
 <script setup>
-// Self-service profile: account (name, password, photo) plus the employee
-// details an employee may change themselves -- personal data, address,
-// emergency contacts and preferences (PUT /me, see UpdateMyProfileRequest
-// in hris-api-main). Identity number, NPWP, employee code, job, salary and
-// bank details stay with HR. Users without an employee profile (e.g. a
-// system admin account) only see the account sections.
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";

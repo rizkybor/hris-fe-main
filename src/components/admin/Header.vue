@@ -29,10 +29,6 @@ const isOpen = ref(false);
 const profileMenuRef = ref(null);
 const emit = defineEmits(["toggle-sidebar"]);
 
-// Closes the dropdown on an outside click or Escape -- without this it
-// only ever closes via an explicit menu action, so it's left open (and
-// intercepting clicks behind it) the moment the user clicks anywhere else
-// on the page.
 const handleOutsideClick = (event) => {
   if (isOpen.value && profileMenuRef.value && !profileMenuRef.value.contains(event.target)) {
     isOpen.value = false;
@@ -506,9 +502,6 @@ const confirmLogout = async () => {
 
 <template>
   <header class="page-header h-14 shrink-0 flex items-center gap-3 px-4 sm:px-6 bg-ui-bg border-b border-ui-line font-sans">
-    <!-- Breadcrumb: the page itself carries the big title and description
-         (UiPageHeader), so the bar only says where you are. On phones it
-         reads as an app bar title. -->
     <nav :aria-label="t('common.a11y.breadcrumb')" class="flex-1 min-w-0 flex items-center gap-1.5">
       <template v-if="pageSection">
         <span class="hidden sm:inline text-ui-small text-ui-muted truncate shrink-0 max-w-[40%]">{{ pageSection }}</span>

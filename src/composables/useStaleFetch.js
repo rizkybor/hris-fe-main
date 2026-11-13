@@ -1,29 +1,3 @@
-// Stale-while-revalidate for pages backed by Pinia stores. Store state
-// outlives the page, so coming back to a list shows the data it already has
-// immediately and refreshes it quietly instead of flashing a skeleton.
-//
-//   const { loading, refreshing, refresh } = useStaleFetch(
-//     () => store.fetchStaffTasks(params.value),     // the store action
-//     {
-//       key: () => ["staff-tasks", params.value],     // refetch when it changes
-//       hasData: () => store.staffTasks.length > 0,   // anything to show yet?
-//       maxAge: 30_000,                               // fresh enough: no request
-//     }
-//   );
-//
-// - loading:    true only while there's nothing to show (first load).
-// - refreshing: true while newer data is being fetched behind what's shown
-//               (filter change, revisit, tab focus) — show a quiet hint.
-// - refresh({ force }) after your own mutation if it didn't update the store.
-// - invalidate("staff-tasks") from anywhere marks matching keys stale.
-// Revisits within maxAge make no request; returning to the browser tab
-// refetches when the data is older than maxAge.
-//
-// A store keeps one copy of a list, so a fresh key isn't enough: if the
-// list was last fetched for another view (page 2, another filter) the store
-// holds those rows. The first element of an array key names the list
-// ("staff-tasks"); a revisit whose key differs from that list's last fetch
-// always refreshes (quietly, behind what's shown).
 import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 const fetchedAt = new Map(); // serialized key -> timestamp

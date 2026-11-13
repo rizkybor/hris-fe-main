@@ -1,7 +1,4 @@
 <script setup>
-// Share a License Certificate: by email (the API attaches the PDF) or via
-// WhatsApp (a 7-day download link in a prefilled message). A Mac + iPad
-// bundle shares one certificate holding both keys.
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { Mail, MessageCircle, Send, ExternalLink, Info } from "lucide-vue-next";

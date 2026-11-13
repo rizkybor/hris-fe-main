@@ -1,6 +1,3 @@
-// Load more when a sentinel at the end of a scrolling list comes into view
-// (inside `root`, the scroll container). `loadMore` is only called while
-// `canLoad()` is true, i.e. there is more and nothing is loading.
 import { onBeforeUnmount, watch } from "vue";
 
 export function useLoadOnScroll(root, sentinel, loadMore, canLoad) {

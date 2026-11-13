@@ -30,9 +30,6 @@ const alertModal = useAlertModalStore();
 const { activities, categories, statistics, meta, loading, loadingStatistics } =
   storeToRefs(store);
 
-// Deleting a log entry is a permanent hard delete (no soft-delete/undo),
-// so this is gated by role -- Superadmin/Manager only -- matching the
-// backend's RoleMiddleware check on the same two endpoints.
 const canDeleteHistory = computed(() => hasAnyRole(["superadmin", "manager"]));
 const deletingRowId = ref(null);
 

@@ -1,8 +1,4 @@
 <script setup lang="ts">
-// Full-screen "please wait" (sign in, password reset): a light scrim with a
-// small blur and a card with the logo inside a slim progress ring. Only
-// transform/opacity animate; the blur is kept small because large blurs
-// are expensive to paint.
 withDefaults(defineProps<{ show: boolean; text?: string }>(), {
   text: "", // default: common.states.pleaseWait
 });

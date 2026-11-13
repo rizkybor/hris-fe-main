@@ -81,10 +81,6 @@ export const useLeaveRequestStore = defineStore("leaveRequest", {
             this.error = null;
 
             try {
-                // A File attachment needs multipart/form-data -- plain JSON
-                // can't carry binary content. Sent as a regular JSON body
-                // when there's no file (the common case), since the backend
-                // treats both the same way.
                 const hasFile = payload.attachment instanceof File;
                 const body = hasFile
                     ? Object.entries(payload).reduce((formData, [key, value]) => {
@@ -144,9 +140,6 @@ export const useLeaveRequestStore = defineStore("leaveRequest", {
             }
         },
 
-        // The newest pending requests (for the Attendance summary) plus how
-        // many are pending in all. Leaves the paginated list
-        // state (leaveRequests/meta/loading) of the Leave Requests page alone.
         async fetchPendingLeaveRequests(limit = 5) {
             const response = await axiosInstance.get('leave-requests/all/paginated', {
                 params: { status: 'pending', row_per_page: limit },

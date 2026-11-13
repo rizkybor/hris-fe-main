@@ -144,10 +144,6 @@ const handleDelete = async (project) => {
       </template>
     </UiPageHeader>
 
-    <!-- Recap, same as Subscriptions/Maintenance: KPI tiles always visible
-         (a plain summary; the status chips below are the one filter), the
-         charts behind "Show analysis" -- closed by default, remembered, and
-         not loaded at all until opened. -->
     <RecapSection v-if="can('project-statistic')" :storage-key="recapKey" :tiles="0" class="!mb-0">
       <Statistics />
       <button
@@ -168,10 +164,11 @@ const handleDelete = async (project) => {
       </div>
     </RecapSection>
 
-    <!-- Projects Grid Section -->
-    <section class="sm:bg-ui-surface sm:border sm:border-ui-line sm:rounded-ui-card">
+    <!-- Projects: toolbar, cards and pagination straight on the page -- no
+         frame around them, so the cards are the only surface. -->
+    <section class="space-y-4">
       <!-- Toolbar: search, status chips, clear -->
-      <div class="flex flex-col lg:flex-row lg:items-center gap-3 sm:p-4 sm:px-5 sm:border-b border-ui-line">
+      <div class="flex flex-col lg:flex-row lg:items-center gap-3">
         <div class="relative w-full lg:w-72 shrink-0">
           <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ui-faint pointer-events-none" />
           <input
@@ -190,7 +187,7 @@ const handleDelete = async (project) => {
         </div>
       </div>
 
-      <div class="pt-4 sm:p-5 sm:ui-tray">
+      <div>
         <p v-if="refreshing" class="sr-only" role="status">{{ $t("projects.list.refreshing") }}</p>
         <SkeletonCardGrid
           v-if="loading"
@@ -239,7 +236,7 @@ const handleDelete = async (project) => {
         </template>
       </div>
 
-      <div class="pt-4 sm:py-3.5 sm:px-5 sm:border-t sm:border-ui-line">
+      <div class="pt-1">
         <Pagination
           :meta="meta"
           :loading="loading || refreshing"

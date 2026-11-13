@@ -180,9 +180,6 @@ const handleSubmit = async () => {
 
     const createdEmployee = await employeeStore.createEmployee(formData);
 
-    // Documents are attached after creation since they belong to the new
-    // employee record, which doesn't exist until this point. A failure here
-    // shouldn't block the (already successful) employee creation.
     if (createdEmployee?.id && step3Data.value.documents.length > 0) {
       try {
         await employeeFileStore.uploadFiles(

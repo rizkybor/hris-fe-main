@@ -47,9 +47,6 @@ const { rateSetting, landingPageRateSetting, calculations, statistics, meta, loa
 const showRateModal = ref(false);
 const showLandingPageRateModal = ref(false);
 
-// Search, scenario and page live in the URL and are remembered, so coming
-// back from an estimate restores the same view; the list shows what the
-// store already has and refreshes quietly.
 const list = useListState("project-calculations", { q: "", scenario: "", page: 1 });
 const search = ref(list.q);
 watch(search, debounce((v) => (list.q = v.trim()), 300));

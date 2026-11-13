@@ -6,10 +6,6 @@ import { isCompanySignatory } from "@/utils/signatories";
 import { AlertTriangle, ExternalLink } from "lucide-vue-next";
 import { localeTag } from "@/i18n";
 
-// Yearly reminder for the company's directors to file their personal
-// annual tax return (SPT Tahunan PPh Orang Pribadi) on Coretax. Shown only
-// in February-March, since the filing deadline is 31 March -- purely
-// client-side, nothing to fetch.
 const CORETAX_URL = "https://coretaxdjp.pajak.go.id";
 
 const authStore = useAuthStore();

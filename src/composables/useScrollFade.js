@@ -1,10 +1,5 @@
 import { ref, onMounted, onBeforeUnmount, nextTick } from "vue";
 
-/**
- * Tracks whether a horizontally-scrollable element has more content hidden
- * off the left/right edge, so callers can show a directional scroll hint
- * (fade + chevron) that disappears once the user actually reaches the end.
- */
 export function useScrollFade() {
   const scrollRef = ref(null);
   const showLeftFade = ref(false);

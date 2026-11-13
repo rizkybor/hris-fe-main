@@ -9,10 +9,6 @@ const { t } = useI18n();
 
 const VueApexCharts = defineAsyncComponent(() => import("vue3-apexcharts"));
 
-// Recap charts of the Staff Tasks page. A task is done once every assignee
-// has marked it done; the charts count assignments (one per staff per task).
-// The page owns the data (GET /staff-tasks/summary via staffTaskStore, so it
-// refreshes quietly and also feeds the summary tiles above the list).
 const props = defineProps({
   data: { type: Object, default: null },
   loading: { type: Boolean, default: false },

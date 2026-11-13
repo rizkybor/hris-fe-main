@@ -16,9 +16,6 @@ const emit = defineEmits(["close"]);
 const { t, te } = useI18n();
 const statusLabel = (s) => (s && te(`attendance.status.${s}`) ? t(`attendance.status.${s}`) : capitalize(s) || "-");
 
-// Shared across Attendance Records and Reporting -> Attendance so both
-// pages read status the same way (same palette as
-// AttendanceRecords.vue's statusBadgeClass()).
 const STATUS_TONE = { present: "ok", late: "warn", absent: "bad", remote: "info", overtime: "accent" };
 const statusTone = computed(() => STATUS_TONE[props.attendance?.status] || "neutral");
 

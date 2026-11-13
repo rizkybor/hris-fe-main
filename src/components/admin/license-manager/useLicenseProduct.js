@@ -2,12 +2,6 @@ import { computed, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useLicenseManagerStore } from "@/stores/licenseManager";
 
-/**
- * The product of the current License Manager page, from :product in the
- * URL. state is "loading" | "missing" | "inactive" | "ready"; pages load
- * their data once it is "ready". Also points the store's license calls at
- * this product.
- */
 export function useLicenseProduct() {
   const route = useRoute();
   const store = useLicenseManagerStore();
@@ -31,10 +25,6 @@ export function useLicenseProduct() {
   return { code, product, productName, state };
 }
 
-/**
- * Run fn whenever the product becomes ready (and again when the product or
- * the given extra source changes).
- */
 export function onProductReady(state, fn, extra = null) {
   watch(
     () => [state.value, extra ? extra() : null],

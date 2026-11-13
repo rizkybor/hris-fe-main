@@ -1,7 +1,3 @@
-// Small, safe Markdown renderer for the terms preview: the text is
-// HTML-escaped first, then headings, lists, paragraphs, rules, bold /
-// italic, inline code and http(s) / mailto links are turned into HTML. The
-// certificate itself is rendered by the API (league/commonmark).
 
 const escapeHtml = (text) =>
   text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");

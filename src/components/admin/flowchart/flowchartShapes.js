@@ -1,8 +1,3 @@
-// Standard flowchart symbols. Each shape draws itself at the node's real
-// pixel size (rather than a stretched 100x100 viewBox) so rounded ends,
-// curves and the cylinder's ellipses never distort when a node is resized.
-// `path(w, h)` returns the SVG elements as { tag, attrs } objects; FlowchartNode
-// renders them and applies the node's fill/stroke.
 import { t } from "@/i18n";
 
 // Each shape's display name lives in flowchart.shapes.<key>; `label` is the

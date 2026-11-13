@@ -1,10 +1,3 @@
-// Motivational quote under the dashboard greeting, one per day.
-//
-// There are 31 quotes (a prime number). The day's quote is picked with
-// (day × 13) mod 31, a permutation of the list, so any 31 days in a row
-// show 31 different quotes: never a repeat within a week, and the same
-// weekday doesn't get the same quote the next week either. Everyone sees
-// the same quote on the same day.
 export const QUOTES = [
   { source: "Alan Kay", en: "The best way to predict the future is to invent it.", id: "Cara terbaik memprediksi masa depan adalah dengan menciptakannya." },
   { source: "Edsger W. Dijkstra", en: "Simplicity is prerequisite for reliability.", id: "Kesederhanaan adalah syarat utama keandalan." },

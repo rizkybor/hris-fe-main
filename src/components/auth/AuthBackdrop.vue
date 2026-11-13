@@ -1,13 +1,4 @@
 <script setup>
-// Panel behind the auth pages. Its sky follows the time of day on the
-// visitor's own clock -- Subuh, Pagi, Siang, Sore, Senja, Malam (see
-// skyPhase.js). The colours are a plain CSS gradient re-evaluated once a
-// minute (the browser eases between them); nothing here runs per frame.
-//
-// A static, CSS-only aurora is always there (first paint, and the fallback);
-// the moving WebGL aurora with drifting motes and the sun fades in on top
-// only on a desktop-size screen with WebGL, a capable device, no data saver
-// and no "reduce motion". The scene is a separate chunk loaded on demand.
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { canAnimate } from "./canAnimate";
 import { skyAt } from "./skyPhase";

@@ -1,8 +1,5 @@
 import { uiColor } from "@/utils/uiColor";
 import { t, localeTag } from "@/i18n";
-// Labels and formatting shared by the Maintenance Management screens.
-// Labels are getters so they follow the interface language each time
-// they are read.
 
 // 7.5 -> "7.5 h", 8 -> "8 h". Hours are stored with two decimals.
 export const formatHours = (hours, unit = t("maintenance.hourUnit")) => {

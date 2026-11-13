@@ -70,10 +70,6 @@ onMounted(() => {
   if (!clientsStore.statistics && !clientsStore.loadingStatistics) clientsStore.fetchClientStatistics();
 });
 
-// Suggests values already used by other clients (via a <datalist>, so the
-// browser's native "pick one or just keep typing" behavior handles the
-// "recommend but allow a new value" requirement for free).
-// From the light /clients/statistic summary, not the full client list.
 const uniqueValues = (key) =>
   [...new Set((clientsStore.statistics?.[`by_${key}`] || []).map((c) => c[key]).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b)));
 

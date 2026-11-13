@@ -105,9 +105,6 @@ export const useSubscriptionStore = defineStore("subscription", {
       if (row) Object.assign(row, fields);
     },
 
-    // Success/error persist across route changes (Pinia stores are
-    // singletons) -- without this, a stale message resurfaces every time
-    // the list remounts, since nothing else ever clears it.
     clearMessages() {
       this.success = null;
       this.error = null;

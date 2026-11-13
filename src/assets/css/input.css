@@ -2,11 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Pointer on everything clickable. Tailwind's reset leaves buttons with the
-   default arrow; this restores the hand cursor app-wide (native controls
-   and ARIA widgets). Disabled controls show not-allowed instead. Clickable
-   non-interactive elements (a div/tr with @click) still add
-   `cursor-pointer` themselves. */
+/* iOS Safari: date/time inputs keep a native minimum width and centre
+   their value; let them shrink to their box and align left like text. */
+@layer base {
+    input[type="date"],
+    input[type="month"],
+    input[type="time"],
+    input[type="datetime-local"] {
+        -webkit-appearance: none;
+        appearance: none;
+        min-width: 0;
+        max-width: 100%;
+        display: block;
+    }
+    input::-webkit-date-and-time-value {
+        text-align: left;
+        min-height: 1.25em;
+    }
+    input::-webkit-datetime-edit {
+        padding: 0;
+    }
+}
+
 @layer base {
   button,
   a[href],
@@ -42,9 +59,6 @@
 }
 
 
-/* Redesign tokens (HRIS+ v4.0, palette "B · Navy + Blue"), as RGB channels
-   so Tailwind's ui-* colours (tailwind.config.js) accept opacity
-   modifiers. Dark mode (stage 9) only has to redefine these variables. */
 :root {
     --ui-bg: 245 247 250;          /* #F5F7FA page background */
     --ui-surface: 255 255 255;     /* #FFFFFF cards, inputs */
@@ -74,10 +88,6 @@
     color-scheme: light;
 }
 
-/* Dark appearance (Settings → Appearance, or the OS when set to System).
-   index.html / useTheme set data-theme on <html> before the app mounts.
-   Same navy family, lifted surfaces; status colours brightened so they
-   stay readable on dark backgrounds. */
 :root[data-theme="dark"] {
     --ui-bg: 11 16 24;             /* #0B1018 */
     --ui-surface: 18 24 35;        /* #121823 */
@@ -119,9 +129,6 @@ html {
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* Condensed display face for the ID Card's name -- self-hosted (not a
-   Google Fonts CDN link) so it renders identically to the DomPDF-generated
-   card, which embeds this same local file. */
 @font-face {
     font-family: "Anton";
     font-weight: 400;
@@ -129,10 +136,6 @@ html {
     src: url("/fonts/Anton-Regular.ttf") format("truetype");
     font-display: swap;
 }
-/* Anton ships as a single (already very bold/black) weight -- this
-   duplicate registration under font-weight:bold mirrors the one in the
-   DomPDF card (see id-card.blade.php) so `font-weight:bold` resolves to
-   this same file instead of a fallback face. */
 @font-face {
     font-family: "Anton";
     font-weight: 700;
@@ -140,13 +143,6 @@ html {
     src: url("/fonts/Anton-Regular.ttf") format("truetype");
     font-display: swap;
 }
-
-/* ------------------------------------------------------------------------
-   Legacy utility classes, re-pointed at the HRIS+ v4.0 tokens.
-   Pages that are not redesigned yet still use these names; mapping them to
-   the tokens keeps every page on one palette (and ready for dark mode)
-   until each page moves to the src/components/ui building blocks.
-   ------------------------------------------------------------------------ */
 
 /* Was the blue gradient on primary buttons and hero bands: now the solid
    ink used by UiButton primary. */
@@ -341,12 +337,6 @@ html {
   background-color: rgb(var(--ui-faint));
 }
 
-/* ------------------------------------------------------------------------
-   Motion (HRIS+ v4.0 redesign)
-   Light by design: CSS only, transform + opacity only (no layout work),
-   120-240ms, one easing. Everything is switched off for people who ask
-   their device to reduce motion.
-   ------------------------------------------------------------------------ */
 :root {
     --ui-ease-out: cubic-bezier(0.2, 0, 0, 1);
     --ui-ease-in: cubic-bezier(0.4, 0, 1, 1);
@@ -360,9 +350,6 @@ html {
 @keyframes ui-scale-in { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: none; } }
 @keyframes ui-sheet-up { from { transform: translateY(100%); } to { transform: none; } }
 
-/* Fill mode is "backwards", never "both": a transform animation that stays
-   filled after it ends makes the element a containing block, so fixed
-   overlays inside a page would be positioned against the page. */
 /* One-shot entrance animations */
 .ui-anim-fade { animation: ui-fade-in var(--ui-dur-base) var(--ui-ease-out) backwards; }
 .ui-anim-fade-up { animation: ui-fade-up var(--ui-dur-slow) var(--ui-ease-out) backwards; }
@@ -409,9 +396,39 @@ html {
 .ui-list-enter-from, .ui-list-leave-to { opacity: 0; transform: translateY(6px); }
 .ui-list-move { transition: transform var(--ui-dur-slow) var(--ui-ease-out); }
 
-/* Tray: the area that holds cards inside a card. A shade darker than a
-   card in both themes (--ui-tray), so the inner cards read as
-   separate objects instead of blending into their container. */
+/* <TransitionGroup name="ui-toast">: slides up in with a small bounce
+   (overshoot easing), leaves quickly; the others glide into place. */
+.ui-toast-enter-active { transition: opacity 220ms var(--ui-ease-out), transform 460ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+.ui-toast-leave-active { transition: opacity 160ms var(--ui-ease-in), transform 160ms var(--ui-ease-in); }
+.ui-toast-enter-from { opacity: 0; transform: translateY(18px) scale(0.96); }
+.ui-toast-leave-to { opacity: 0; transform: translateX(12px); }
+.ui-toast-move { transition: transform var(--ui-dur-slow) var(--ui-ease-out); }
+
+@media (prefers-reduced-motion: no-preference) {
+    .ui-bell-ring { transform-origin: 50% 2px; animation: ui-bell-ring 900ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+    .ui-badge-pop { animation: ui-badge-pop 360ms cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+    .ui-empty-icon { animation: ui-empty-icon 520ms cubic-bezier(0.34, 1.4, 0.64, 1) both; }
+    .ui-empty-text { animation: ui-empty-text 420ms var(--ui-ease-out) 80ms both; }
+}
+@keyframes ui-bell-ring {
+    0%, 100% { transform: rotate(0); }
+    12% { transform: rotate(16deg); }
+    26% { transform: rotate(-14deg); }
+    40% { transform: rotate(10deg); }
+    54% { transform: rotate(-7deg); }
+    68% { transform: rotate(4deg); }
+    82% { transform: rotate(-2deg); }
+}
+@keyframes ui-badge-pop {
+    from { transform: scale(0.4); opacity: 0; }
+}
+@keyframes ui-empty-icon {
+    from { transform: translateY(6px) scale(0.8); opacity: 0; }
+}
+@keyframes ui-empty-text {
+    from { transform: translateY(4px); opacity: 0; }
+}
+
 @layer utilities {
     .ui-tray { background-color: rgb(var(--ui-tray)); }
 }

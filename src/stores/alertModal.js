@@ -1,10 +1,6 @@
 import { defineStore } from "pinia";
 import { t } from "@/i18n";
 
-// Auto-close alert()-mode dialogs (informational, single OK button) after
-// this long if the user never responds -- confirm()-mode is excluded since
-// it's gating an actual decision (often a destructive one) that only the
-// user should make.
 const AUTO_CLOSE_MS = 5000;
 let autoCloseTimer = null;
 

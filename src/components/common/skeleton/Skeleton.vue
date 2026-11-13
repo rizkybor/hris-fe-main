@@ -1,8 +1,4 @@
 <script setup>
-// Placeholder block while data loads. The shimmer is a highlight that
-// slides across with `transform` (GPU-composited), not an animated
-// background-position, so many skeletons on one page stay cheap.
-// Static for people who prefer reduced motion.
 defineProps({
   width: { type: String, default: "100%" },
   height: { type: String, default: "16px" },

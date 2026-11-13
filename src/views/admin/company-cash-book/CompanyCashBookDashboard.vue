@@ -307,9 +307,6 @@ const handleDelete = async () => {
   }
 };
 
-// The backend already returns newest-first, paginated -- balances are
-// computed server-side against the full chronological history before
-// that reversal, so no re-sorting is needed here.
 const displayedTransactions = computed(() => transactions.value);
 
 const formatDate = (date) => {

@@ -345,7 +345,20 @@
     "overdue": "Overdue",
     "addToColumn": "Add a task to {column}",
     "quickAdd": "Add a task",
-    "quickAddLabel": "New task title for {column} (press Enter)"
+    "quickAddLabel": "New task title for {column} (press Enter)",
+    "view": {
+      "label": "View",
+      "board": "Board",
+      "list": "List"
+    },
+    "list": {
+      "sortBy": "Sort by",
+      "sortPosition": "Board order",
+      "sortDue": "Due date",
+      "sortPriority": "Priority",
+      "task": "Task",
+      "due": "Due date"
+    }
   },
   "comments": {
     "title": "Comments",

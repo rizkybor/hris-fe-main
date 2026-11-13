@@ -1,7 +1,4 @@
 <script setup>
-// Thin progress bar at the top while a route (and its lazy chunk) loads.
-// Appears only when navigation takes longer than 150ms, so fast moves
-// never flicker. Animates with transform (scaleX) only.
 import { onBeforeUnmount, ref } from "vue";
 import { useRouter } from "vue-router";
 

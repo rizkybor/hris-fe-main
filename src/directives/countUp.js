@@ -1,12 +1,3 @@
-// v-count-up: the numbers in an element's text count up when they appear
-// (from 0) or change (from the previous value), keeping their formatting:
-// "Rp 19.404.167", "87%", "26 jam / 30 jam", "3,5". Only the digits in the
-// element's text nodes are rewritten, for ~0.7 s, so any icons or buttons
-// inside stay untouched. Skipped when the device asks for reduced motion
-// or the tab is hidden; anything that isn't clearly a number (dates,
-// times with a leading zero) is left as is.
-//
-//   <p v-count-up>{{ value }}</p>
 
 const DURATION = 700;
 const TOKEN = /\d+(?:[.,]\d+)*/g;

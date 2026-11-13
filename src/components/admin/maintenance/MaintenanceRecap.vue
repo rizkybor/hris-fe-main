@@ -13,9 +13,6 @@ const { t } = useI18n();
 
 const VueApexCharts = defineAsyncComponent(() => import("vue3-apexcharts"));
 
-// Recap above the Maintenance list: this month's hours against quota per
-// contract, what the hours went into, the last 6 months, and the
-// development balance.
 const props = defineProps({ refreshKey: { type: Number, default: 0 } });
 
 const data = ref(null);
@@ -34,9 +31,6 @@ const load = async () => {
 onMounted(load);
 watch(() => props.refreshKey, load);
 
-// Same as the Subscriptions recap: the tiles answer the everyday questions,
-// the charts sit behind "Show analysis" -- closed by default, remembered per
-// browser, and not rendered (no chart download) while closed.
 const ANALYSIS_KEY = "maintenance-recap-analysis-open";
 const analysisOpen = ref(false);
 try {

@@ -3,10 +3,6 @@ import { ref } from "vue";
 import { ChevronDown } from "lucide-vue-next";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 
-// Collapsible "Recap" block above a list page (open/closed remembered per
-// browser), with its own loading and error states. `defaultOpen` is the
-// state before the person has toggled it; nothing in the slot renders while
-// closed, so charts inside don't mount (or download) until it is opened.
 const props = defineProps({
   storageKey: { type: String, required: true },
   defaultOpen: { type: Boolean, default: true },

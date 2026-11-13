@@ -131,9 +131,6 @@ const scrollToSection = (id, focusTitle = false) => {
   if (focusTitle) el?.querySelector("input")?.select();
 };
 
-// ===== Flowcharts =====
-// The editor's Insert Flowchart button awaits this; the picker resolves it
-// with the chosen flowchart, or null when closed.
 const flowchartPicker = ref(null);
 const pickFlowchart = () => new Promise((resolve) => (flowchartPicker.value = { resolve }));
 const closeFlowchartPicker = (picked = null) => {
@@ -195,9 +192,6 @@ const save = async () => {
   }
 };
 
-// The PDF is built from what's saved, so unsaved edits are saved first.
-// The viewer tab is opened right away, inside the click (pop-up blockers
-// would stop one opened after the save), and closed again if saving fails.
 const openPdf = async (download = false) => {
   const tab = download ? null : window.open("", "_blank");
   if (isDirty.value && !(await save())) {
@@ -292,9 +286,6 @@ const lastSaved = computed(() => {
     <UiSpinner v-if="loading" :label="$t('documents.proposal.editor.loading')" />
 
     <template v-else-if="doc">
-      <!-- Top bar: sticks to the top of <main>. -top-3 cancels main's
-           padding, and the wrapper's page-coloured band hides content
-           scrolling past above / beside the bar. -->
       <div class="sticky -top-3 z-20 -mt-3 pt-3 -mx-1 px-1 sm:-mx-3 sm:px-3 lg:-mx-5 lg:px-5 bg-ui-bg">
         <div class="bg-ui-surface border border-ui-line rounded-ui-card px-3 sm:px-4 py-2.5 flex flex-wrap items-center gap-x-3 gap-y-2.5">
           <div class="flex items-center gap-2 sm:gap-3 flex-1 min-w-[220px]">

@@ -345,7 +345,20 @@
     "overdue": "Lewat jatuh tempo",
     "addToColumn": "Tambah tugas ke {column}",
     "quickAdd": "Tambah tugas",
-    "quickAddLabel": "Judul tugas baru untuk {column} (tekan Enter)"
+    "quickAddLabel": "Judul tugas baru untuk {column} (tekan Enter)",
+    "view": {
+      "label": "Tampilan",
+      "board": "Board",
+      "list": "List"
+    },
+    "list": {
+      "sortBy": "Urutkan",
+      "sortPosition": "Urutan board",
+      "sortDue": "Jatuh tempo",
+      "sortPriority": "Prioritas",
+      "task": "Tugas",
+      "due": "Jatuh tempo"
+    }
   },
   "comments": {
     "title": "Komentar",

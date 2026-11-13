@@ -42,16 +42,10 @@ const { refreshing } = useStaleFetch(() => store.fetchContracts(params.value), {
 // The client filter needs the client names (shared, cached lookup).
 lookups.ensure("clients").catch(() => {});
 
-// Contracts that need a look this month: over quota, from 75% used, or
-// balance hours about to expire. Counted from the loaded list (it isn't
-// paginated), so the chip and the filter always agree.
 const needsAttention = (c) => (c.current_period && (c.current_period.overage > 0 || c.current_period.used_percent >= 75)) || c.expiring_soon?.hours > 0;
 const attentionCount = computed(() => contracts.value.filter(needsAttention).length);
 const rows = computed(() => (list.attention ? contracts.value.filter(needsAttention) : contracts.value));
 
-// "New contract" from a client's or project's detail page:
-// ?new=1&client_id=..&project_id=.. opens the form once; only those keys
-// are removed from the URL so the list's own filters stay.
 const NEW_KEYS = ["new", "client_id", "project_id"];
 onMounted(async () => {
   if (!route.query.new) return;

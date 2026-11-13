@@ -345,10 +345,6 @@ const handleDeleteEmployee = async () => {
   }
 };
 
-// Blocking login is separate from Resignation/Termination and from
-// job_information.status (which only affects payroll/reporting) --
-// Superadmin/Manager/Finance/Operational Director only; the elevated-role
-// restriction below is a UI-side hint, the real rule is enforced server-side.
 const canManageAccountStatus = computed(() =>
   hasAnyRole(["superadmin", "manager", "finance", "operational_director"])
 );

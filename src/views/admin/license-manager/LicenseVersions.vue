@@ -1,9 +1,4 @@
 <script setup>
-// Versions of one product's app: what is on sale, which versions the apps
-// report, and the release history (changelog) with its installers.
-// Permissions (own module): license-release-menu / -list / -view (page),
-// -create (new version), -edit (edit, publish, installer), -delete,
-// -download (installer).
 import { computed, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";

@@ -30,10 +30,6 @@ export const useEmployeeStore = defineStore("employee", {
             per_page: 10,
             total: 0
         },
-        // Self-service pages (My Profile / My Team) keep their data here so a
-        // revisit shows it at once and refreshes quietly. Separate from the
-        // admin fields above (performanceStatistics is also used by
-        // EmployeeDetail for other employees).
         myProfile: null,
         myPerformanceStatistics: null,
         myTeam: null,
@@ -186,11 +182,6 @@ export const useEmployeeStore = defineStore("employee", {
         },
 
 
-        // Blocks/restores the employee's ability to log in -- distinct from
-        // job_information.status, which only affects payroll/reporting.
-        // Superadmin/Manager/Finance/Operational Director only; Manager/
-        // Finance/Operational Director accounts can only be toggled by
-        // Superadmin (enforced server-side).
         async toggleAccountStatus(id) {
             this.error = null;
             try {
@@ -385,9 +376,6 @@ export const useEmployeeStore = defineStore("employee", {
             }
         },
 
-        // Success/error persist across route changes (Pinia stores are
-        // singletons) -- without this, a stale message resurfaces every
-        // time the list remounts, since nothing else ever clears it.
         clearMessages() {
             this.success = null;
             this.error = null;

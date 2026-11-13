@@ -1,8 +1,4 @@
 <script setup>
-// Full-width create / edit layout for a license: header row with actions,
-// the form sections on the left (8/12 on lg) and a sticky live "License
-// summary" on the right (4/12). Below lg everything stacks and a sticky
-// bottom bar carries the primary button. The parent owns submission.
 import { computed, nextTick, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import {
@@ -115,9 +111,6 @@ const minCustomDate = computed(() => {
   return d.toISOString().slice(0, 10);
 });
 
-// Max devices last filled in from a plan default. On create, picking a plan
-// only replaces the value while it still equals that default, so a number
-// the user typed is kept.
 const autoMaxDevices = ref(props.isEdit ? null : form.value.max_devices);
 
 const selectPlan = (plan) => {
