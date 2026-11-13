@@ -1,9 +1,9 @@
 <script setup>
-// Installed-app status: "new version available" (reload when ready) and
-// "no connection". The service worker is checked for updates hourly and
-// whenever the tab comes back.
+// Installed-app status: "new version available" and "no connection".
+// The service worker registers only after the page has loaded and the
+// browser is idle, so it never competes with the first screen or the API.
 import { onBeforeUnmount, onMounted, ref } from "vue";
-import { useRegisterSW } from "virtual:pwa-register/vue";
+import { registerSW } from "virtual:pwa-register";
 import { RefreshCw, WifiOff, Wifi } from "lucide-vue-next";
 
 const HOUR = 60 * 60 * 1000;
@@ -13,17 +13,29 @@ const checkUpdate = () => {
   if (registration && !document.hidden && navigator.onLine) registration.update().catch(() => {});
 };
 
-const { needRefresh, updateServiceWorker } = useRegisterSW({
-  immediate: true,
-  onRegisteredSW(_url, reg) {
-    registration = reg || null;
-    timer = window.setInterval(checkUpdate, HOUR);
-  },
-});
+const needRefresh = ref(false);
+let updateServiceWorker = null;
+const register = () => {
+  updateServiceWorker = registerSW({
+    immediate: true,
+    onNeedRefresh: () => (needRefresh.value = true),
+    onRegisteredSW(_url, reg) {
+      registration = reg || null;
+      timer = window.setInterval(checkUpdate, HOUR);
+    },
+  });
+};
+let startTimer = 0;
+const registerWhenIdle = () => {
+  startTimer = window.setTimeout(() => {
+    if ("requestIdleCallback" in window) window.requestIdleCallback(register, { timeout: 5000 });
+    else register();
+  }, 3000);
+};
 const reloading = ref(false);
 const reload = () => {
   reloading.value = true;
-  updateServiceWorker(true);
+  updateServiceWorker?.(true);
 };
 
 const offline = ref(typeof navigator !== "undefined" && navigator.onLine === false);
@@ -42,6 +54,10 @@ const onOnline = () => {
 };
 
 onMounted(() => {
+  if ("serviceWorker" in navigator) {
+    if (document.readyState === "complete") registerWhenIdle();
+    else window.addEventListener("load", registerWhenIdle, { once: true });
+  }
   window.addEventListener("offline", onOffline);
   window.addEventListener("online", onOnline);
   document.addEventListener("visibilitychange", checkUpdate);
@@ -51,6 +67,7 @@ onBeforeUnmount(() => {
   window.removeEventListener("online", onOnline);
   document.removeEventListener("visibilitychange", checkUpdate);
   window.clearInterval(timer);
+  window.clearTimeout(startTimer);
   window.clearTimeout(backTimer);
 });
 </script>

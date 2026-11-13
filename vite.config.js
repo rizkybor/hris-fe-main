@@ -53,7 +53,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'prompt',
       injectRegister: null,
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'favicon-32x32.png'],
+      includeManifestIcons: false,
       manifest: {
         id: '/',
         name: 'HRIS+ · Jendela Cakra Digital',
@@ -73,13 +73,22 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,ttf}'],
-        // Heavy, rarely used parts load on first use instead (cached below).
-        globIgnores: [
-          '**/og-image.png', '**/idcard-*.png', '**/template-letter-*.png', '**/fonts/Anton-*',
-          '**/jspdf*.js', '**/html2canvas*.js', '**/FlowchartEditor-*.js', '**/purify.es-*.js',
+        // Precache only what the first screen needs (index.html and the files
+        // it loads, the Indonesian messages, icons). Every other page's files
+        // are cached the first time they're opened (app-extras below).
+        globPatterns: ['**/*.{js,css,html,ico}', '*.png'],
+        manifestTransforms: [
+          (entries) => {
+            const html = readFileSync(new URL('./dist/index.html', import.meta.url), 'utf8')
+            const keep = entries.filter((e) => {
+              if (!e.url.startsWith('assets/')) return true
+              if (/^assets\/locale-/.test(e.url)) return /^assets\/locale-id-/.test(e.url)
+              return html.includes(e.url)
+            })
+            return { manifest: keep, warnings: [] }
+          },
         ],
-        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//, /^\/storage\//],
         cleanupOutdatedCaches: true,
@@ -87,7 +96,7 @@ export default defineConfig({
           {
             urlPattern: ({ url, sameOrigin }) => sameOrigin && /^\/(assets|fonts|images)\//.test(url.pathname),
             handler: 'CacheFirst',
-            options: { cacheName: 'app-extras', expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 } },
+            options: { cacheName: 'app-extras', expiration: { maxEntries: 250, maxAgeSeconds: 60 * 60 * 24 * 60 } },
           },
           {
             urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
