@@ -192,10 +192,6 @@
     "editing": "{names} is editing"
   },
   "pwa": {
-    "updateTitle": "New version available",
-    "updateMessage": "Reload to use the latest version.",
-    "reload": "Reload",
-    "later": "Later",
     "offline": "No internet connection",
     "backOnline": "Back online"
   }

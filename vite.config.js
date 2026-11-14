@@ -77,6 +77,7 @@ export default defineConfig({
         // it loads, the Indonesian messages, icons). Every other page's files
         // are cached the first time they're opened (app-extras below).
         globPatterns: ['**/*.{js,css,html,ico}', '*.png'],
+        globIgnores: ['sw-reload-auth.js'],
         manifestTransforms: [
           (entries) => {
             const html = readFileSync(new URL('./dist/index.html', import.meta.url), 'utf8')
@@ -92,6 +93,11 @@ export default defineConfig({
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//, /^\/storage\//],
         cleanupOutdatedCaches: true,
+        // A new version takes over at once (the app then loads it on the next
+        // page change) -- no "waiting" version that needs a browser restart.
+        skipWaiting: true,
+        clientsClaim: true,
+        importScripts: ['/sw-reload-auth.js'],
         runtimeCaching: [
           {
             urlPattern: ({ url, sameOrigin }) => sameOrigin && /^\/(assets|fonts|images)\//.test(url.pathname),
