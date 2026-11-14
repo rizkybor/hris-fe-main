@@ -68,7 +68,7 @@ onBeforeUnmount(() => {
 <template>
   <div class="relative">
     <button
-      class="relative w-9 h-9 rounded-ui-control flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink transition-colors"
+      class="topbar-on-sky relative w-9 h-9 rounded-ui-control flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink transition-colors"
       :aria-label="$t('common.a11y.notifications')"
       @click="toggle"
     >

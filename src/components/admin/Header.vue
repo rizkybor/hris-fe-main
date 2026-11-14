@@ -19,6 +19,27 @@ import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRoute, RouterLink } from "vue-router";
 import { join } from "lodash-es";
 import { useLicenseManagerStore } from "@/stores/licenseManager";
+import { skyAt } from "@/components/auth/skyPhase";
+
+// Topbar sky: the login screen's sky for the current time, as a plain CSS
+// gradient (no WebGL), refreshed every minute while the tab is visible.
+const sky = ref(skyAt());
+const triplet = (css) => css.replace(/^rgb\(|\)$/g, "");
+const skyStyle = computed(() => {
+  const s = sky.value;
+  const bright = s.bright.map((v) => Math.round(v * 255)).join(" ");
+  return {
+    "--sky-top": s.top,
+    "--sky-bottom": s.bottom,
+    "--sky-top-rgb": triplet(s.top),
+    "--sky-bright": bright,
+    "--sky-glow": (0.18 + 0.22 * s.glow).toFixed(2),
+  };
+});
+let skyTimer = 0;
+const refreshSky = () => {
+  if (!document.hidden) sky.value = skyAt();
+};
 
 const { t, te } = useI18n();
 const authStore = useAuthStore();
@@ -38,10 +59,14 @@ const handleEscape = (event) => {
   if (event.key === "Escape") isOpen.value = false;
 };
 onMounted(() => {
+  skyTimer = window.setInterval(refreshSky, 60_000);
+  document.addEventListener("visibilitychange", refreshSky);
   document.addEventListener("click", handleOutsideClick);
   document.addEventListener("keydown", handleEscape);
 });
 onBeforeUnmount(() => {
+  window.clearInterval(skyTimer);
+  document.removeEventListener("visibilitychange", refreshSky);
   document.removeEventListener("click", handleOutsideClick);
   document.removeEventListener("keydown", handleEscape);
 });
@@ -501,8 +526,8 @@ const confirmLogout = async () => {
 </script>
 
 <template>
-  <header class="page-header h-14 shrink-0 flex items-center gap-3 px-4 sm:px-6 bg-ui-bg border-b border-ui-line font-sans">
-    <nav :aria-label="t('common.a11y.breadcrumb')" class="flex-1 min-w-0 flex items-center gap-1.5">
+  <header class="page-header topbar-sky h-14 shrink-0 flex items-center gap-3 px-4 sm:px-6 font-sans" :style="skyStyle">
+    <nav :aria-label="t('common.a11y.breadcrumb')" class="topbar-on-sky flex-1 min-w-0 flex items-center gap-1.5">
       <template v-if="pageSection">
         <span class="hidden sm:inline text-ui-small text-ui-muted truncate shrink-0 max-w-[40%]">{{ pageSection }}</span>
         <ChevronRight class="hidden sm:block w-3.5 h-3.5 text-ui-faint shrink-0" aria-hidden="true" />
@@ -515,20 +540,20 @@ const confirmLogout = async () => {
       <NotificationBell />
       <RouterLink
         :to="{ name: 'admin.settings.dashboard' }"
-        class="hidden sm:inline-flex w-9 h-9 items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink transition-colors"
+        class="topbar-on-sky hidden sm:inline-flex w-9 h-9 items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink transition-colors"
         :aria-label="t('common.a11y.settings')"
       >
         <SettingsIcon class="w-[18px] h-[18px]" />
       </RouterLink>
     </div>
 
-    <div class="hidden sm:block w-px h-6 bg-ui-line mx-1"></div>
+    <div class="hidden sm:block w-px h-6 bg-white/25 mx-1"></div>
 
     <!-- User menu -->
     <div ref="profileMenuRef" class="relative z-50">
       <button
         type="button"
-        class="flex items-center gap-2.5 rounded-[10px] py-1 pl-1 pr-1.5 hover:bg-ui-hover transition-colors focus:outline-none focus-visible:shadow-ui-focus"
+        class="topbar-on-sky flex items-center gap-2.5 rounded-[10px] py-1 pl-1 pr-1.5 hover:bg-ui-hover transition-colors focus:outline-none focus-visible:shadow-ui-focus"
         aria-haspopup="true"
         :aria-expanded="isOpen"
         @click="isOpen = !isOpen"
@@ -588,3 +613,26 @@ const confirmLogout = async () => {
     />
   </header>
 </template>
+
+<style>
+/* Sky topbar: login sky gradient + a soft glow, under a 20% ink veil so
+   white text stays >= 5.7:1 (secondary >= 4.7:1) at every hour. */
+.topbar-sky {
+  background:
+    linear-gradient(rgb(11 20 36 / 0.2), rgb(11 20 36 / 0.2)),
+    radial-gradient(38% 220% at 82% 0%, rgb(var(--sky-bright) / var(--sky-glow)), transparent 70%),
+    linear-gradient(100deg, var(--sky-top), var(--sky-bottom));
+  box-shadow: 0 1px 0 rgb(11 20 36 / 0.12), 0 8px 18px -12px rgb(11 20 36 / 0.5);
+  position: relative;
+  z-index: 20;
+}
+.topbar-sky .topbar-on-sky {
+  --ui-ink: 255 255 255;
+  --ui-text: 255 255 255;
+  --ui-muted: 227 235 247;
+  --ui-faint: 227 235 247;
+  --ui-bg: var(--sky-top-rgb);
+}
+.topbar-sky :is(a, button).topbar-on-sky:hover { background-color: rgb(255 255 255 / 0.14); }
+.topbar-sky :is(a, button).topbar-on-sky:focus-visible { box-shadow: 0 0 0 2px rgb(255 255 255 / 0.7); outline: none; }
+</style>

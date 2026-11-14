@@ -36,7 +36,7 @@ onBeforeUnmount(() => {
   <div ref="root" class="relative">
     <button
       type="button"
-      class="w-9 h-9 inline-flex items-center justify-center rounded-ui-control hover:bg-ui-hover transition-colors"
+      class="topbar-on-sky w-9 h-9 inline-flex items-center justify-center rounded-ui-control hover:bg-ui-hover transition-colors"
       :aria-label="t('common.language.title')"
       :title="t('common.language.title')"
       aria-haspopup="menu"
