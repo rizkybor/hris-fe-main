@@ -1,11 +1,14 @@
 <script setup>
-// Installed-app status: "new version available" and "no connection".
-// The service worker registers only after the page has loaded and the
-// browser is idle, so it never competes with the first screen or the API.
+// Service worker + "no connection" banner. Updates apply by themselves:
+// a new version takes over in the background, and the next page change
+// (e.g. login -> dashboard) loads it in full. Registration waits until the
+// page has loaded and the browser is idle, so it never slows the first screen.
 import { onBeforeUnmount, onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
 import { registerSW } from "virtual:pwa-register";
-import { RefreshCw, WifiOff, Wifi } from "lucide-vue-next";
+import { WifiOff, Wifi } from "lucide-vue-next";
 
+const router = useRouter();
 const HOUR = 60 * 60 * 1000;
 let registration = null;
 let timer = 0;
@@ -13,12 +16,9 @@ const checkUpdate = () => {
   if (registration && !document.hidden && navigator.onLine) registration.update().catch(() => {});
 };
 
-const needRefresh = ref(false);
-let updateServiceWorker = null;
 const register = () => {
-  updateServiceWorker = registerSW({
+  registerSW({
     immediate: true,
-    onNeedRefresh: () => (needRefresh.value = true),
     onRegisteredSW(_url, reg) {
       registration = reg || null;
       timer = window.setInterval(checkUpdate, HOUR);
@@ -32,10 +32,39 @@ const registerWhenIdle = () => {
     else register();
   }, 3000);
 };
-const reloading = ref(false);
-const reload = () => {
-  reloading.value = true;
-  updateServiceWorker?.(true);
+
+// A newer version took control (not the first install): the code running
+// now is outdated, so the next navigation does a full load instead.
+const hadController = typeof navigator !== "undefined" && !!navigator.serviceWorker?.controller;
+let outdated = false;
+const onControllerChange = () => {
+  if (hadController) outdated = true;
+};
+
+// A full load to `path`, at most once per 10 s (no loops while offline).
+const hardNavigate = (path) => {
+  try {
+    const last = Number(sessionStorage.getItem("hris-hard-nav") || 0);
+    if (Date.now() - last < 10_000) return false;
+    sessionStorage.setItem("hris-hard-nav", String(Date.now()));
+  } catch {
+    /* storage unavailable */
+  }
+  window.location.assign(path);
+  return true;
+};
+const removeGuard = router.beforeEach((to) => {
+  if (outdated && navigator.onLine && hardNavigate(to.fullPath)) return false;
+});
+// After a deploy, an old page may ask for a file that no longer exists.
+const CHUNK_ERROR = /dynamically imported module|Importing a module script failed|error loading dynamically imported module|Failed to fetch/i;
+const removeErrorHandler = router.onError((error, to) => {
+  if (CHUNK_ERROR.test(error?.message || "") && navigator.onLine) hardNavigate(to.fullPath);
+});
+const onPreloadError = (event) => {
+  if (!navigator.onLine) return;
+  event.preventDefault();
+  hardNavigate(window.location.pathname + window.location.search);
 };
 
 const offline = ref(typeof navigator !== "undefined" && navigator.onLine === false);
@@ -55,14 +84,20 @@ const onOnline = () => {
 
 onMounted(() => {
   if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
     if (document.readyState === "complete") registerWhenIdle();
     else window.addEventListener("load", registerWhenIdle, { once: true });
   }
+  window.addEventListener("vite:preloadError", onPreloadError);
   window.addEventListener("offline", onOffline);
   window.addEventListener("online", onOnline);
   document.addEventListener("visibilitychange", checkUpdate);
 });
 onBeforeUnmount(() => {
+  removeGuard();
+  removeErrorHandler();
+  navigator.serviceWorker?.removeEventListener("controllerchange", onControllerChange);
+  window.removeEventListener("vite:preloadError", onPreloadError);
   window.removeEventListener("offline", onOffline);
   window.removeEventListener("online", onOnline);
   document.removeEventListener("visibilitychange", checkUpdate);
@@ -83,31 +118,6 @@ onBeforeUnmount(() => {
       >
         <component :is="offline ? WifiOff : Wifi" class="w-4 h-4 shrink-0" />
         {{ offline ? $t("common.pwa.offline") : $t("common.pwa.backOnline") }}
-      </div>
-    </Transition>
-
-    <Transition name="ui-pop">
-      <div
-        v-if="needRefresh"
-        role="alert"
-        class="pointer-events-auto w-full max-w-[420px] flex items-center gap-3 bg-ui-ink text-white rounded-[12px] pl-4 pr-2 py-2 shadow-ui-overlay"
-      >
-        <RefreshCw class="w-4 h-4 shrink-0 text-[#84ADFF]" />
-        <div class="flex-1 min-w-0">
-          <p class="text-ui-small font-medium">{{ $t("common.pwa.updateTitle") }}</p>
-          <p class="text-ui-cap text-white/70">{{ $t("common.pwa.updateMessage") }}</p>
-        </div>
-        <button type="button" class="h-8 px-2.5 rounded-[8px] text-ui-small font-medium text-white/70 hover:text-white" @click="needRefresh = false">
-          {{ $t("common.pwa.later") }}
-        </button>
-        <button
-          type="button"
-          class="ui-press h-8 px-3 rounded-[8px] bg-white text-ui-ink text-ui-small font-semibold disabled:opacity-60"
-          :disabled="reloading"
-          @click="reload"
-        >
-          {{ $t("common.pwa.reload") }}
-        </button>
       </div>
     </Transition>
   </div>
