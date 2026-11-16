@@ -164,7 +164,8 @@
       "required": "Description, amount, and date are required.",
       "employeeRequired": "Choose who this spending is on behalf of.",
       "saveFailed": "Failed to save the transaction.",
-      "balanceFailed": "Failed to update the opening balance."
+      "balanceFailed": "Failed to update the opening balance.",
+      "proofTooMany": "At most {n} proof files per transaction."
     },
     "tabs": {
       "all": "All Transactions",
@@ -248,13 +249,15 @@
       "optional": "optional",
       "preview": "Preview",
       "uploadedOnSave": "Uploaded when you save",
-      "replace": "Replace",
-      "upload": "Upload proof (JPG, PNG, WEBP, PDF · max 5 MB)",
-      "willBeRemoved": "The current proof will be removed when you save.",
       "undo": "Undo",
       "pdfDocument": "PDF document",
       "openFull": "Open full size",
-      "openPdf": "Open PDF"
+      "openPdf": "Open PDF",
+      "dropHere": "Drag & drop files here, or click to choose",
+      "dropNow": "Drop to add",
+      "hint": "JPG, PNG, WEBP or PDF · max 5 MB each · {n} more",
+      "full": "{n} files (the maximum). Remove one to add another.",
+      "willBeRemovedCount": "{n} proof will be removed on save. | {n} proofs will be removed on save."
     }
   }
 }
