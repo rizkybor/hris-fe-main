@@ -533,10 +533,10 @@
       "title": "Zona Berbahaya",
       "subtitle": "Tindakan permanen yang tidak dapat dibatalkan",
       "deleteTitle": "Hapus Profil Karyawan",
-      "deleteText": "Hapus karyawan ini beserta semua datanya secara permanen. Tindakan ini tidak dapat dibatalkan.",
+      "deleteText": "Hapus karyawan dari daftar dan tutup aksesnya: semua sesi login langsung diputus dan akun tidak bisa login lagi. Riwayatnya (absensi, gaji, dokumen) tetap disimpan untuk arsip.",
       "backup": "Cadangkan Data",
       "delete": "Hapus Karyawan",
-      "deleteConfirm": "Yakin ingin menghapus '{name}'? Tindakan ini tidak dapat dibatalkan."
+      "deleteConfirm": "Hapus '{name}'? Karyawan ini akan hilang dari daftar dan tidak bisa login lagi. Tindakan ini tidak dapat dibatalkan dari aplikasi."
     },
     "share": {
       "copied": "Tautan profil disalin ke clipboard!"

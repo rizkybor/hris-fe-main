@@ -533,10 +533,10 @@
       "title": "Danger Zone",
       "subtitle": "Irreversible and destructive actions",
       "deleteTitle": "Delete Employee Profile",
-      "deleteText": "Permanently remove this employee and all associated data. This action cannot be undone.",
+      "deleteText": "Remove this employee from the roster and close their access: every login session ends and the account can no longer sign in. Their history (attendance, payroll, documents) is kept for the record.",
       "backup": "Backup Data",
       "delete": "Delete Employee",
-      "deleteConfirm": "Are you sure you want to delete '{name}'? This action cannot be undone."
+      "deleteConfirm": "Delete '{name}'? They will disappear from the roster and won't be able to log in again. This can't be undone from the app."
     },
     "share": {
       "copied": "Profile link copied to clipboard!"

@@ -21,6 +21,7 @@ import { invalidate } from "@/composables/useStaleFetch";
 import { usePerformanceReviewStore } from "@/stores/performanceReview";
 import { useResignationStore } from "@/stores/resignation";
 import { can, hasAnyRole } from "@/helpers/permissionHelper";
+import { useAuthStore } from "@/stores/auth";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { storeToRefs } from "pinia";
 import {
@@ -345,9 +346,11 @@ const handleDeleteEmployee = async () => {
   }
 };
 
-const canManageAccountStatus = computed(() =>
-  hasAnyRole(["superadmin", "manager", "finance", "operational_director"])
-);
+// Turning a login off/on: the employee-account-status permission (by default
+// Superadmin, Manager, HR, Operational Director), never on one's own account.
+const authStore = useAuthStore();
+const isOwnAccount = computed(() => !!employee.value?.user?.id && employee.value.user.id === authStore.user?.id);
+const canManageAccountStatus = computed(() => can("employee-account-status") && !isOwnAccount.value);
 const targetIsElevated = computed(() =>
   (employee.value?.user?.roles || []).some((r: string) =>
     ["manager", "finance", "operational_director"].includes(r)
