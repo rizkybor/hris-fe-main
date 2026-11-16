@@ -541,7 +541,8 @@
       "taskScopeDelete": "Task Scope Delete",
       "taskScopeEdit": "Task Scope Edit",
       "taskScopeList": "Task Scope List",
-      "upcomingTasks": "Upcoming Tasks"
+      "upcomingTasks": "Upcoming Tasks",
+      "accountStatus": "Activate/Deactivate Account"
     }
   }
 }

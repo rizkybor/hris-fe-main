@@ -56,7 +56,9 @@ export const formatDateShort = (dateString) => {
 };
 
 export const formatDateLong = (dateString) => {
-  const date = new Date(dateString);
+  // No date (e.g. a join date not filled in yet): "-", not "Invalid Date".
+  const date = dateString ? new Date(dateString) : null;
+  if (!date || Number.isNaN(date.getTime())) return "-";
   return date.toLocaleDateString(localeTag(), {
     weekday: "long",
     month: "long",
