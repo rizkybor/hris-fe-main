@@ -159,7 +159,8 @@
       "filter": "Report filter period",
       "week": "This Week",
       "month": "This Month",
-      "all": "All Time"
+      "all": "All Time",
+      "tenure": "Tenure"
     },
     "noData": "No data",
     "attendanceDays": "Attendance ({n} working days)",
@@ -176,7 +177,27 @@
     "strengths": "Strengths:",
     "improvements": "Areas for Improvement:",
     "usesPeriod": "Uses the period above:",
-    "signatureHint": "Stamps the Director's signature onto the PDF."
+    "signatureHint": "Stamps the Director's signature onto the PDF.",
+    "accessEndedBadge": "Access ended",
+    "accessEnded": {
+      "contract": "Contract ended — login inactive since {date}. The \"Tenure\" period runs from the start date to that day.",
+      "probation": "Probation ended — login inactive since {date}. The \"Tenure\" period runs from the start date to that day."
+    },
+    "review": {
+      "title": "Reviewer notes",
+      "dialogTitle": "Note before downloading",
+      "dialogHint": "Optional. Your note is saved, printed on the PDF and shown on the employee's Performance tab. Leave it empty to remove your note.",
+      "label": "Your note (optional)",
+      "placeholder": "E.g. a summary of their performance during their tenure, a recommendation...",
+      "skip": "Skip, just download",
+      "saveAndDownload": "Save & download",
+      "saveFailed": "Could not save the note.",
+      "roles": {
+        "manager": "Manager",
+        "operational_director": "Operational Director",
+        "finance": "Finance Manager"
+      }
+    }
   },
   "billing": {
     "settled": "Settled",

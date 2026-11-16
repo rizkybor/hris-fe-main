@@ -11,7 +11,7 @@ import { debounce } from "lodash-es";
 import { useListState } from "@/composables/useListState";
 import { useStaleFetch } from "@/composables/useStaleFetch";
 import { storeToRefs } from "pinia";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import {
   FileTextIcon,
   Download,
@@ -35,6 +35,7 @@ import { useReportStore } from "@/stores/report";
 import { useOptionStore } from "@/stores/option";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { can, hasAnyRole } from "@/helpers/permissionHelper";
+import { useAuthStore } from "@/stores/auth";
 import { useScrollFade } from "@/composables/useScrollFade";
 import SkeletonStatCards from "@/components/common/skeleton/SkeletonStatCards.vue";
 import { UiPageHeader, UiStat, UiButton, UiBadge, UiInput, UiSelect, UiTable, UiEmpty, UiAlert, UiModal } from "@/components/ui";
@@ -50,6 +51,7 @@ import { localeTag } from "@/i18n";
 const { t, te } = useI18n();
 
 const router = useRouter();
+const route = useRoute();
 const reportStore = useReportStore();
 const optionStore = useOptionStore();
 const { employmentTypes } = storeToRefs(optionStore);
@@ -93,6 +95,7 @@ const canDeleteReports = computed(() => hasAnyRole(["superadmin", "manager"]));
 const showDeleteColumn = computed(() => canDeleteReports.value && DELETABLE_REPORT_TYPES.includes(activeTab.value));
 
 const alertModal = useAlertModalStore();
+const authStore = useAuthStore();
 const deletingRowId = ref(null);
 
 const rowIdField = (row) => row.id ?? row.employee_id;
@@ -232,9 +235,10 @@ const loadRaportDetail = async () => {
   }
 };
 
-const openRaportDetail = async (employeeId) => {
+const openRaportDetail = async (employeeId, row = null) => {
   raportEmployeeId.value = employeeId;
-  raportPeriod.value = "filter";
+  // Someone whose access has ended: their whole employment by default.
+  raportPeriod.value = row?.access_ended_on ? "tenure" : "filter";
   showRaportDetail.value = true;
   await loadRaportDetail();
 };
@@ -316,6 +320,39 @@ const raportAttendanceBoxes = computed(() => {
     { label: t("reports.raport.notCounted"), value: (a.sick_leave ?? 0) + (a.leave ?? 0) + (a.holidays ?? 0), sub: t("reports.raport.notCountedSub", { sick: a.sick_leave ?? 0, leave: a.leave ?? 0, holiday: a.holidays ?? 0 }) },
   ];
 });
+
+// Manager / Operational Director / Finance Manager may add an optional
+// closing note first; it's saved and printed on the PDF.
+const canReviewRaport = computed(() => can("staff-raport-review"));
+const reviewDialogOpen = ref(false);
+const reviewDraft = ref("");
+const savingReview = ref(false);
+const authUserId = computed(() => authStore.user?.id);
+const ownReview = computed(() => (staffRaportDetail.value?.reviews || []).find((r) => r.reviewer_id === authUserId.value));
+const startDownload = () => {
+  if (!canReviewRaport.value) return handleDownloadPdf();
+  reviewDraft.value = ownReview.value?.review || "";
+  reviewDialogOpen.value = true;
+};
+const downloadWithReview = async (save) => {
+  if (save && reviewDraft.value.trim() !== (ownReview.value?.review || "")) {
+    savingReview.value = true;
+    try {
+      await reportStore.saveStaffRaportReview(staffRaportDetail.value.employee.id, reviewDraft.value.trim());
+    } catch (error) {
+      savingReview.value = false;
+      return alertModal.alert(error?.response?.data?.message || t("reports.raport.review.saveFailed"), { type: "danger" });
+    }
+    savingReview.value = false;
+  }
+  reviewDialogOpen.value = false;
+  await handleDownloadPdf();
+};
+// The API's period labels are English ("This Month"); the named periods use ours.
+const raportPeriodLabel = computed(() =>
+  raportPeriod.value !== "filter" ? t(`reports.raport.periods.${raportPeriod.value}`) : staffRaportDetail.value?.period_label
+);
+const raportRoleLabel = (role) => (role ? t(`reports.raport.review.roles.${role}`) : "");
 
 const handleDownloadPdf = async () => {
   if (!staffRaportDetail.value) return;
@@ -645,6 +682,16 @@ const goToPage = (page) => (list.page = page);
 // age, but for another key): show it from the cache or refresh quietly.
 onMounted(() => {
   if (!loading.value && !refreshing.value && loadedTabs.has(activeTab.value) && shownKey[activeTab.value] !== requestKey.value) refresh({ force: true });
+  // ?raport=<employeeId> (from an employee's page): open that Staff Report
+  // over their whole employment, then drop the parameter from the URL.
+  const raportId = Number(route.query.raport);
+  if (raportId && can("staff-raport-menu")) {
+    activeTab.value = "staff_raport";
+    openRaportDetail(raportId, { access_ended_on: true });
+    const query = { ...route.query };
+    delete query.raport;
+    router.replace({ query }).catch(() => {});
+  }
 });
 
 async function handleExport() {
@@ -804,7 +851,7 @@ const onRowClick = (row) => {
     case "maintenance":
       return router.push({ name: "admin.maintenance.detail", params: { id: row.id } });
     case "staff_raport":
-      return openRaportDetail(row.employee_id);
+      return openRaportDetail(row.employee_id, row);
   }
 };
 
@@ -1201,6 +1248,9 @@ const mobileCard = (row) => {
                 <span class="text-ui-ink font-medium" :class="activeTab === 'project' ? 'whitespace-nowrap' : ''">
                   {{ activeTab === "employee" ? row.user?.name ?? "N/A" : activeTab === "staff_raport" ? row.name ?? "N/A" : row.name }}
                 </span>
+                <UiBadge v-if="activeTab === 'staff_raport' && row.access_ended_on" tone="bad" class="ml-1.5 align-middle" :title="$t('reports.raport.accessEnded.' + (row.access_end_reason || 'contract'), { date: formatDate(row.access_ended_on) })">
+                  {{ $t('reports.raport.accessEndedBadge') }}
+                </UiBadge>
               </template>
               <template #cell-job_title="{ row }">
                 {{ activeTab === "employee" ? row.job_information?.job_title ?? "N/A" : row.job_title ?? "-" }}
@@ -1467,9 +1517,15 @@ const mobileCard = (row) => {
             {{ (staffRaportDetail.employee.employment_type || "-").replace("_", " ") }}
             <span v-if="staffRaportDetail.employee.start_date"> • {{ $t('reports.raport.joined') }} {{ formatDate(staffRaportDetail.employee.start_date) }}</span>
           </p>
+          <UiAlert
+            v-if="staffRaportDetail.employee.access_ended_on"
+            tone="warn"
+            class="mt-3"
+            :message="$t('reports.raport.accessEnded.' + (staffRaportDetail.employee.access_end_reason || 'contract'), { date: formatDate(staffRaportDetail.employee.access_ended_on) })"
+          />
           <div class="mt-3 flex flex-col sm:flex-row sm:items-center gap-2 bg-ui-subtle border border-ui-line rounded-ui-control px-3 py-2">
             <p class="text-ui-cap text-ui-text flex-1">
-              {{ $t('common.labels.period') }}: <strong class="text-ui-ink font-semibold">{{ staffRaportDetail.period_label }}</strong>
+              {{ $t('common.labels.period') }}: <strong class="text-ui-ink font-semibold">{{ raportPeriodLabel }}</strong>
               <span class="text-ui-muted">({{ formatDate(staffRaportDetail.period.start_date) }} – {{ formatDate(staffRaportDetail.period.end_date) }})</span>
             </p>
             <UiSelect
@@ -1480,6 +1536,7 @@ const mobileCard = (row) => {
                 { value: 'week', label: $t('reports.raport.periods.week') },
                 { value: 'month', label: $t('reports.raport.periods.month') },
                 { value: 'all', label: $t('reports.raport.periods.all') },
+                { value: 'tenure', label: $t('reports.raport.periods.tenure') },
               ]"
               class="sm:w-48"
               @change="loadRaportDetail"
@@ -1569,17 +1626,40 @@ const mobileCard = (row) => {
           </div>
         </div>
 
+        <div v-if="staffRaportDetail.reviews?.length" class="pt-4 border-t border-ui-line">
+          <p class="text-ui-h3 text-ui-ink mb-2">{{ $t('reports.raport.review.title') }}</p>
+          <ul class="space-y-2">
+            <li v-for="note in staffRaportDetail.reviews" :key="note.id" class="border-l-2 border-ui-accent bg-ui-subtle rounded-r-ui-control px-3 py-2">
+              <p class="text-ui-cap text-ui-muted">
+                <span class="font-medium text-ui-ink">{{ note.reviewer_name }}</span>
+                <template v-if="note.reviewer_role"> · {{ raportRoleLabel(note.reviewer_role) }}</template>
+                · {{ formatDate(note.updated_at) }}
+              </p>
+              <p class="text-ui-small text-ui-text mt-0.5 whitespace-pre-line break-words">{{ note.review }}</p>
+            </li>
+          </ul>
+        </div>
+
         <div class="pt-4 border-t border-ui-line">
           <p class="text-ui-h3 text-ui-ink mb-2">{{ $t("common.actions.downloadPdf") }}</p>
           <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-            <p class="text-ui-cap text-ui-muted flex-1">{{ $t('reports.raport.usesPeriod') }} <strong class="text-ui-ink font-semibold">{{ staffRaportDetail.period_label }}</strong></p>
-            <UiButton :icon="Download" :loading="downloadingPdf" class="shrink-0" @click="handleDownloadPdf">
+            <p class="text-ui-cap text-ui-muted flex-1">{{ $t('reports.raport.usesPeriod') }} <strong class="text-ui-ink font-semibold">{{ raportPeriodLabel }}</strong></p>
+            <UiButton :icon="Download" :loading="downloadingPdf" class="shrink-0" @click="startDownload">
               {{ downloadingPdf ? $t('reports.downloading') : $t("common.actions.downloadPdf") }}
             </UiButton>
           </div>
           <SignatureToggle v-model="raportUseSignature" class="mt-3" :hint="$t('reports.raport.signatureHint')" />
         </div>
       </div>
+    </UiModal>
+
+    <!-- Optional closing note before downloading a Staff Report -->
+    <UiModal v-model:open="reviewDialogOpen" :title="$t('reports.raport.review.dialogTitle')" :description="$t('reports.raport.review.dialogHint')" size="sm" :z-index="150">
+      <UiInput v-model="reviewDraft" :rows="5" :label="$t('reports.raport.review.label')" :placeholder="$t('reports.raport.review.placeholder')" />
+      <template #footer>
+        <UiButton variant="secondary" class="flex-1 sm:flex-none" :disabled="savingReview" @click="downloadWithReview(false)">{{ $t('reports.raport.review.skip') }}</UiButton>
+        <UiButton :icon="Download" class="flex-1 sm:flex-none" :loading="savingReview" @click="downloadWithReview(true)">{{ $t('reports.raport.review.saveAndDownload') }}</UiButton>
+      </template>
     </UiModal>
 
     <!-- Subscription Detail Modal -->

@@ -111,6 +111,13 @@ export const useReportStore = defineStore("report", {
       }
     },
 
+    // The signed-in reviewer's optional closing note ("" removes it); returns all notes.
+    async saveStaffRaportReview(employeeId, review) {
+      const { data } = await axiosInstance.put(`/reports/staff-raport/${employeeId}/review`, { review });
+      if (this.staffRaportDetail?.employee?.id === employeeId) this.staffRaportDetail.reviews = data.data;
+      return data.data;
+    },
+
     // periodParams: { period: "week" | "month" | "all" } or { start_date, end_date }.
     async downloadStaffRaportPdf(employeeId, periodParams, employeeName = "staff", withSignature = false) {
       this.downloadingPdf = true;

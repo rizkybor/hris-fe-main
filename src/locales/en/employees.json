@@ -537,7 +537,11 @@
       "deactivateFailed": "Failed to deactivate account.",
       "activateFailed": "Failed to activate account.",
       "deactivatedOk": "Account deactivated successfully.",
-      "activatedOk": "Account activated successfully."
+      "activatedOk": "Account activated successfully.",
+      "autoEnded": {
+        "contract": "Switched off automatically on {date} because the contract ended.",
+        "probation": "Switched off automatically on {date} because the probation period ended."
+      }
     },
     "danger": {
       "title": "Danger Zone",
@@ -556,6 +560,17 @@
       "confirm": "Create backup for {name}? This will download all employee data.",
       "confirmText": "Create Backup",
       "soon": "Backup feature will be implemented soon."
+    },
+    "closingNotes": {
+      "title": "End-of-tenure notes",
+      "subtitle": "From the Staff Report — Manager, Operational Director, Finance Manager"
+    },
+    "closingActions": {
+      "title": "Closing documents",
+      "hint": "Prepare the closing documents from here.",
+      "raport": "Staff Report",
+      "letter": "Reference Letter",
+      "certificate": "Certificate"
     }
   }
 }

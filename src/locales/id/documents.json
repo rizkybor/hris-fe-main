@@ -42,6 +42,27 @@
       "errors": {
         "noRecipient": "Minimal 1 penerima wajib diisi.",
         "failed": "Gagal membuat sertifikat."
+      },
+      "notEmployee": "— Bukan karyawan —",
+      "accessEnded": "akses berakhir",
+      "employee": "Karyawan",
+      "layout": {
+        "title": "Tata Letak & Lampiran",
+        "orientation": "Orientasi",
+        "landscape": "Landscape",
+        "portrait": "Portrait"
+      },
+      "tasksPage": {
+        "label": "Halaman 2: Task yang diselesaikan",
+        "description": "Lampirkan daftar task (staff & proyek) yang diselesaikan penerima beserta waktunya, dalam periode sertifikat. Hanya untuk penerima yang dipilih dari karyawan.",
+        "unlinked": "{n} penerima belum dipilih dari karyawan — sertifikatnya tanpa halaman task.",
+        "short": "Halaman task",
+        "on": "Ya ({n} penerima)",
+        "off": "Tidak"
+      },
+      "hologram": {
+        "label": "Hologram",
+        "description": "Tempelkan segel hologram perak (logo JCD dan mikroteks Jendela Cakra Digital) pada sertifikat."
       }
     },
     "types": {
@@ -308,7 +329,8 @@
         "bodyRequired": "Isi surat wajib diisi.",
         "create": "Gagal membuat Surat.",
         "update": "Gagal memperbarui Surat."
-      }
+      },
+      "referenceSubject": "Surat Keterangan Kerja"
     },
     "list": {
       "title": "Surat",
