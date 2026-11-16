@@ -154,23 +154,6 @@ const handleSubmit = async () => {
       <!-- Task Name -->
       <UiInput v-model="formData.name" :label="$t('projects.tasks.form.name')" :icon="ClipboardList" :placeholder="$t('projects.tasks.form.namePlaceholder')" required />
 
-      <!-- Assignees -->
-      <div>
-        <p class="block text-ui-small font-medium text-ui-ink mb-1.5">
-          {{ $t("projects.tasks.detail.assignee") }} <span class="text-ui-muted font-normal">{{ $t("projects.tasks.form.optional") }}</span>
-        </p>
-        <AssigneePicker v-model="formData.assignees" :project-id="projectId" />
-      </div>
-
-      <!-- Description -->
-      <UiInput v-model="formData.description" :label="$t('common.labels.description')" :rows="3" :placeholder="$t('projects.tasks.form.descriptionPlaceholder')" />
-
-      <!-- Priority and Status -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <UiSelect v-model="formData.priority" :label="$t('projects.fields.priority')" :options="PRIORITY_OPTIONS" />
-        <UiSelect v-model="formData.status" :label="$t('common.labels.status')" :options="STATUS_OPTIONS" />
-      </div>
-
       <!-- Task Type & Color -->
       <div>
         <label for="task-type-create" class="block text-ui-small font-medium text-ui-ink mb-1.5">
@@ -209,6 +192,20 @@ const handleSubmit = async () => {
 
       <!-- Due Date -->
       <UiInput v-model="formData.due_date" type="date" :label="$t('projects.tasks.form.dueDate')" :icon="Calendar" />
+
+      <!-- Assignees -->
+      <div>
+        <p class="block text-ui-small font-medium text-ui-ink mb-1.5">
+          {{ $t("projects.tasks.detail.assignee") }} <span class="text-ui-muted font-normal">{{ $t("projects.tasks.form.optional") }}</span>
+        </p>
+        <AssigneePicker v-model="formData.assignees" :project-id="projectId" />
+      </div>
+
+      <!-- Status and Priority -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <UiSelect v-model="formData.status" :label="$t('common.labels.status')" :options="STATUS_OPTIONS" />
+        <UiSelect v-model="formData.priority" :label="$t('projects.fields.priority')" :options="PRIORITY_OPTIONS" />
+      </div>
 
       <!-- Image (Optional) -->
       <div>
@@ -265,6 +262,9 @@ const handleSubmit = async () => {
 
         <p v-if="imageError" class="text-ui-cap text-ui-bad mt-1.5">{{ imageError }}</p>
       </div>
+
+      <!-- Description -->
+      <UiInput v-model="formData.description" :label="$t('common.labels.description')" :rows="3" :placeholder="$t('projects.tasks.form.descriptionPlaceholder')" />
     </form>
 
     <template #footer>
