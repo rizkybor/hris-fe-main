@@ -165,6 +165,18 @@ export const useEmployeeStore = defineStore("employee", {
             }
         },
 
+        // Deleted employees (Superadmin/Manager): [{ id, name, email, job_title, deleted_at, email_taken }].
+        async fetchDeletedEmployees() {
+            const { data } = await axiosInstance.get("employees/deleted");
+            return data.data ?? [];
+        },
+
+        // Brings a deleted employee back (profile, email and login).
+        async restoreEmployee(id) {
+            const { data } = await axiosInstance.post(`employees/${id}/restore`);
+            return data.data;
+        },
+
         async deleteEmployee(id) {
             this.loading = true;
             this.error = null;

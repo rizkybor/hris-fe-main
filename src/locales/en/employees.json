@@ -55,7 +55,17 @@
     "searchPlaceholder": "Search employees by name, department, role...",
     "allTypes": "All Types",
     "allStatus": "All Status",
-    "empty": "No employees found"
+    "empty": "No employees found",
+    "deletedButton": "Deleted employees",
+    "deletedTitle": "Deleted employees",
+    "deletedSubtitle": "Restore to bring back the profile, email and login with their history.",
+    "deletedEmpty": "No deleted employees.",
+    "deletedOn": "Deleted {date}",
+    "restore": "Restore",
+    "restoreConfirm": "Restore '{name}'? Their profile, email and login access will be back as before.",
+    "restored": "'{name}' has been restored.",
+    "restoreFailed": "Could not restore the employee.",
+    "emailTaken": "The email {email} is already used by another account, so this can't be restored. Add them as a new employee, or change that account's email first."
   },
   "card": {
     "loginDisabled": "Login Disabled",
@@ -536,7 +546,8 @@
       "deleteText": "Remove this employee from the roster and close their access: every login session ends and the account can no longer sign in. Their history (attendance, payroll, documents) is kept for the record.",
       "backup": "Backup Data",
       "delete": "Delete Employee",
-      "deleteConfirm": "Delete '{name}'? They will disappear from the roster and won't be able to log in again. This can't be undone from the app."
+      "deleteConfirm": "Delete '{name}'? They will disappear from the roster and won't be able to log in again. This can't be undone from the app.",
+      "deleteFailed": "Could not delete the employee."
     },
     "share": {
       "copied": "Profile link copied to clipboard!"
