@@ -126,7 +126,7 @@ const initials = computed(() =>
               </div>
             </header>
             <div class="p-5 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <UiInput v-model="form.name" :label="$t('clients.fields.name') + ' *'" :icon="Briefcase" :placeholder="$t('clients.form.placeholders.name')" class="md:col-span-2" />
+              <UiInput v-model="form.name" :label="$t('clients.fields.name')" required :icon="Briefcase" :placeholder="$t('clients.form.placeholders.name')" class="md:col-span-2" />
               <div class="min-w-0">
                 <label :for="'client-type-options-input'" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("clients.fields.type") }}</label>
                 <div class="relative">
@@ -174,8 +174,8 @@ const initials = computed(() =>
               </div>
             </header>
             <div class="p-5 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <UiInput v-model="form.pic_name" :label="$t('clients.fields.picName') + ' *'" :icon="User" :placeholder="$t('clients.form.placeholders.picName')" />
-              <UiInput v-model="form.pic_phone" :label="$t('clients.fields.picPhone') + ' *'" :icon="Phone" placeholder="+62..." />
+              <UiInput v-model="form.pic_name" :label="$t('clients.fields.picName')" required :icon="User" :placeholder="$t('clients.form.placeholders.picName')" />
+              <UiInput v-model="form.pic_phone" :label="$t('clients.fields.picPhone')" required :icon="Phone" placeholder="+62..." />
               <UiInput v-model="form.email" :label="$t('common.labels.email')" type="email" :icon="Mail" placeholder="client@company.com" class="md:col-span-2" />
             </div>
           </section>

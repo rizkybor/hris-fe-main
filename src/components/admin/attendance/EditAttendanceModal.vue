@@ -106,7 +106,7 @@ const err = (k) => errors.value?.[k]?.[0];
 
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label for="ea-check-in" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("attendance.edit.checkInWib") }}</label>
+          <label for="ea-check-in" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("attendance.edit.checkInWib") }}<span v-if="!NO_TIME.includes(form.status)" class="text-ui-bad"> *</span></label>
           <input id="ea-check-in" v-model="form.check_in" type="time" class="w-full bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control px-3 focus:outline-none focus:border-ui-accent focus:shadow-ui-focus h-[38px]" :required="!NO_TIME.includes(form.status)" />
           <p v-if="err('check_in')" class="text-ui-cap text-ui-bad mt-1.5">{{ err("check_in") }}</p>
         </div>

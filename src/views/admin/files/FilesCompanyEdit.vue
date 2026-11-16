@@ -254,6 +254,7 @@ const fileExt = (name, mime) => {
             <UiInput
               id="document_name"
 :label="$t('files.form.nameRequiredLabel')"
+              required
               :placeholder="$t('files.edit.namePlaceholder')"
               v-model="form.document_name"
               :error="fileNameError ? $t('files.form.nameRequired') : ''"

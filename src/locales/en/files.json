@@ -35,7 +35,7 @@
   "form": {
     "infoSection": "File Information",
     "fileSection": "File",
-    "nameRequiredLabel": "File Name *",
+    "nameRequiredLabel": "File Name",
     "namePlaceholder": "e.g. Company NDA Template, HR Policy 2026",
     "nameRequired": "File name is required.",
     "descriptionOptional": "Description (Optional)",

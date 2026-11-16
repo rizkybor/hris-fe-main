@@ -1,4 +1,5 @@
 <script setup>
+import { toDateInput, todayLocal } from "@/utils/dateUtils";
 import { ref, computed, onMounted } from "vue";
 import { useRouter, useRoute, RouterLink } from "vue-router";
 import { useI18n } from "vue-i18n";
@@ -103,7 +104,7 @@ const form = ref({
   letter_code_id: "",
   division_code_id: "",
   type: "I",
-  date: new Date().toISOString().slice(0, 10),
+  date: todayLocal(),
   subject: "",
   recipient: "",
   employee_id: "",
@@ -138,7 +139,7 @@ const fillForm = (letter) => {
   form.value.letter_code_id = letter.letter_code_id;
   form.value.division_code_id = letter.division_code_id;
   form.value.type = letter.type;
-  form.value.date = letter.date;
+  form.value.date = toDateInput(letter.date);
   form.value.subject = letter.subject;
   form.value.recipient = letter.recipient || "";
   form.value.employee_id = letter.employee_id || "";

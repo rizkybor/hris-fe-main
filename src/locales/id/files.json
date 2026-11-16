@@ -35,7 +35,7 @@
   "form": {
     "infoSection": "Informasi File",
     "fileSection": "File",
-    "nameRequiredLabel": "Nama File *",
+    "nameRequiredLabel": "Nama File",
     "namePlaceholder": "mis. Template NDA Perusahaan, Kebijakan HR 2026",
     "nameRequired": "Nama file wajib diisi.",
     "descriptionOptional": "Deskripsi (Opsional)",

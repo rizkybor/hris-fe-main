@@ -232,8 +232,11 @@
       "errors": {
         "load": "Gagal memuat invoice.",
         "create": "Gagal membuat Invoice.",
-        "update": "Gagal memperbarui Invoice."
-      }
+        "update": "Gagal memperbarui Invoice.",
+        "bankRequired": "Nama bank wajib dipilih.",
+        "bankAccountMissing": "Nomor rekening untuk bank ini belum ada. Lengkapi di Pengaturan > Rekening Bank."
+      },
+      "clientCodeFixed": "Sudah tertanam di nomor invoice, tidak bisa diubah."
     },
     "list": {
       "title": "Invoice",
@@ -446,7 +449,8 @@
         "load": "Gagal memuat kwitansi.",
         "create": "Gagal membuat Kwitansi.",
         "update": "Gagal memperbarui Kwitansi."
-      }
+      },
+      "clientCodeFixed": "Sudah tertanam di nomor kuitansi, tidak bisa diubah."
     }
   },
   "purchaseOrder": {
