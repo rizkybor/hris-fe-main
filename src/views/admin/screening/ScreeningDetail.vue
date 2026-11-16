@@ -39,13 +39,18 @@ const tab = computed({
   get: () => view.tab || (s.value && !s.value.submitted_at ? "answers" : "recommendation"),
   set: (value) => (view.tab = value),
 });
+const notFound = ref(false);
 const load = async () => {
   // Coming from the list: show what it already knows while the rest loads.
   loading.value = String(s.value?.id) !== String(route.params.id);
+  notFound.value = false;
   try {
     await store.fetchScreening(route.params.id);
     editingAnswers.value = !s.value?.submitted_at && s.value?.source === "internal" && canEdit.value;
     resetDrafts();
+  } catch {
+    // Deleted or never existed (or no access): show that instead of a blank page.
+    notFound.value = true;
   } finally {
     loading.value = false;
   }
@@ -549,5 +554,14 @@ const iconBtn = "ui-press w-8 h-8 inline-flex items-center justify-center rounde
         </template>
       </div>
     </template>
+
+    <UiEmpty
+      v-else-if="notFound"
+      :icon="AlertTriangle"
+      :title="$t('screening.detail.notFoundTitle')"
+      :message="$t('screening.detail.notFoundMessage')"
+    >
+      <UiButton variant="secondary" size="sm" :icon="ArrowLeft" :to="{ name: 'admin.screening.dashboard' }">{{ $t("common.actions.back") }}</UiButton>
+    </UiEmpty>
   </div>
 </template>
