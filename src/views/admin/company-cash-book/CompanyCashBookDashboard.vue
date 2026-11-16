@@ -24,9 +24,14 @@ import {
   History,
   Wallet,
   UserRound,
+  X,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-vue-next";
 import { useCompanyCashTransactionStore } from "@/stores/companyCashTransaction";
 import { useLookupStore } from "@/stores/lookups";
+import { formatFileSize } from "@/utils/fileUtils";
+import { todayLocal } from "@/utils/dateUtils";
 import { formatRupiah } from "@/utils/formatUtils";
 import { can } from "@/helpers/permissionHelper";
 import Pagination from "@/components/common/Pagination.vue";
@@ -169,55 +174,82 @@ const emptyForm = (spending = false) => ({
   type: "debit",
   description: "",
   amount: "",
-  transaction_date: new Date().toISOString().slice(0, 10),
+  transaction_date: todayLocal(),
   notes: "",
-  proof: null, // new File to upload
-  remove_proof: false,
+  proofs: [], // new files to upload: { file, url }
+  remove_proof_ids: [], // saved proofs to remove on save
 });
 
-// ===== Proof of transaction (optional) =====
+// ===== Proofs of transaction (optional, up to 3) =====
 const PROOF_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
 const PROOF_MAX_BYTES = 5 * 1024 * 1024;
-const existingProof = ref(null); // proof already saved on the row being edited
-const proofPreviewUrl = ref("");
+const PROOF_MAX_FILES = 3;
+const existingProofs = ref([]); // proofs already saved on the row being edited
 const proofInput = ref(null);
+const dragActive = ref(false);
 
-const resetProofPreview = () => {
-  if (proofPreviewUrl.value) URL.revokeObjectURL(proofPreviewUrl.value);
-  proofPreviewUrl.value = "";
+const keptProofs = computed(() => existingProofs.value.filter((p) => !form.value.remove_proof_ids.includes(p.id)));
+const proofCount = computed(() => keptProofs.value.length + form.value.proofs.length);
+const proofSlotsLeft = computed(() => Math.max(0, PROOF_MAX_FILES - proofCount.value));
+
+const releasePreviews = (items) => items.forEach((p) => p.url && URL.revokeObjectURL(p.url));
+
+// Adds picked or dropped files, keeping only valid ones and at most 3 in all.
+const addProofFiles = (fileList) => {
+  const files = Array.from(fileList || []);
+  if (!files.length) return;
+  const problems = [];
+  const accepted = [];
+  for (const file of files) {
+    if (!PROOF_TYPES.includes(file.type)) problems.push(t("finance.cashBook.errors.proofType"));
+    else if (file.size > PROOF_MAX_BYTES) problems.push(t("finance.cashBook.errors.proofSize"));
+    else if (accepted.length >= proofSlotsLeft.value) problems.push(t("finance.cashBook.errors.proofTooMany", { n: PROOF_MAX_FILES }));
+    else accepted.push({ file, url: file.type.startsWith("image/") ? URL.createObjectURL(file) : "" });
+  }
+  form.value.proofs = [...form.value.proofs, ...accepted];
+  formError.value = [...new Set(problems)].join(" ");
 };
 
 const onProofSelected = (event) => {
-  const file = event.target.files?.[0];
+  addProofFiles(event.target.files);
   event.target.value = "";
-  if (!file) return;
-  if (!PROOF_TYPES.includes(file.type)) {
-    formError.value = t("finance.cashBook.errors.proofType");
-    return;
-  }
-  if (file.size > PROOF_MAX_BYTES) {
-    formError.value = t("finance.cashBook.errors.proofSize");
-    return;
-  }
+};
+const onProofDragOver = (event) => {
+  if (!Array.from(event.dataTransfer?.types || []).includes("Files")) return;
+  event.preventDefault();
+  dragActive.value = true;
+};
+const onProofDragLeave = (event) => {
+  if (!event.currentTarget.contains(event.relatedTarget)) dragActive.value = false;
+};
+const onProofDrop = (event) => {
+  event.preventDefault();
+  dragActive.value = false;
+  addProofFiles(event.dataTransfer?.files);
+};
+
+const removeNewProof = (index) => {
+  const [removed] = form.value.proofs.splice(index, 1);
+  if (removed) releasePreviews([removed]);
   formError.value = "";
-  resetProofPreview();
-  form.value.proof = file;
-  form.value.remove_proof = false;
-  if (file.type.startsWith("image/")) proofPreviewUrl.value = URL.createObjectURL(file);
+};
+const removeExistingProof = (proof) => {
+  form.value.remove_proof_ids = [...form.value.remove_proof_ids, proof.id];
+};
+const undoRemoveProofs = () => {
+  form.value.remove_proof_ids = [];
 };
 
-const clearNewProof = () => {
-  form.value.proof = null;
-  resetProofPreview();
+// Viewer for saved proofs (from the table or the edit form), one at a time.
+const viewer = ref(null); // { list, index }
+const viewingProof = computed(() => viewer.value?.list[viewer.value.index] || null);
+const proofsOf = (row) => (row?.proofs?.length ? row.proofs : row?.proof ? [row.proof] : []);
+const openProof = (list, index = 0) => (viewer.value = { list, index });
+const stepProof = (delta) => {
+  if (!viewer.value) return;
+  const n = viewer.value.list.length;
+  viewer.value = { ...viewer.value, index: (viewer.value.index + delta + n) % n };
 };
-
-const removeExistingProof = () => {
-  form.value.remove_proof = true;
-};
-
-// Small viewer for a saved proof (from the table or the edit form).
-const viewingProof = ref(null);
-const openProof = (proof) => (viewingProof.value = proof);
 
 const form = ref(emptyForm());
 
@@ -225,9 +257,9 @@ const isSpendingForm = computed(() => form.value.category === "spending");
 
 const openCreateModal = (spending = false) => {
   editingId.value = null;
+  releasePreviews(form.value.proofs);
   form.value = emptyForm(spending === true);
-  existingProof.value = null;
-  resetProofPreview();
+  existingProofs.value = [];
   formError.value = "";
   isFormModalOpen.value = true;
 };
@@ -242,18 +274,18 @@ const openEditModal = (transaction) => {
     amount: transaction.amount,
     transaction_date: transaction.transaction_date,
     notes: transaction.notes || "",
-    proof: null,
-    remove_proof: false,
+    proofs: [],
+    remove_proof_ids: [],
   };
-  existingProof.value = transaction.proof || null;
-  resetProofPreview();
+  existingProofs.value = proofsOf(transaction);
   formError.value = "";
   isFormModalOpen.value = true;
 };
 
 const closeFormModal = () => {
   isFormModalOpen.value = false;
-  resetProofPreview();
+  releasePreviews(form.value.proofs);
+  dragActive.value = false;
 };
 
 const handleSubmit = async () => {
@@ -269,11 +301,11 @@ const handleSubmit = async () => {
   }
 
   // Only send proof fields that actually change something.
-  const { proof, remove_proof, ...fields } = form.value;
+  const { proofs, remove_proof_ids, ...fields } = form.value;
   const payload = { ...fields, category: fields.category || null, employee_id: fields.category ? fields.employee_id : null };
   if (payload.category === "spending") payload.type = "debit";
-  if (proof) payload.proof = proof;
-  else if (editingId.value && remove_proof) payload.remove_proof = true;
+  if (proofs.length) payload.proofs = proofs.map((p) => p.file);
+  if (editingId.value && remove_proof_ids.length) payload.remove_proof_ids = remove_proof_ids;
 
   try {
     if (editingId.value) {
@@ -577,12 +609,12 @@ const fieldClass =
             <p class="text-ui-ink font-medium">{{ row.description }}</p>
             <p v-if="row.notes" class="text-ui-cap text-ui-muted mt-0.5">{{ row.notes }}</p>
             <button
-              v-if="row.proof"
+              v-if="proofsOf(row).length"
               type="button"
               class="mt-1 inline-flex items-center gap-1 text-ui-cap font-medium text-ui-accent hover:underline"
-              @click="openProof(row.proof)"
+              @click="openProof(proofsOf(row))"
             >
-              <Paperclip class="w-3 h-3" /> {{ $t('finance.cashBook.viewProof') }}
+              <Paperclip class="w-3 h-3" /> {{ $t('finance.cashBook.viewProof') }}<span v-if="proofsOf(row).length > 1" class="tabular-nums"> ({{ proofsOf(row).length }})</span>
             </button>
           </div>
         </template>
@@ -657,8 +689,10 @@ const fieldClass =
                 <UiBadge v-else tone="neutral">{{ $t('finance.cashBook.manual') }}</UiBadge>
                 <span class="text-ui-cap text-ui-muted">{{ $t('finance.cashBook.balance') }} <span class="tabular-nums font-medium text-ui-ink">{{ masked(row.balance) }}</span></span>
               </div>
-              <div v-if="row.proof || canManage" class="flex items-center gap-1 mt-2 -ml-2">
-                <UiButton v-if="row.proof" variant="ghost" size="sm" :icon="Paperclip" @click="openProof(row.proof)">{{ $t('finance.cashBook.viewProof') }}</UiButton>
+              <div v-if="proofsOf(row).length || canManage" class="flex items-center gap-1 mt-2 -ml-2">
+                <UiButton v-if="proofsOf(row).length" variant="ghost" size="sm" :icon="Paperclip" @click="openProof(proofsOf(row))">
+                  {{ $t('finance.cashBook.viewProof') }}<span v-if="proofsOf(row).length > 1" class="tabular-nums"> ({{ proofsOf(row).length }})</span>
+                </UiButton>
                 <template v-if="canManage">
                   <template v-if="!row.is_synced">
                     <UiButton variant="ghost" size="sm" :icon="Pencil" @click="openEditModal(row)">{{ $t("common.actions.edit") }}</UiButton>
@@ -747,49 +781,80 @@ const fieldClass =
 
         <UiInput v-model="form.notes" :label="$t('common.labels.notes')" :rows="2" :placeholder="$t('finance.cashBook.form.notesPlaceholder')" class="sm:col-span-2" />
 
-        <!-- Proof of transaction -->
+        <!-- Proofs of transaction: drop or pick up to 3 files -->
         <div class="sm:col-span-2">
-          <p class="block text-ui-small font-medium text-ui-ink mb-1.5">
-            {{ $t('finance.cashBook.proof.title') }} <span class="text-ui-muted font-normal">({{ $t('finance.cashBook.proof.optional') }})</span>
-          </p>
-
-          <!-- New file picked -->
-          <div v-if="form.proof" class="flex items-center gap-3 p-2.5 border border-ui-line rounded-ui-control">
-            <img v-if="proofPreviewUrl" :src="proofPreviewUrl" :alt="$t('finance.cashBook.proof.preview')" class="w-12 h-12 rounded-md object-cover border border-ui-line" />
-            <div v-else class="w-12 h-12 rounded-md bg-ui-subtle flex items-center justify-center shrink-0"><FileText class="w-5 h-5 text-ui-muted" /></div>
-            <div class="min-w-0 flex-1">
-              <p class="text-ui-small text-ui-ink font-medium truncate">{{ form.proof.name }}</p>
-              <p class="text-ui-cap text-ui-muted">{{ $t('finance.cashBook.proof.uploadedOnSave') }}</p>
-            </div>
-            <UiButton variant="ghost" size="sm" @click="clearNewProof">{{ $t("common.actions.cancel") }}</UiButton>
+          <div class="flex items-baseline justify-between gap-2 mb-1.5">
+            <p class="text-ui-small font-medium text-ui-ink">
+              {{ $t('finance.cashBook.proof.title') }} <span class="text-ui-muted font-normal">({{ $t('finance.cashBook.proof.optional') }})</span>
+            </p>
+            <span class="text-ui-cap text-ui-muted tabular-nums">{{ proofCount }}/{{ PROOF_MAX_FILES }}</span>
           </div>
 
-          <!-- Proof already saved on this transaction -->
-          <div v-else-if="existingProof && !form.remove_proof" class="flex items-center gap-3 p-2.5 border border-ui-line rounded-ui-control">
-            <img v-if="existingProof.is_image" :src="existingProof.url" :alt="$t('finance.cashBook.proof.title')" class="w-12 h-12 rounded-md object-cover border border-ui-line" />
-            <div v-else class="w-12 h-12 rounded-md bg-ui-subtle flex items-center justify-center shrink-0"><FileText class="w-5 h-5 text-ui-muted" /></div>
-            <div class="min-w-0 flex-1">
-              <p class="text-ui-small text-ui-ink font-medium truncate">{{ existingProof.name || $t('finance.cashBook.proof.title') }}</p>
-              <button type="button" class="text-ui-cap font-medium text-ui-accent hover:underline" @click="openProof(existingProof)">{{ $t("common.actions.view") }}</button>
-            </div>
-            <UiButton variant="ghost" size="sm" @click="proofInput?.click()">{{ $t('finance.cashBook.proof.replace') }}</UiButton>
-            <UiButton variant="ghost" size="sm" class="!text-ui-bad" @click="removeExistingProof">{{ $t("common.actions.remove") }}</UiButton>
-          </div>
+          <ul v-if="keptProofs.length || form.proofs.length" class="space-y-2 mb-2">
+            <!-- Already saved -->
+            <li v-for="proof in keptProofs" :key="`saved-${proof.id}`" class="flex items-center gap-3 p-2 border border-ui-line rounded-ui-control">
+              <img v-if="proof.is_image" :src="proof.url" :alt="proof.name || $t('finance.cashBook.proof.title')" loading="lazy" class="w-11 h-11 rounded-md object-cover border border-ui-line shrink-0" />
+              <span v-else class="w-11 h-11 rounded-md bg-ui-subtle flex items-center justify-center shrink-0"><FileText class="w-5 h-5 text-ui-muted" /></span>
+              <div class="min-w-0 flex-1">
+                <p class="text-ui-small text-ui-ink font-medium truncate">{{ proof.name || $t('finance.cashBook.proof.title') }}</p>
+                <p class="text-ui-cap text-ui-muted">
+                  <span v-if="proof.size" class="tabular-nums">{{ formatFileSize(proof.size) }} · </span>
+                  <button type="button" class="font-medium text-ui-accent hover:underline" @click="openProof(keptProofs, keptProofs.indexOf(proof))">{{ $t("common.actions.view") }}</button>
+                </p>
+              </div>
+              <button
+                type="button"
+                class="w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-faint hover:bg-ui-bad-soft hover:text-ui-bad shrink-0"
+                :aria-label="`${$t('common.actions.remove')}: ${proof.name || ''}`"
+                :title="$t('common.actions.remove')"
+                @click="removeExistingProof(proof)"
+              >
+                <X class="w-4 h-4" />
+              </button>
+            </li>
+            <!-- Picked now, uploaded on save -->
+            <li v-for="(proof, index) in form.proofs" :key="`new-${index}-${proof.file.name}`" class="flex items-center gap-3 p-2 border border-dashed border-ui-accent/40 bg-ui-accent-soft/40 rounded-ui-control">
+              <img v-if="proof.url" :src="proof.url" :alt="$t('finance.cashBook.proof.preview')" class="w-11 h-11 rounded-md object-cover border border-ui-line shrink-0" />
+              <span v-else class="w-11 h-11 rounded-md bg-ui-surface flex items-center justify-center shrink-0"><FileText class="w-5 h-5 text-ui-muted" /></span>
+              <div class="min-w-0 flex-1">
+                <p class="text-ui-small text-ui-ink font-medium truncate">{{ proof.file.name }}</p>
+                <p class="text-ui-cap text-ui-muted"><span class="tabular-nums">{{ formatFileSize(proof.file.size) }}</span> · {{ $t('finance.cashBook.proof.uploadedOnSave') }}</p>
+              </div>
+              <button
+                type="button"
+                class="w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-faint hover:bg-ui-bad-soft hover:text-ui-bad shrink-0"
+                :aria-label="`${$t('common.actions.remove')}: ${proof.file.name}`"
+                :title="$t('common.actions.remove')"
+                @click="removeNewProof(index)"
+              >
+                <X class="w-4 h-4" />
+              </button>
+            </li>
+          </ul>
 
-          <!-- Nothing attached -->
+          <!-- Drop zone (also a button that opens the picker) -->
           <button
-            v-else
+            v-if="proofSlotsLeft > 0"
             type="button"
-            class="ui-press w-full flex items-center justify-center gap-2 px-3.5 py-3 border border-dashed border-ui-line-strong rounded-ui-control text-ui-small text-ui-muted hover:border-ui-accent hover:text-ui-accent transition-colors"
+            class="ui-press w-full flex flex-col items-center justify-center gap-1 px-3.5 py-4 border-2 border-dashed rounded-ui-control text-center transition-colors"
+            :class="dragActive ? 'border-ui-accent bg-ui-accent-soft text-ui-accent' : 'border-ui-line-strong text-ui-muted hover:border-ui-accent hover:text-ui-accent'"
             @click="proofInput?.click()"
+            @dragenter="onProofDragOver"
+            @dragover="onProofDragOver"
+            @dragleave="onProofDragLeave"
+            @drop="onProofDrop"
           >
-            <Upload class="w-4 h-4" /> {{ $t('finance.cashBook.proof.upload') }}
+            <Upload class="w-5 h-5" />
+            <span class="text-ui-small font-medium">{{ dragActive ? $t('finance.cashBook.proof.dropNow') : $t('finance.cashBook.proof.dropHere') }}</span>
+            <span class="text-ui-cap" :class="dragActive ? 'text-ui-accent' : 'text-ui-faint'">{{ $t('finance.cashBook.proof.hint', { n: proofSlotsLeft }) }}</span>
           </button>
-          <p v-if="existingProof && form.remove_proof && !form.proof" class="text-ui-cap text-ui-muted mt-1.5">
-            {{ $t('finance.cashBook.proof.willBeRemoved') }}
-            <button type="button" class="font-medium text-ui-accent hover:underline" @click="form.remove_proof = false">{{ $t('finance.cashBook.proof.undo') }}</button>
+          <p v-else class="text-ui-cap text-ui-muted">{{ $t('finance.cashBook.proof.full', { n: PROOF_MAX_FILES }) }}</p>
+
+          <p v-if="form.remove_proof_ids.length" class="text-ui-cap text-ui-muted mt-1.5">
+            {{ $t('finance.cashBook.proof.willBeRemovedCount', { n: form.remove_proof_ids.length }, form.remove_proof_ids.length) }}
+            <button type="button" class="font-medium text-ui-accent hover:underline" @click="undoRemoveProofs">{{ $t('finance.cashBook.proof.undo') }}</button>
           </p>
-          <input ref="proofInput" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" class="hidden" @change="onProofSelected" />
+          <input ref="proofInput" type="file" multiple accept="image/jpeg,image/png,image/webp,application/pdf" class="hidden" @change="onProofSelected" />
         </div>
 
         <UiAlert v-if="formError" tone="bad" :message="formError" class="sm:col-span-2" />
@@ -803,15 +868,26 @@ const fieldClass =
       </template>
     </UiModal>
 
-    <!-- PROOF VIEWER (kept small) -->
-    <UiModal :open="!!viewingProof" :title="$t('finance.cashBook.proof.title')" :description="viewingProof?.name || ''" size="sm" :z-index="150" @update:open="(v) => !v && (viewingProof = null)">
-      <div v-if="viewingProof?.is_image" class="bg-ui-subtle border border-ui-line rounded-ui-control flex items-center justify-center p-2">
-        <img :src="viewingProof?.url" :alt="viewingProof?.name" class="max-w-full object-contain rounded" style="max-height: 320px" />
+    <!-- PROOF VIEWER: one file at a time, arrows when there are several -->
+    <UiModal :open="!!viewingProof" :title="$t('finance.cashBook.proof.title')" :description="viewingProof?.name || ''" size="sm" :z-index="150" @update:open="(v) => !v && (viewer = null)">
+      <div class="relative">
+        <div v-if="viewingProof?.is_image" class="bg-ui-subtle border border-ui-line rounded-ui-control flex items-center justify-center p-2">
+          <img :src="viewingProof?.url" :alt="viewingProof?.name" class="max-w-full object-contain rounded" style="max-height: 320px" />
+        </div>
+        <div v-else class="bg-ui-subtle border border-ui-line rounded-ui-control flex flex-col items-center justify-center py-8">
+          <FileText class="w-10 h-10 text-ui-muted mb-2" />
+          <p class="text-ui-cap text-ui-muted">{{ $t('finance.cashBook.proof.pdfDocument') }}</p>
+        </div>
+        <template v-if="viewer && viewer.list.length > 1">
+          <button type="button" class="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-ui-surface/90 shadow-ui-raised flex items-center justify-center text-ui-ink hover:bg-ui-surface" :aria-label="$t('common.pagination.previous')" @click="stepProof(-1)">
+            <ChevronLeft class="w-5 h-5" />
+          </button>
+          <button type="button" class="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-ui-surface/90 shadow-ui-raised flex items-center justify-center text-ui-ink hover:bg-ui-surface" :aria-label="$t('common.pagination.next')" @click="stepProof(1)">
+            <ChevronRight class="w-5 h-5" />
+          </button>
+        </template>
       </div>
-      <div v-else class="bg-ui-subtle border border-ui-line rounded-ui-control flex flex-col items-center justify-center py-8">
-        <FileText class="w-10 h-10 text-ui-muted mb-2" />
-        <p class="text-ui-cap text-ui-muted">{{ $t('finance.cashBook.proof.pdfDocument') }}</p>
-      </div>
+      <p v-if="viewer && viewer.list.length > 1" class="text-center text-ui-cap text-ui-muted mt-2 tabular-nums">{{ viewer.index + 1 }} / {{ viewer.list.length }}</p>
       <template #footer>
         <UiButton variant="secondary" :href="viewingProof?.url" target="_blank" rel="noopener" :icon="ExternalLink" class="w-full">
           {{ viewingProof?.is_image ? $t('finance.cashBook.proof.openFull') : $t('finance.cashBook.proof.openPdf') }}

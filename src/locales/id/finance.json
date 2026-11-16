@@ -164,7 +164,8 @@
       "required": "Deskripsi, jumlah, dan tanggal wajib diisi.",
       "employeeRequired": "Pilih atas nama siapa pengeluaran ini.",
       "saveFailed": "Gagal menyimpan transaksi.",
-      "balanceFailed": "Gagal memperbarui saldo awal."
+      "balanceFailed": "Gagal memperbarui saldo awal.",
+      "proofTooMany": "Maksimal {n} file bukti per transaksi."
     },
     "tabs": {
       "all": "Semua Transaksi",
@@ -248,13 +249,15 @@
       "optional": "opsional",
       "preview": "Pratinjau",
       "uploadedOnSave": "Diunggah saat disimpan",
-      "replace": "Ganti",
-      "upload": "Unggah bukti (JPG, PNG, WEBP, PDF · maks 5 MB)",
-      "willBeRemoved": "Bukti saat ini akan dihapus saat disimpan.",
       "undo": "Urungkan",
       "pdfDocument": "Dokumen PDF",
       "openFull": "Buka ukuran penuh",
-      "openPdf": "Buka PDF"
+      "openPdf": "Buka PDF",
+      "dropHere": "Tarik & lepas file ke sini, atau klik untuk memilih",
+      "dropNow": "Lepaskan untuk menambahkan",
+      "hint": "JPG, PNG, WEBP, atau PDF · maks. 5 MB per file · {n} file lagi",
+      "full": "Sudah {n} file (maksimal). Hapus salah satu untuk menambah yang lain.",
+      "willBeRemovedCount": "{n} bukti akan dihapus saat disimpan."
     }
   }
 }
