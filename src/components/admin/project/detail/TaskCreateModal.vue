@@ -5,6 +5,7 @@ import { useAlertModalStore } from "@/stores/alertModal";
 import { TASK_TYPE_COLORS, getTaskTypeColorClasses } from "@/utils/styleHelpers";
 import { UiButton, UiInput, UiSelect } from "@/components/ui";
 import TaskPanel from "./TaskPanel.vue";
+import AssigneePicker from "./AssigneePicker.vue";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
@@ -59,6 +60,7 @@ const defaultFormData = () => ({
   image: null,
   type: "",
   color: null,
+  assignees: [],
 });
 
 const formData = ref(defaultFormData());
@@ -130,7 +132,8 @@ const handleSubmit = async () => {
   isSubmitting.value = true;
 
   try {
-    emit("created", { ...formData.value });
+    const { assignees, ...fields } = formData.value;
+    emit("created", { ...fields, assignee_ids: assignees.map((e) => e.id) }, assignees);
     closeModal();
   } catch (error) {
     console.error("Error creating task:", error);
@@ -150,6 +153,14 @@ const handleSubmit = async () => {
     <form id="task-create-form" @submit.prevent="handleSubmit" class="space-y-4">
       <!-- Task Name -->
       <UiInput v-model="formData.name" :label="$t('projects.tasks.form.name')" :icon="ClipboardList" :placeholder="$t('projects.tasks.form.namePlaceholder')" required />
+
+      <!-- Assignees -->
+      <div>
+        <p class="block text-ui-small font-medium text-ui-ink mb-1.5">
+          {{ $t("projects.tasks.detail.assignee") }} <span class="text-ui-muted font-normal">{{ $t("projects.tasks.form.optional") }}</span>
+        </p>
+        <AssigneePicker v-model="formData.assignees" :project-id="projectId" />
+      </div>
 
       <!-- Description -->
       <UiInput v-model="formData.description" :label="$t('common.labels.description')" :rows="3" :placeholder="$t('projects.tasks.form.descriptionPlaceholder')" />
