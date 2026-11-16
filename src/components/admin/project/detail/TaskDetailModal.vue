@@ -217,8 +217,60 @@ const closePanel = () => emit("close");
     </template>
 
     <div v-if="task" class="space-y-5">
-      <!-- Key facts -->
+      <!-- Key facts, same order as the new-task form: type, due date, assignees, then status / priority -->
       <div class="space-y-5 pb-5 border-b border-ui-line">
+        <!-- Type & colour -->
+        <div>
+          <h3 class="flex items-center gap-1.5 text-ui-over uppercase text-ui-muted mb-2">
+            <Tag class="w-3.5 h-3.5" /> {{ $t("projects.tasks.form.type") }}
+          </h3>
+          <template v-if="editable">
+            <input
+              v-model="type"
+              type="text"
+              list="task-type-suggestions-edit"
+              maxlength="100"
+              :aria-label="$t('projects.tasks.form.type')"
+              :placeholder="$t('projects.tasks.form.typePlaceholder')"
+              :class="[fieldClass, 'h-[38px] px-3 mb-3']"
+              @focus="focused = 'type'"
+              @blur="commitType"
+              @keydown.enter.prevent="$event.target.blur()"
+            />
+            <datalist id="task-type-suggestions-edit">
+              <option v-for="s in typeSuggestions" :key="s.type" :value="s.type" />
+            </datalist>
+            <div class="flex items-center gap-2 flex-wrap">
+              <button
+                v-for="swatch in TASK_TYPE_COLORS"
+                :key="swatch.key"
+                type="button"
+                :title="$t(`projects.colors.${swatch.key}`)"
+                :aria-label="$t(`projects.colors.${swatch.key}`)"
+                :aria-pressed="task.color === swatch.key"
+                class="ui-press w-6 h-6 rounded-full"
+                :class="[swatch.dot, task.color === swatch.key ? `ring-2 ring-offset-2 ${swatch.ring}` : 'opacity-60 hover:opacity-100']"
+                @click="pickColor(swatch.key)"
+              ></button>
+              <span v-if="task.color" class="text-ui-cap font-medium text-ui-text ml-1">{{ $t(`projects.colors.${typeColor.key}`) }}</span>
+            </div>
+          </template>
+          <span v-else-if="task.type" class="inline-flex items-center gap-1.5 h-[22px] px-2 rounded-md bg-ui-subtle text-ui-cap font-medium text-ui-text">
+            <span v-if="task.color" class="w-1.5 h-1.5 rounded-full" :class="typeColor.dot" aria-hidden="true"></span>
+            {{ task.type }}
+          </span>
+          <p v-else class="text-ui-small text-ui-faint">{{ $t("projects.tasks.detail.noType") }}</p>
+        </div>
+
+        <div>
+          <h3 class="text-ui-over uppercase text-ui-muted mb-2">{{ $t("projects.tasks.form.dueDate") }}</h3>
+          <div v-if="editable" @change="changeDueDate($event.target.value)">
+            <UiInput v-model="dueDate" type="date" :icon="Calendar" :aria-label="$t('projects.tasks.form.dueDate')" />
+          </div>
+          <p v-else class="flex items-center gap-2 text-ui-small text-ui-ink tabular-nums">
+            <Calendar class="w-4 h-4 text-ui-faint" />{{ task.due_date ? formatDate(task.due_date) : "-" }}
+          </p>
+        </div>
         <div>
           <h3 class="text-ui-over uppercase text-ui-muted mb-2">{{ $t("projects.tasks.detail.assignee") }}</h3>
           <AssigneePicker v-model="assignees" :project-id="projectId" :disabled="!editable" />
@@ -235,59 +287,6 @@ const closePanel = () => emit("close");
             <UiBadge v-else :tone="PRIORITY_TONES[task.priority] || 'neutral'" dot class="capitalize">{{ priorityLabel(task.priority) }}</UiBadge>
           </div>
         </div>
-
-        <div>
-          <h3 class="text-ui-over uppercase text-ui-muted mb-2">{{ $t("projects.tasks.form.dueDate") }}</h3>
-          <div v-if="editable" @change="changeDueDate($event.target.value)">
-            <UiInput v-model="dueDate" type="date" :icon="Calendar" :aria-label="$t('projects.tasks.form.dueDate')" />
-          </div>
-          <p v-else class="flex items-center gap-2 text-ui-small text-ui-ink tabular-nums">
-            <Calendar class="w-4 h-4 text-ui-faint" />{{ task.due_date ? formatDate(task.due_date) : "-" }}
-          </p>
-        </div>
-      </div>
-
-      <!-- Type & colour -->
-      <div>
-        <h3 class="flex items-center gap-1.5 text-ui-over uppercase text-ui-muted mb-2">
-          <Tag class="w-3.5 h-3.5" /> {{ $t("projects.tasks.form.type") }}
-        </h3>
-        <template v-if="editable">
-          <input
-            v-model="type"
-            type="text"
-            list="task-type-suggestions-edit"
-            maxlength="100"
-            :aria-label="$t('projects.tasks.form.type')"
-            :placeholder="$t('projects.tasks.form.typePlaceholder')"
-            :class="[fieldClass, 'h-[38px] px-3 mb-3']"
-            @focus="focused = 'type'"
-            @blur="commitType"
-            @keydown.enter.prevent="$event.target.blur()"
-          />
-          <datalist id="task-type-suggestions-edit">
-            <option v-for="s in typeSuggestions" :key="s.type" :value="s.type" />
-          </datalist>
-          <div class="flex items-center gap-2 flex-wrap">
-            <button
-              v-for="swatch in TASK_TYPE_COLORS"
-              :key="swatch.key"
-              type="button"
-              :title="$t(`projects.colors.${swatch.key}`)"
-              :aria-label="$t(`projects.colors.${swatch.key}`)"
-              :aria-pressed="task.color === swatch.key"
-              class="ui-press w-6 h-6 rounded-full"
-              :class="[swatch.dot, task.color === swatch.key ? `ring-2 ring-offset-2 ${swatch.ring}` : 'opacity-60 hover:opacity-100']"
-              @click="pickColor(swatch.key)"
-            ></button>
-            <span v-if="task.color" class="text-ui-cap font-medium text-ui-text ml-1">{{ $t(`projects.colors.${typeColor.key}`) }}</span>
-          </div>
-        </template>
-        <span v-else-if="task.type" class="inline-flex items-center gap-1.5 h-[22px] px-2 rounded-md bg-ui-subtle text-ui-cap font-medium text-ui-text">
-          <span v-if="task.color" class="w-1.5 h-1.5 rounded-full" :class="typeColor.dot" aria-hidden="true"></span>
-          {{ task.type }}
-        </span>
-        <p v-else class="text-ui-small text-ui-faint">{{ $t("projects.tasks.detail.noType") }}</p>
       </div>
 
       <!-- Image -->
