@@ -815,6 +815,10 @@ button:disabled,
   left: 50%;
 }
 
+.left-2 {
+  left: 0.5rem;
+}
+
 .left-2\.5 {
   left: 0.625rem;
 }
@@ -3691,6 +3695,10 @@ button:disabled,
 .bg-ui-accent-soft {
   --tw-bg-opacity: 1;
   background-color: rgb(var(--ui-accent-soft) / var(--tw-bg-opacity, 1));
+}
+
+.bg-ui-accent-soft\/40 {
+  background-color: rgb(var(--ui-accent-soft) / 0.4);
 }
 
 .bg-ui-accent-soft\/50 {
