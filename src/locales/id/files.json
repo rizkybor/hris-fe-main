@@ -4,7 +4,6 @@
   "listTitle": "Arsip File",
   "totalFiles": "{n} file",
   "searchPlaceholder": "Cari arsip...",
-  "uploadedOn": "Diunggah {date}",
   "noResultsFor": "Coba kata kunci lain untuk \"{query}\"",
   "itemLabel": "file",
   "stats": {

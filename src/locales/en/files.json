@@ -4,7 +4,6 @@
   "listTitle": "File Archives",
   "totalFiles": "{n} total file | {n} total files",
   "searchPlaceholder": "Search archives...",
-  "uploadedOn": "Uploaded {date}",
   "noResultsFor": "Try searching with a different keyword for \"{query}\"",
   "itemLabel": "files",
   "stats": {

@@ -6,7 +6,6 @@ import {
   Archive,
   Upload,
   Calendar,
-  Eye,
   Pencil,
   Download,
   Trash2,
@@ -28,6 +27,7 @@ import { useFilesCompanyStore } from "@/stores/filesCompany";
 import { UiPageHeader, UiButton, UiBadge, UiStat, UiInput, UiEmpty, UiPagination, UiConfirmDialog } from "@/components/ui";
 import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
 import { localeTag } from "@/i18n";
+import { formatFileSize, cloudinaryThumb } from "@/utils/fileUtils";
 
 const archiveStore = useFilesCompanyStore();
 const { archives, statistics, loading, success, error, pagination } =
@@ -48,19 +48,27 @@ const formatDate = (date) => {
   });
 };
 
-// File-type presentation so the archive list reads at a glance instead of
-// every row wearing the same generic icon.
+// File-type presentation for the card cover: icon and a tint per kind.
 const fileTypeMeta = (mime) => {
-  if (!mime) return { icon: FileIcon, class: "from-gray-400 to-gray-500" };
-  if (mime.startsWith("image/")) return { icon: FileImage, class: "from-emerald-500 to-emerald-600" };
-  if (mime === "application/pdf") return { icon: FileText, class: "from-red-500 to-red-600" };
+  if (!mime) return { icon: FileIcon, tint: "bg-ui-subtle", ink: "text-ui-muted", label: "bg-ui-muted" };
+  if (mime.startsWith("image/")) return { icon: FileImage, tint: "bg-emerald-500/10", ink: "text-emerald-600", label: "bg-emerald-600" };
+  if (mime === "application/pdf") return { icon: FileText, tint: "bg-red-500/10", ink: "text-red-600", label: "bg-red-600" };
   if (mime.includes("spreadsheet") || mime.includes("excel") || mime === "text/csv")
-    return { icon: FileSpreadsheet, class: "from-green-600 to-green-700" };
+    return { icon: FileSpreadsheet, tint: "bg-green-600/10", ink: "text-green-700", label: "bg-green-700" };
   if (mime.includes("zip") || mime.includes("compressed") || mime.includes("archive"))
-    return { icon: FileArchive, class: "from-amber-500 to-amber-600" };
+    return { icon: FileArchive, tint: "bg-amber-500/10", ink: "text-amber-600", label: "bg-amber-600" };
   if (mime.includes("word") || mime === "application/msword")
-    return { icon: FileText, class: "from-blue-500 to-blue-600" };
-  return { icon: FileIcon, class: "from-primary-500 to-primary-600" };
+    return { icon: FileText, tint: "bg-blue-500/10", ink: "text-blue-600", label: "bg-blue-600" };
+  if (mime.includes("presentation") || mime.includes("powerpoint"))
+    return { icon: FileText, tint: "bg-orange-500/10", ink: "text-orange-600", label: "bg-orange-600" };
+  return { icon: FileIcon, tint: "bg-ui-subtle", ink: "text-ui-muted", label: "bg-ui-muted" };
+};
+const isImage = (archive) => String(archive.type_file || "").startsWith("image/") && !!archive.document_path;
+// Covers that failed to load fall back to the document illustration.
+const brokenCovers = ref(new Set());
+const coverUrl = (archive) => (isImage(archive) && !brokenCovers.value.has(archive.id) ? cloudinaryThumb(archive.document_path, { width: 640, height: 360 }) : "");
+const markBroken = (archive) => {
+  brokenCovers.value = new Set(brokenCovers.value).add(archive.id);
 };
 
 // Extension badge shown next to the neutral file icon (redesign).
@@ -206,63 +214,88 @@ const handleDelete = async () => {
           <article
             v-for="archive in archives"
             :key="archive.id"
-            class="ui-lift bg-ui-surface border border-ui-line rounded-ui-card p-4 flex flex-col min-w-0"
+            class="ui-lift group bg-ui-surface border border-ui-line rounded-ui-card overflow-hidden flex flex-col min-w-0"
           >
-            <div class="flex items-start gap-3">
-              <div class="relative w-11 h-11 rounded-ui-control bg-ui-subtle text-ui-muted flex items-center justify-center shrink-0">
-                <component :is="fileTypeMeta(archive.type_file).icon" class="w-5 h-5" />
+            <!-- Cover: the picture itself for images, a document sheet for the rest -->
+            <router-link
+              :to="{ name: 'admin.files-company.detail', params: { id: archive.id } }"
+              class="relative block aspect-[16/9] overflow-hidden border-b border-ui-line"
+              :class="coverUrl(archive) ? 'bg-ui-subtle' : fileTypeMeta(archive.type_file).tint"
+              :aria-label="archive.document_name"
+              tabindex="-1"
+            >
+              <img
+                v-if="coverUrl(archive)"
+                :src="coverUrl(archive)"
+                :alt="archive.document_name"
+                loading="lazy"
+                decoding="async"
+                width="640"
+                height="360"
+                class="w-full h-full object-cover transition-transform duration-ui-base group-hover:scale-[1.02]"
+                @error="markBroken(archive)"
+              />
+              <div v-else class="absolute inset-0 flex items-center justify-center">
+                <div class="relative w-[88px] h-[108px] rounded-[6px] bg-ui-surface border border-ui-line shadow-ui-raised transition-transform duration-ui-base group-hover:-translate-y-0.5">
+                  <span class="absolute top-0 right-0 w-5 h-5 bg-ui-subtle rounded-bl-[6px] border-l border-b border-ui-line" aria-hidden="true"></span>
+                  <div class="absolute left-3 right-6 top-4 space-y-1.5" aria-hidden="true">
+                    <span class="block h-1 rounded-full bg-ui-line"></span>
+                    <span class="block h-1 w-4/5 rounded-full bg-ui-line"></span>
+                  </div>
+                  <component :is="fileTypeMeta(archive.type_file).icon" class="absolute left-1/2 top-[52px] -translate-x-1/2 w-6 h-6" :class="fileTypeMeta(archive.type_file).ink" />
+                  <span
+                    class="absolute left-0 bottom-3 px-1.5 py-0.5 rounded-r-[4px] text-[10px] font-semibold tracking-wide text-white font-mono"
+                    :class="fileTypeMeta(archive.type_file).label"
+                  >{{ fileExt(archive.document_path || archive.document_name, archive.type_file) }}</span>
+                </div>
               </div>
-              <div class="flex-1 min-w-0">
-                <router-link
-                  :to="{ name: 'admin.files-company.detail', params: { id: archive.id } }"
-                  class="block text-ui-h3 text-ui-ink truncate hover:text-ui-accent"
-                  :title="archive.document_name"
-                >
-                  {{ archive.document_name }}
-                </router-link>
-                <p v-if="archive.description" class="text-ui-small text-ui-muted truncate">{{ archive.description }}</p>
-                <p v-else class="text-ui-small text-ui-faint">—</p>
-              </div>
-              <UiBadge tone="outline" class="shrink-0 font-mono">{{ fileExt(archive.document_path || archive.document_name, archive.type_file) }}</UiBadge>
-            </div>
+              <UiBadge v-if="coverUrl(archive)" tone="neutral" class="absolute top-2.5 left-2.5 font-mono shadow-ui-raised">{{ fileExt(archive.document_path || archive.document_name, archive.type_file) }}</UiBadge>
+            </router-link>
 
-            <div class="flex items-center gap-2 mt-4 pt-3 border-t border-ui-line">
-              <p class="text-ui-cap text-ui-muted flex-1 min-w-0 truncate">{{ $t("files.uploadedOn", { date: formatDate(archive.created_at) }) }}</p>
-              <div class="flex items-center gap-0.5 -mr-1.5">
-                <button
-                  type="button"
-                  :class="iconBtn"
-:title="$t('files.actions.download')"
-                  :aria-label="$t('files.actions.download')"
-                  @click="archiveStore.downloadArchive(archive)"
-                >
-                  <Download class="w-4 h-4" />
-                </button>
-                <router-link
-                  :to="{ name: 'admin.files-company.detail', params: { id: archive.id } }"
-                  :class="iconBtn"
-:title="$t('files.actions.view')"
-                  :aria-label="$t('files.actions.view')"
-                >
-                  <Eye class="w-4 h-4" />
-                </router-link>
-                <router-link
-                  :to="{ name: 'admin.files-company.edit', params: { id: archive.id } }"
-                  :class="iconBtn"
-:title="$t('files.actions.edit')"
-                  :aria-label="$t('files.actions.edit')"
-                >
-                  <Pencil class="w-4 h-4" />
-                </router-link>
-                <button
-                  type="button"
-                  class="ui-press w-8 h-8 rounded-ui-control flex items-center justify-center text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad"
-:title="$t('files.actions.delete')"
-                  :aria-label="$t('files.actions.delete')"
-                  @click="confirmDelete(archive)"
-                >
-                  <Trash2 class="w-4 h-4" />
-                </button>
+            <div class="p-4 flex flex-col flex-1 min-w-0">
+              <router-link
+                :to="{ name: 'admin.files-company.detail', params: { id: archive.id } }"
+                class="block text-ui-h3 text-ui-ink truncate hover:text-ui-accent"
+                :title="archive.document_name"
+              >
+                {{ archive.document_name }}
+              </router-link>
+              <p v-if="archive.description" class="text-ui-small text-ui-muted truncate mt-0.5" :title="archive.description">{{ archive.description }}</p>
+              <p v-else class="text-ui-small text-ui-faint mt-0.5">—</p>
+
+              <div class="flex items-center gap-2 mt-auto pt-3">
+                <p class="text-ui-cap text-ui-muted flex-1 min-w-0 truncate tabular-nums">
+                  <span class="font-medium text-ui-text">{{ formatFileSize(archive.size_file) }}</span>
+                  <span class="text-ui-faint"> · </span>{{ formatDate(archive.created_at) }}
+                </p>
+                <div class="flex items-center gap-0.5 -mr-1.5">
+                  <button
+                    type="button"
+                    :class="iconBtn"
+                    :title="$t('files.actions.download')"
+                    :aria-label="$t('files.actions.download')"
+                    @click="archiveStore.downloadArchive(archive)"
+                  >
+                    <Download class="w-4 h-4" />
+                  </button>
+                  <router-link
+                    :to="{ name: 'admin.files-company.edit', params: { id: archive.id } }"
+                    :class="iconBtn"
+                    :title="$t('files.actions.edit')"
+                    :aria-label="$t('files.actions.edit')"
+                  >
+                    <Pencil class="w-4 h-4" />
+                  </router-link>
+                  <button
+                    type="button"
+                    class="ui-press w-8 h-8 rounded-ui-control flex items-center justify-center text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad"
+                    :title="$t('files.actions.delete')"
+                    :aria-label="$t('files.actions.delete')"
+                    @click="confirmDelete(archive)"
+                  >
+                    <Trash2 class="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
           </article>

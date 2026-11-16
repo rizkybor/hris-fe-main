@@ -1,4 +1,5 @@
 <script setup>
+import { formatFileSize } from "@/utils/fileUtils";
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
@@ -37,12 +38,7 @@ const formatDate = (date) => {
   });
 };
 
-const formatSize = (bytes) => {
-  if (!bytes) return "-";
-  const kb = bytes / 1024;
-  if (kb < 1024) return `${kb.toFixed(2)} KB`;
-  return `${(kb / 1024).toFixed(2)} MB`;
-};
+const formatSize = formatFileSize;
 
 onMounted(async () => {
   try {
