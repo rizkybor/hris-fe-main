@@ -347,7 +347,7 @@ onMounted(async () => {
                 name="name"
                 type="text"
                 v-model="form.name"
-                :label="$t('teams.form.name') + ' *'"
+                :label="$t('teams.form.name')" required
                 :placeholder="$t('teams.form.namePlaceholder')"
                 :icon="Users"
                 :error="error?.name?.join(', ')"
@@ -357,7 +357,7 @@ onMounted(async () => {
               <UiSelect
                 id="department"
                 v-model="form.department"
-                :label="$t('teams.form.department') + ' *'"
+                :label="$t('teams.form.department')" required
                 :placeholder="$t('teams.form.departmentPlaceholder')"
                 :options="departments"
                 :error="error?.department?.join(', ')"

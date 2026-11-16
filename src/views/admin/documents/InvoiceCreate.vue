@@ -1,4 +1,5 @@
 <script setup>
+import { toDateInput, todayLocal } from "@/utils/dateUtils";
 import { ref, computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
@@ -33,16 +34,17 @@ const fillForm = (invoice) => {
   form.value.client_email = invoice.client_email || "";
   form.value.client_phone = invoice.client_phone || "";
   form.value.client_npwp = invoice.client_npwp || "";
-  form.value.date = invoice.date;
-  form.value.items = invoice.items?.length ? invoice.items : form.value.items;
-  form.value.ppn_percentage = invoice.ppn_percentage || 0;
-  form.value.admin_fee = invoice.admin_fee || 0;
-  form.value.icann_fee = invoice.icann_fee || 0;
+  form.value.date = toDateInput(invoice.date);
+  form.value.items = invoice.items?.length ? invoice.items.map((item) => ({ ...item, total: Number(item.total) || 0 })) : form.value.items;
+  // Decimal casts arrive as strings ("11.00").
+  form.value.ppn_percentage = Number(invoice.ppn_percentage) || 0;
+  form.value.admin_fee = Number(invoice.admin_fee) || 0;
+  form.value.icann_fee = Number(invoice.icann_fee) || 0;
   form.value.bank_name = invoice.bank_name || "";
   form.value.bank_account = invoice.bank_account || "";
   form.value.terms = invoice.terms || "";
   form.value.pph23_type = invoice.pph23_type;
-  form.value.pph23_percent = invoice.pph23_percent;
+  form.value.pph23_percent = invoice.pph23_percent != null ? Number(invoice.pph23_percent) : null;
   if (invoice.pph23_type) applyPph23.value = true;
 };
 
@@ -59,7 +61,7 @@ const form = ref({
   client_email: "",
   client_phone: "",
   client_npwp: "",
-  date: new Date().toISOString().slice(0, 10),
+  date: todayLocal(),
   items: [{ description: "", quantity: "", rate: "", total: 0 }],
   ppn_percentage: 0,
   admin_fee: 0,
@@ -101,7 +103,11 @@ const removeItem = (i) => form.value.items.splice(i, 1);
 const handleBankNameChange = () => {
   const selected = bankAccounts.value.find((a) => a.bank_name === form.value.bank_name);
   form.value.bank_account = selected?.account_number || "";
+  bankAccountError.value = "";
 };
+// The account number is read-only (filled from the chosen bank), and the
+// browser skips "required" on read-only fields, so it's checked here.
+const bankAccountError = ref("");
 
 const subtotal = computed(() => form.value.items.reduce((sum, item) => sum + (Number(item.total) || 0), 0));
 const ppnAmount = computed(() => Math.round(subtotal.value * ((Number(form.value.ppn_percentage) || 0) / 100)));
@@ -127,17 +133,25 @@ const handlePph23TypeChange = () => {
   }
 };
 
+// An emptied number field means 0 (the API columns aren't nullable).
+const num = (value) => (value === "" || value == null ? 0 : Number(value) || 0);
+
 const handleSubmit = async () => {
   errorMessage.value = "";
+  bankAccountError.value = "";
+  if (!form.value.bank_name || !String(form.value.bank_account || "").trim()) {
+    bankAccountError.value = t(form.value.bank_name ? "documents.invoice.form.errors.bankAccountMissing" : "documents.invoice.form.errors.bankRequired");
+    errorMessage.value = bankAccountError.value;
+    return;
+  }
   submitting.value = true;
   try {
     if (isEditMode.value) {
-      // Numbering mode / invoice_number aren't editable once issued -- only
-      // the content fields InvoiceUpdateRequest actually validates.
+      // The number (and the client code in it) is fixed once issued, so
+      // neither is sent; a manually numbered invoice has no client code.
       const payload = {
         project_id: form.value.project_id || null,
         faktur_pajak_number: form.value.faktur_pajak_number,
-        client_code: form.value.client_code,
         client_name: form.value.client_name,
         client_pic: form.value.client_pic,
         client_email: form.value.client_email,
@@ -145,9 +159,9 @@ const handleSubmit = async () => {
         client_npwp: form.value.client_npwp,
         date: form.value.date,
         items: form.value.items,
-        ppn_percentage: form.value.ppn_percentage,
-        admin_fee: form.value.admin_fee,
-        icann_fee: form.value.icann_fee,
+        ppn_percentage: num(form.value.ppn_percentage),
+        admin_fee: num(form.value.admin_fee),
+        icann_fee: num(form.value.icann_fee),
         bank_name: form.value.bank_name,
         bank_account: form.value.bank_account,
         terms: form.value.terms,
@@ -164,7 +178,12 @@ const handleSubmit = async () => {
       return;
     }
 
-    const payload = { ...form.value };
+    const payload = {
+      ...form.value,
+      ppn_percentage: num(form.value.ppn_percentage),
+      admin_fee: num(form.value.admin_fee),
+      icann_fee: num(form.value.icann_fee),
+    };
     if (payload.numbering_mode === "manual") {
       delete payload.client_code;
     } else {
@@ -188,7 +207,12 @@ const lbl = "block text-ui-small font-medium text-ui-ink mb-1.5";
 const hintCls = "text-ui-cap text-ui-muted mt-1.5";
 const rp = (n) => `Rp ${(Number(n) || 0).toLocaleString("id-ID")}`;
 const projectOptions = computed(() => [{ value: "", label: t("documents.invoice.form.noProject") }, ...projects.value.map((p) => ({ value: p.id, label: p.name }))]);
-const bankOptions = computed(() => bankAccounts.value.map((a) => ({ value: a.bank_name, label: a.bank_name })));
+// The invoice's own bank stays selectable even if it's no longer in the list.
+const bankOptions = computed(() => {
+  const list = bankAccounts.value.map((a) => ({ value: a.bank_name, label: a.bank_name }));
+  const current = form.value.bank_name;
+  return current && !list.some((o) => o.value === current) ? [{ value: current, label: current }, ...list] : list;
+});
 const pphTypeOptions = computed(() => pphTypes.value.map((t) => ({ value: t.value, label: t.label })));
 const onApplyPph23 = (value) => {
   applyPph23.value = value;
@@ -240,7 +264,15 @@ const onApplyPph23 = (value) => {
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <UiInput
-              v-if="isEditMode || form.numbering_mode === 'automatic'"
+              v-if="isEditMode && form.client_code"
+              :model-value="form.client_code"
+              :label="$t('documents.invoice.form.clientCode')"
+              readonly
+              mono
+              :hint="$t('documents.invoice.form.clientCodeFixed')"
+            />
+            <UiInput
+              v-else-if="!isEditMode && form.numbering_mode === 'automatic'"
               v-model="form.client_code"
               :label="$t('documents.invoice.form.clientCode')"
               required
@@ -249,7 +281,7 @@ const onApplyPph23 = (value) => {
               :hint="!isEditMode ? $t('documents.invoice.form.clientCodeHint') : ''"
             />
             <UiInput
-              v-else
+              v-else-if="!isEditMode"
               v-model="form.invoice_number"
               :label="$t('documents.invoice.form.invoiceNumber')"
               required
@@ -336,13 +368,14 @@ const onApplyPph23 = (value) => {
             </div>
             <UiSelect
               v-model="form.bank_name"
+              required
               :options="bankOptions"
               :label="$t('documents.shared.bankName')"
               :placeholder="$t('documents.shared.selectBank')"
               :hint="bankAccounts.length === 0 ? $t('documents.shared.noBankAccounts') : ''"
               @change="handleBankNameChange"
             />
-            <UiInput v-model="form.bank_account" :label="$t('documents.shared.accountNumber')" readonly mono />
+            <UiInput v-model="form.bank_account" :label="$t('documents.shared.accountNumber')" required readonly mono :error="bankAccountError" />
             <UiInput v-model="form.terms" :rows="3" :label="$t('documents.invoice.form.terms')" class="md:col-span-2" />
             <div class="md:col-span-2 rounded-ui-control border border-ui-line p-3.5">
               <UiSwitch

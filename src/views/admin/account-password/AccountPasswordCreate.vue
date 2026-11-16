@@ -144,12 +144,14 @@ const submit = async () => {
               class="md:col-span-2"
               v-model="form.label_password"
               :label="$t('credentials.form.labelRequired')"
+              required
               :icon="Tag"
               :placeholder="$t('credentials.form.labelPlaceholder')"
             />
             <UiInput
               v-model="form.username_email"
               :label="$t('credentials.form.usernameRequired')"
+              required
               mono
               :icon="User"
               :placeholder="$t('credentials.form.usernamePlaceholder')"
@@ -173,7 +175,7 @@ const submit = async () => {
               <h3 class="text-ui-h2 text-ui-ink">{{ $t("credentials.fields.password") }}</h3>
             </div>
           </template>
-          <label for="credential-password" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("credentials.form.passwordRequired") }}</label>
+          <label for="credential-password" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("credentials.form.passwordRequired") }}<span class="text-ui-bad"> *</span></label>
           <div class="relative">
             <Key class="absolute left-3 top-[11px] w-4 h-4 text-ui-faint pointer-events-none" />
             <input

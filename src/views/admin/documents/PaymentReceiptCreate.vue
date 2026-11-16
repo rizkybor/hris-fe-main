@@ -1,4 +1,5 @@
 <script setup>
+import { toDateInput, todayLocal } from "@/utils/dateUtils";
 import { ref, computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
@@ -31,7 +32,7 @@ const form = ref({
   numbering_mode: "automatic",
   client_code: "",
   receipt_number: "",
-  date: new Date().toISOString().slice(0, 10),
+  date: todayLocal(),
   amount: 0,
   pph23_type: null,
   pph23_percent: null,
@@ -50,14 +51,25 @@ const applyPph23 = ref(false);
 const submitting = ref(false);
 const errorMessage = ref("");
 
+// The receipt's own invoice, which may be older than the picker's list.
+const linkedInvoice = ref(null);
+const allInvoices = computed(() => {
+  const linked = linkedInvoice.value;
+  return linked && !invoices.value.some((i) => i.id === linked.id) ? [linked, ...invoices.value] : invoices.value;
+});
+
 const fillForm = (receipt) => {
   existingReceiptNumber.value = receipt.receipt_number;
+  linkedInvoice.value = receipt.invoice?.id ? receipt.invoice : null;
   form.value.client_code = receipt.client_code || "";
-  form.value.date = receipt.date;
-  form.value.amount = receipt.amount;
-  form.value.pph23_type = receipt.pph23_type;
-  form.value.pph23_percent = receipt.pph23_percent;
-  form.value.pph23_amount = receipt.pph23_amount;
+  form.value.date = toDateInput(receipt.date);
+  // Decimal casts arrive as strings ("1636600.00").
+  form.value.amount = Number(receipt.amount) || 0;
+  // PPh 23 is on when a type was chosen (a stored "0.00" alone doesn't count).
+  const hasPph = !!receipt.pph23_type;
+  form.value.pph23_type = hasPph ? receipt.pph23_type : null;
+  form.value.pph23_percent = hasPph && receipt.pph23_percent != null ? Number(receipt.pph23_percent) : null;
+  form.value.pph23_amount = hasPph ? Number(receipt.pph23_amount) || 0 : null;
   form.value.received_from = receipt.received_from || "";
   form.value.for_payment_of = receipt.for_payment_of || "";
   form.value.invoice_id = receipt.invoice_id || "";
@@ -65,12 +77,8 @@ const fillForm = (receipt) => {
   form.value.recipient_name = receipt.recipient_name || "";
   form.value.use_signature = !!receipt.use_signature;
 
-  if (receipt.pph23_amount) {
-    applyPph23.value = true;
-    grossAmount.value = Number(receipt.amount) + Number(receipt.pph23_amount);
-  } else {
-    grossAmount.value = Number(receipt.amount);
-  }
+  applyPph23.value = hasPph;
+  grossAmount.value = form.value.amount + (form.value.pph23_amount || 0);
 };
 
 // Everything the page needs in one wave: the invoice picker, PPh types
@@ -129,7 +137,7 @@ const handlePph23TypeChange = () => {
 };
 
 const invoiceOptions = computed(() =>
-  invoices.value.filter((i) => i.status !== "cancelled" || i.id === Number(form.value.invoice_id))
+  allInvoices.value.filter((i) => i.status !== "cancelled" || i.id === Number(form.value.invoice_id))
 );
 
 const signatoryOptions = computed(() => {
@@ -146,7 +154,7 @@ const suggestForPayment = (invoice) => {
 };
 
 const handleInvoiceSelect = () => {
-  const invoice = invoices.value.find((i) => i.id === Number(form.value.invoice_id));
+  const invoice = allInvoices.value.find((i) => i.id === Number(form.value.invoice_id));
   if (invoice) {
     form.value.client_code = invoice.client_code || "";
     grossAmount.value = Number(invoice.total);
@@ -160,7 +168,7 @@ const handleInvoiceSelect = () => {
 };
 
 const selectedInvoiceNumber = computed(
-  () => invoices.value.find((i) => i.id === Number(form.value.invoice_id))?.invoice_number || ""
+  () => allInvoices.value.find((i) => i.id === Number(form.value.invoice_id))?.invoice_number || ""
 );
 
 const escapeRegex = (v) => v.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&");
@@ -179,10 +187,9 @@ const handleSubmit = async () => {
   submitting.value = true;
   try {
     if (isEditMode.value) {
-      // Numbering mode / receipt_number aren't editable once issued -- only
-      // the content fields PaymentReceiptUpdateRequest actually validates.
+      // The number (and the client code in it) is fixed once issued, so
+      // neither is sent; a manually numbered receipt has no client code.
       const payload = {
-        client_code: form.value.client_code,
         date: form.value.date,
         received_from: form.value.received_from,
         amount: form.value.amount,
@@ -198,7 +205,7 @@ const handleSubmit = async () => {
       const updated = await store.updateReceipt(editingId.value, payload);
       // The list shows the saved row without reloading (the response has no
       // relations, so the invoice number comes from the picker).
-      const invoice = invoices.value.find((i) => i.id === Number(payload.invoice_id));
+      const invoice = allInvoices.value.find((i) => i.id === Number(payload.invoice_id));
       store.patchRow(editingId.value, { ...updated, invoice: invoice ? { id: invoice.id, invoice_number: invoice.invoice_number } : null });
       markSaved();
       router.push({ name: "admin.payment-receipts.dashboard" });
@@ -229,7 +236,7 @@ const lbl = "block text-ui-small font-medium text-ui-ink mb-1.5";
 const rp = (n) => `Rp ${(Number(n) || 0).toLocaleString("id-ID")}`;
 const invoiceSelectOptions = computed(() => [
   { value: "", label: t("documents.receipt.form.noInvoice") },
-  ...invoiceOptions.value.map((i) => ({ value: i.id, label: `${i.invoice_number} - ${i.client_name}` })),
+  ...invoiceOptions.value.map((i) => ({ value: i.id, label: i.client_name ? `${i.invoice_number} - ${i.client_name}` : i.invoice_number })),
 ]);
 const paymentStatusOptions = computed(() => [
   { value: "paid", label: t("documents.shared.status.paid") },
@@ -308,7 +315,14 @@ const onApplyPph23 = (value) => {
                 :hint="$t('documents.shared.manualNumberHint')"
               />
             </template>
-            <UiInput v-else v-model="form.client_code" :label="$t('documents.invoice.form.clientCode')" required :placeholder="$t('documents.invoice.form.clientCodePlaceholder')" class="[&_input]:uppercase" />
+            <UiInput
+              v-else-if="form.client_code"
+              :model-value="form.client_code"
+              :label="$t('documents.invoice.form.clientCode')"
+              readonly
+              mono
+              :hint="$t('documents.receipt.form.clientCodeFixed')"
+            />
             <UiInput v-model="form.date" type="date" :label="$t('common.labels.date')" required />
             <UiInput v-model="form.received_from" :label="$t('documents.receipt.fields.receivedFrom')" required :placeholder="$t('documents.receipt.form.receivedFromPlaceholder')" class="md:col-span-2" />
             <div>

@@ -137,3 +137,14 @@ export const calculateWorkingDays = (startDate, endDate) => {
 
   return workingDays;
 };
+
+// "YYYY-MM-DD" for <input type="date"> from an API date, which may come as
+// "2026-11-12" or as a Laravel date cast "2026-11-12T00:00:00.000000Z".
+export const toDateInput = (value) => (value ? String(value).slice(0, 10) : "");
+
+// Today as "YYYY-MM-DD" in the device's time zone (toISOString() is UTC, so
+// before 07:00 WIB it would give yesterday).
+export const todayLocal = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
