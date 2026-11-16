@@ -232,8 +232,11 @@
       "errors": {
         "load": "Failed to load invoice.",
         "create": "Failed to create Invoice.",
-        "update": "Failed to update Invoice."
-      }
+        "update": "Failed to update Invoice.",
+        "bankRequired": "Please choose a bank.",
+        "bankAccountMissing": "This bank has no account number yet. Add it in Settings > Bank Accounts."
+      },
+      "clientCodeFixed": "Already part of the invoice number; can't be changed."
     },
     "list": {
       "title": "Invoice",
@@ -446,7 +449,8 @@
         "load": "Failed to load payment receipt.",
         "create": "Failed to create Payment Receipt.",
         "update": "Failed to update Payment Receipt."
-      }
+      },
+      "clientCodeFixed": "Already part of the receipt number; can't be changed."
     }
   },
   "purchaseOrder": {

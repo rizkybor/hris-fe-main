@@ -164,6 +164,7 @@ const submit = async () => {
           <UiInput
             id="file_name"
 :label="$t('files.form.nameRequiredLabel')"
+              required
             :placeholder="$t('files.form.namePlaceholder')"
             v-model="form.file_name"
             :error="nameError ? $t('files.form.nameRequired') : ''"

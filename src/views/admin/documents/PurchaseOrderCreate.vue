@@ -1,4 +1,5 @@
 <script setup>
+import { toDateInput, todayLocal } from "@/utils/dateUtils";
 import { ref, computed, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
@@ -19,7 +20,7 @@ const existingPoNumber = ref("");
 
 const form = ref({
   type: "E",
-  date: new Date().toISOString().slice(0, 10),
+  date: todayLocal(),
   title: "",
   client_name: "",
   client_address: "",
@@ -61,7 +62,7 @@ onMounted(async () => {
     const order = await store.fetchOrder(editingId.value);
     existingPoNumber.value = order.po_number;
     form.value.type = order.type;
-    form.value.date = order.date;
+    form.value.date = toDateInput(order.date);
     form.value.title = order.title;
     form.value.client_name = order.client_name;
     form.value.client_address = order.client_address || "";

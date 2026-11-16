@@ -170,10 +170,11 @@ watch(
               </div>
             </template>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
-              <UiInput class="md:col-span-2" v-model="form.label_password" :label="$t('credentials.form.labelRequired')" :icon="Tag" />
+              <UiInput class="md:col-span-2" v-model="form.label_password" :label="$t('credentials.form.labelRequired')" required :icon="Tag" />
               <UiInput
                 v-model="form.username_email"
                 :label="$t('credentials.form.usernameRequired')"
+                required
                 mono
                 :icon="User"
                 :placeholder="$t('credentials.form.usernamePlaceholder')"

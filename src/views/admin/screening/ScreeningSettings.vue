@@ -524,16 +524,16 @@ const label = "block text-ui-small font-medium text-ui-ink mb-1.5";
     <UiModal :open="!!editing" :title="editing?.id ? $t('screening.settings.modal.editTitle') : $t('screening.settings.modal.addTitle')" @update:open="(v) => !v && (editing = null)">
       <form v-if="editing" id="catalog-item-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4" @submit.prevent="saveItem">
         <div class="sm:col-span-2">
-          <label for="ci-name" :class="label">{{ $t("common.labels.name") }}</label>
+          <label for="ci-name" :class="label">{{ $t("common.labels.name") }}<span class="text-ui-bad"> *</span></label>
           <input id="ci-name" v-model="editing.name" required maxlength="255" :class="field" />
         </div>
         <div>
-          <label for="ci-code" :class="label">{{ $t("screening.settings.modal.code") }}</label>
+          <label for="ci-code" :class="label">{{ $t("screening.settings.modal.code") }}<span class="text-ui-bad"> *</span></label>
           <input id="ci-code" v-model="editing.code" required maxlength="60" pattern="[a-z0-9-]+" :class="[field, 'font-mono text-ui-small']" />
           <p v-if="itemErrors.code" class="text-ui-cap text-ui-bad mt-1.5">{{ itemErrors.code[0] }}</p>
         </div>
         <div>
-          <label for="ci-category" :class="label">{{ $t("common.labels.category") }}</label>
+          <label for="ci-category" :class="label">{{ $t("common.labels.category") }}<span class="text-ui-bad"> *</span></label>
           <input id="ci-category" v-model="editing.category" required maxlength="60" :class="field" />
         </div>
         <div class="sm:col-span-2">

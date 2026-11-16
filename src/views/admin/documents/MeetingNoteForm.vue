@@ -216,7 +216,7 @@ const handleSubmit = async () => {
         <!-- Basics -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <UiInput v-model="form.document_number" :label="$t('documents.meetingNote.fields.number')" :placeholder="$t('documents.shared.autoNumberPlaceholder')" mono />
-          <UiSelect v-model="form.meeting_type" :label="$t('documents.meetingNote.fields.type')" :options="TYPE_OPTIONS" />
+          <UiSelect v-model="form.meeting_type" :label="$t('documents.meetingNote.fields.type')" :options="TYPE_OPTIONS" required />
           <UiInput v-model="form.meeting_date" type="datetime-local" :label="$t('documents.meetingNote.fields.dateTime')" required class="sm:col-span-2 lg:col-span-1" />
           <UiInput
             v-model="form.title"
