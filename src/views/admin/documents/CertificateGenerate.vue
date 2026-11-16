@@ -1,20 +1,21 @@
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
-import { Settings, Plus, Trash2, Hash, ClipboardPaste, ArrowLeft, Award } from "lucide-vue-next";
+import { Settings, Plus, Trash2, Hash, ClipboardPaste, ArrowLeft, Award, RectangleHorizontal, RectangleVertical, ListChecks } from "lucide-vue-next";
 import { useCertificateStore } from "@/stores/certificate";
 import SignatureToggle from "@/components/common/SignatureToggle.vue";
 import { can } from "@/helpers/permissionHelper";
 import { useUnsavedGuard } from "@/composables/useUnsavedGuard";
 import { invalidate } from "@/composables/useStaleFetch";
-import { UiPageHeader, UiButton, UiCard, UiInput, UiSelect, UiAlert, UiBadge, UiSpinner } from "@/components/ui";
+import { UiPageHeader, UiButton, UiCard, UiInput, UiSelect, UiSwitch, UiAlert, UiBadge, UiSpinner } from "@/components/ui";
 
 const { t } = useI18n();
 const store = useCertificateStore();
 const { templates } = storeToRefs(store);
 const router = useRouter();
+const route = useRoute();
 
 const form = ref({
   title: "",
@@ -27,9 +28,16 @@ const form = ref({
   category_code: "",
   program_code: "",
   certificate_template_id: "",
+  orientation: "landscape",
+  include_tasks: false,
+  use_hologram: false,
 });
 
-const recipients = ref([{ name: "" }]);
+// A recipient is a typed name, optionally linked to an employee (needed for
+// the completed-tasks page).
+const blankRecipient = () => ({ name: "", employee_id: "" });
+const recipients = ref([blankRecipient()]);
+const employees = ref([]);
 const bulkText = ref("");
 const showBulkPaste = ref(false);
 
@@ -39,16 +47,43 @@ const submitting = ref(false);
 const errorMessage = ref("");
 const successMessage = ref("");
 
-// Templates are fetched once per session (Settings keeps the list in step).
-onMounted(() => store.ensureTemplates().catch(() => {}));
-
 // Unsaved-changes guard: anything typed since the page opened.
 const snapshot = () => JSON.stringify([form.value, recipients.value]);
-const pristine = snapshot();
+let pristine = snapshot();
+
+// Templates are fetched once per session (Settings keeps the list in step).
+// Opened from an employee's page (?employee_id=…&start_date=…&end_date=…),
+// the first recipient and the period come prefilled.
+onMounted(async () => {
+  store.ensureTemplates().catch(() => {});
+  try {
+    employees.value = await store.fetchEmployeeOptions();
+  } catch {
+    employees.value = [];
+  }
+  const preset = employees.value.find((e) => String(e.id) === String(route.query.employee_id || ""));
+  if (preset) {
+    recipients.value = [{ name: preset.name, employee_id: preset.id }];
+    form.value.include_tasks = true;
+    if (typeof route.query.start_date === "string") form.value.start_date = route.query.start_date;
+    if (typeof route.query.end_date === "string") form.value.end_date = route.query.end_date;
+    pristine = snapshot();
+  }
+});
+
+const employeeOptions = computed(() => [
+  { value: "", label: t("documents.certificate.generate.notEmployee") },
+  ...employees.value.map((e) => ({ value: e.id, label: e.is_active ? e.name : `${e.name} (${t("documents.certificate.generate.accessEnded")})` })),
+]);
+const pickEmployee = (recipient) => {
+  const employee = employees.value.find((e) => e.id === recipient.employee_id);
+  if (employee) recipient.name = employee.name;
+};
+const linkedRecipients = computed(() => recipients.value.filter((r) => r.name.trim() && r.employee_id).length);
 let generated = false;
 useUnsavedGuard(() => !generated && snapshot() !== pristine);
 
-const addRecipient = () => recipients.value.push({ name: "" });
+const addRecipient = () => recipients.value.push(blankRecipient());
 const removeRecipient = (i) => recipients.value.splice(i, 1);
 
 const applyBulkPaste = () => {
@@ -57,7 +92,7 @@ const applyBulkPaste = () => {
     .map((n) => n.trim())
     .filter(Boolean);
   if (names.length === 0) return;
-  recipients.value = names.map((name) => ({ name }));
+  recipients.value = names.map((name) => ({ name, employee_id: "" }));
   bulkText.value = "";
   showBulkPaste.value = false;
 };
@@ -106,7 +141,7 @@ const handleSubmit = async () => {
       certificate_template_id: form.value.certificate_template_id || null,
       start_date: form.value.start_date || null,
       end_date: form.value.end_date || null,
-      recipients: cleanRecipients,
+      recipients: cleanRecipients.map((r) => ({ name: r.name.trim(), employee_id: r.employee_id || null })),
     };
     const result = await store.generate(payload);
     successMessage.value = result.isZip
@@ -115,7 +150,7 @@ const handleSubmit = async () => {
     generated = true;
     // The history and its counters show the new certificates on return.
     invalidate("certificates");
-    recipients.value = [{ name: "" }];
+    recipients.value = [blankRecipient()];
     preview.value = null;
     setTimeout(() => router.push({ name: "admin.certificates.dashboard" }), 1500);
   } catch (error) {
@@ -130,6 +165,10 @@ const handleSubmit = async () => {
 const templateOptions = computed(() => [
   { value: "", label: t("documents.certificate.generate.defaultTemplate") },
   ...templates.value.map((tpl) => ({ value: tpl.id, label: tpl.name })),
+]);
+const orientations = computed(() => [
+  { value: "landscape", icon: RectangleHorizontal, label: t("documents.certificate.generate.layout.landscape") },
+  { value: "portrait", icon: RectangleVertical, label: t("documents.certificate.generate.layout.portrait") },
 ]);
 const filledRecipients = computed(() => recipients.value.filter((r) => r.name).length);
 const submitLabel = computed(() =>
@@ -197,6 +236,45 @@ const submitLabel = computed(() =>
           </div>
         </UiCard>
 
+        <UiCard :title="$t('documents.certificate.generate.layout.title')">
+          <p class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("documents.certificate.generate.layout.orientation") }}</p>
+          <div class="grid grid-cols-2 gap-3 max-w-md" role="radiogroup" :aria-label="$t('documents.certificate.generate.layout.orientation')">
+            <button
+              v-for="opt in orientations"
+              :key="opt.value"
+              type="button"
+              role="radio"
+              :aria-checked="form.orientation === opt.value"
+              class="ui-press flex items-center gap-3 rounded-ui-control border px-3 py-2.5 text-left focus:outline-none focus-visible:shadow-ui-focus"
+              :class="form.orientation === opt.value ? 'border-ui-accent bg-ui-accent-soft text-ui-ink' : 'border-ui-line-strong bg-ui-surface text-ui-text hover:bg-ui-hover'"
+              @click="form.orientation = opt.value"
+            >
+              <component :is="opt.icon" class="w-5 h-5 shrink-0" :class="form.orientation === opt.value ? 'text-ui-accent' : 'text-ui-faint'" />
+              <span class="text-ui-small font-medium">{{ opt.label }}</span>
+            </button>
+          </div>
+
+          <div class="mt-5 pt-4 border-t border-ui-line">
+            <UiSwitch
+              v-model="form.use_hologram"
+              :label="$t('documents.certificate.generate.hologram.label')"
+              :description="$t('documents.certificate.generate.hologram.description')"
+            />
+          </div>
+
+          <div class="mt-4 pt-4 border-t border-ui-line">
+            <UiSwitch
+              v-model="form.include_tasks"
+              :label="$t('documents.certificate.generate.tasksPage.label')"
+              :description="$t('documents.certificate.generate.tasksPage.description')"
+            />
+            <p v-if="form.include_tasks && filledRecipients > linkedRecipients" class="mt-2 flex items-start gap-1.5 text-ui-cap text-ui-warn">
+              <ListChecks class="w-3.5 h-3.5 mt-px shrink-0" />
+              {{ $t("documents.certificate.generate.tasksPage.unlinked", { n: filledRecipients - linkedRecipients }) }}
+            </p>
+          </div>
+        </UiCard>
+
         <UiCard :title="$t('documents.certificate.generate.recipientsTitle')">
           <template #actions>
             <UiButton variant="ghost" size="sm" :icon="ClipboardPaste" @click="showBulkPaste = !showBulkPaste">{{ $t("documents.certificate.generate.bulkPaste") }}</UiButton>
@@ -211,9 +289,15 @@ const submitLabel = computed(() =>
           </div>
 
           <ol class="space-y-2">
-            <li v-for="(recipient, i) in recipients" :key="i" class="flex items-center gap-2">
-              <span class="text-ui-cap text-ui-faint tabular-nums w-6 shrink-0 text-right">{{ i + 1 }}.</span>
-              <UiInput v-model="recipient.name" :placeholder="$t('documents.certificate.generate.recipientName')" class="flex-1" />
+            <li v-for="(recipient, i) in recipients" :key="i" class="flex items-start sm:items-center gap-2">
+              <span class="text-ui-cap text-ui-faint tabular-nums w-6 shrink-0 text-right pt-2.5 sm:pt-0">{{ i + 1 }}.</span>
+              <div class="flex-1 min-w-0 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <template v-if="employees.length">
+                  <label :for="`certificate-recipient-employee-${i}`" class="sr-only">{{ $t("documents.certificate.generate.employee") }} {{ i + 1 }}</label>
+                  <UiSelect :id="`certificate-recipient-employee-${i}`" v-model="recipient.employee_id" :options="employeeOptions" @change="pickEmployee(recipient)" />
+                </template>
+                <UiInput v-model="recipient.name" :placeholder="$t('documents.certificate.generate.recipientName')" :class="employees.length ? '' : 'sm:col-span-2'" />
+              </div>
               <button
                 v-if="recipients.length > 1"
                 type="button"
@@ -255,6 +339,14 @@ const submitLabel = computed(() =>
                 <UiBadge v-if="isBulk" tone="warn" dot>{{ $t("documents.certificate.generate.bulkActive", { n: recipients.filter(r => r.name).length }) }}</UiBadge>
                 <UiBadge v-else tone="neutral">{{ $t("documents.certificate.generate.single") }}</UiBadge>
               </dd>
+            </div>
+            <div class="flex items-center justify-between gap-3 py-2">
+              <dt class="text-ui-muted">{{ $t("documents.certificate.generate.layout.orientation") }}</dt>
+              <dd class="text-ui-ink">{{ $t(`documents.certificate.generate.layout.${form.orientation}`) }}</dd>
+            </div>
+            <div class="flex items-center justify-between gap-3 py-2">
+              <dt class="text-ui-muted">{{ $t("documents.certificate.generate.tasksPage.short") }}</dt>
+              <dd class="text-ui-ink">{{ form.include_tasks ? $t("documents.certificate.generate.tasksPage.on", { n: linkedRecipients }) : $t("documents.certificate.generate.tasksPage.off") }}</dd>
             </div>
           </dl>
         </section>

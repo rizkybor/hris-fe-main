@@ -1,5 +1,6 @@
 <script setup>
 import { toDateInput, todayLocal } from "@/utils/dateUtils";
+import { localeTag } from "@/i18n";
 import { ref, computed, onMounted } from "vue";
 import { useRouter, useRoute, RouterLink } from "vue-router";
 import { useI18n } from "vue-i18n";
@@ -51,6 +52,14 @@ const TEMPLATES = {
   ST: {
     body:
       "Dear [name],\n\nIn connection with [reason for assignment], we hereby assign:\n\nName\t: [name]\nPosition\t: [position]\n\nTo carry out [task description] on [date/location].\n\nThis assignment letter is issued to be carried out to the best of one's ability and with full responsibility.",
+    useItems: false,
+    useSecondParty: false,
+    itemsPriced: false,
+    requiresEmployee: true,
+  },
+  SKT: {
+    body:
+      "The undersigned, on behalf of PT. Jendela Cakra Digital, hereby certifies that:\n\nName\t: [name]\nPosition\t: [position]\nPeriod of employment\t: [start date] - [end date]\n\nhas worked at PT. Jendela Cakra Digital during the period above and carried out their duties with full responsibility.\n\nThis reference letter is issued at the request of the person concerned, to be used as appropriate.",
     useItems: false,
     useSecondParty: false,
     itemsPriced: false,
@@ -183,6 +192,8 @@ onMounted(async () => {
     if (letter.status === "fulfilled" && letter.value) fillForm(letter.value);
     else errorMessage.value = t("documents.letter.form.errors.load");
     loadingLetter.value = false;
+  } else if (route.query.code) {
+    prefillFromQuery();
   }
   pristine = snapshot();
 });
@@ -201,6 +212,24 @@ const applyTemplate = () => {
   form.value.body = template.body.replace(/\n/g, "<br>");
   useItems.value = template.useItems;
   useSecondParty.value = template.useSecondParty;
+};
+
+// Opened from an employee's page (?code=SKT&employee_id=…&name=…&position=…
+// &start=…&end=…): a Surat Keterangan for that employee, ready to review.
+const prefillFromQuery = () => {
+  const q = route.query;
+  const code = letterCodes.value.find((c) => c.code === q.code);
+  if (!code) return;
+  form.value.letter_code_id = code.id;
+  form.value.template = "secondary";
+  form.value.subject = t("documents.letter.form.referenceSubject");
+  if (q.employee_id) form.value.employee_id = Number(q.employee_id);
+  applyTemplate();
+  const day = (value) => (value ? new Date(`${value}T00:00:00`).toLocaleDateString(localeTag(), { day: "numeric", month: "long", year: "numeric" }) : "");
+  const fill = { "[name]": q.name, "[position]": q.position, "[start date]": day(q.start), "[end date]": day(q.end) };
+  for (const [placeholder, value] of Object.entries(fill)) {
+    if (typeof value === "string" && value) form.value.body = form.value.body.replace(placeholder, value);
+  }
 };
 
 const addItem = () => items.value.push({ description: "", specification: "", qty: "", price: 0 });

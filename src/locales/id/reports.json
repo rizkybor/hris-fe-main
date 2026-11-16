@@ -159,7 +159,8 @@
       "filter": "Periode filter laporan",
       "week": "Minggu Ini",
       "month": "Bulan Ini",
-      "all": "Semua Waktu"
+      "all": "Semua Waktu",
+      "tenure": "Masa kerja"
     },
     "noData": "Tidak ada data",
     "attendanceDays": "Kehadiran ({n} hari kerja)",
@@ -176,7 +177,27 @@
     "strengths": "Kekuatan:",
     "improvements": "Area Perbaikan:",
     "usesPeriod": "Menggunakan periode di atas:",
-    "signatureHint": "Membubuhkan tanda tangan Direktur pada PDF."
+    "signatureHint": "Membubuhkan tanda tangan Direktur pada PDF.",
+    "accessEndedBadge": "Akses berakhir",
+    "accessEnded": {
+      "contract": "Kontrak berakhir — akun nonaktif sejak {date}. Periode \"Masa kerja\" mencakup awal kerja sampai tanggal itu.",
+      "probation": "Masa percobaan berakhir — akun nonaktif sejak {date}. Periode \"Masa kerja\" mencakup awal kerja sampai tanggal itu."
+    },
+    "review": {
+      "title": "Catatan reviewer",
+      "dialogTitle": "Catatan sebelum unduh",
+      "dialogHint": "Opsional. Catatan disimpan, tercetak di PDF, dan tampil di tab Kinerja karyawan. Kosongkan untuk menghapus catatan Anda.",
+      "label": "Catatan Anda (opsional)",
+      "placeholder": "Mis. ringkasan kinerja selama masa kerja, rekomendasi...",
+      "skip": "Lewati, unduh saja",
+      "saveAndDownload": "Simpan & unduh",
+      "saveFailed": "Gagal menyimpan catatan.",
+      "roles": {
+        "manager": "Manager",
+        "operational_director": "Operational Director",
+        "finance": "Finance Manager"
+      }
+    }
   },
   "billing": {
     "settled": "Lunas",

@@ -537,7 +537,11 @@
       "deactivatedOk": "Akun berhasil dinonaktifkan.",
       "activatedOk": "Akun berhasil diaktifkan.",
       "deactivateFailed": "Gagal menonaktifkan akun.",
-      "activateFailed": "Gagal mengaktifkan akun."
+      "activateFailed": "Gagal mengaktifkan akun.",
+      "autoEnded": {
+        "contract": "Dinonaktifkan otomatis sejak {date} karena kontrak berakhir.",
+        "probation": "Dinonaktifkan otomatis sejak {date} karena masa percobaan berakhir."
+      }
     },
     "danger": {
       "title": "Zona Berbahaya",
@@ -556,6 +560,17 @@
       "confirm": "Buat cadangan untuk {name}? Semua data karyawan akan diunduh.",
       "confirmText": "Buat Cadangan",
       "soon": "Fitur cadangan akan segera tersedia."
+    },
+    "closingNotes": {
+      "title": "Catatan akhir masa kerja",
+      "subtitle": "Dari Staff Report — Manager, Operational Director, Finance Manager"
+    },
+    "closingActions": {
+      "title": "Dokumen penutup",
+      "hint": "Siapkan dokumen penutupnya dari sini.",
+      "raport": "Staff Report",
+      "letter": "Surat Keterangan",
+      "certificate": "Sertifikat"
     }
   }
 }

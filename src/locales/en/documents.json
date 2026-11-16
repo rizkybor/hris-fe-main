@@ -42,6 +42,27 @@
       "errors": {
         "noRecipient": "At least 1 recipient is required.",
         "failed": "Failed to generate certificate."
+      },
+      "notEmployee": "— Not an employee —",
+      "accessEnded": "access ended",
+      "employee": "Employee",
+      "layout": {
+        "title": "Layout & Appendix",
+        "orientation": "Orientation",
+        "landscape": "Landscape",
+        "portrait": "Portrait"
+      },
+      "tasksPage": {
+        "label": "Page 2: Completed tasks",
+        "description": "Attach the recipient's completed tasks (staff & project) with their completion time, within the certificate period. Only for recipients picked from the employees.",
+        "unlinked": "{n} recipient(s) aren't linked to an employee — their certificate has no task page.",
+        "short": "Task page",
+        "on": "Yes ({n} recipients)",
+        "off": "No"
+      },
+      "hologram": {
+        "label": "Hologram",
+        "description": "Add a silver holographic seal (JCD logo and Jendela Cakra Digital microtext) to the certificate."
       }
     },
     "types": {
@@ -308,7 +329,8 @@
         "bodyRequired": "Letter content is required.",
         "create": "Failed to create Letter.",
         "update": "Failed to update Letter."
-      }
+      },
+      "referenceSubject": "Employment Reference Letter"
     },
     "list": {
       "title": "Letters",

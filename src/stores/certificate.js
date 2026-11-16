@@ -107,6 +107,12 @@ export const useCertificateStore = defineStore("certificate", {
       this.templates = this.templates.filter((t) => t.id !== id);
     },
 
+    // Employees for the recipient picker (fetched once per page visit).
+    async fetchEmployeeOptions() {
+      const { data } = await axiosInstance.get("/certificates/employee-options");
+      return data.data || [];
+    },
+
     async previewNumber({ category_code, program_code }) {
       const { data } = await axiosInstance.post("/certificates/preview-number", {
         category_code,

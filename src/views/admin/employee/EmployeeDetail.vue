@@ -13,6 +13,7 @@ import Avatar from "@/components/common/Avatar.vue";
 import { useRoute, useRouter } from "vue-router";
 import { useEmployeeStore } from "@/stores/employee";
 import { axiosInstance } from "@/plugins/axios";
+import { localeTag } from "@/i18n";
 import { useToastStore } from "@/stores/toast";
 import { useLookupStore } from "@/stores/lookups";
 import { useListState } from "@/composables/useListState";
@@ -57,6 +58,7 @@ import {
   ChevronDown,
   UserX,
   UserCheck,
+  FileBadge,
 } from "lucide-vue-next";
 import { useScrollFade } from "@/composables/useScrollFade";
 import { UiAlert, UiBadge, UiButton, UiCard, UiEmpty, UiInput, UiModal, UiSelect, UiStat } from "@/components/ui";
@@ -369,6 +371,50 @@ const canToggleThisAccount = computed(
 );
 const togglingAccountStatus = ref(false);
 
+// Closing notes written on this employee's Staff Report.
+// After the contract/probation ended (account closed automatically): quick
+// links to the closing documents, each prefilled for this employee.
+const closingActions = computed(() => {
+  const e = employee.value;
+  if (!e?.user || e.user.is_active !== false || !e.user.access_ended_on) return [];
+  const startDate = e.job_information?.start_date?.slice(0, 10) || undefined;
+  const endDate = String(e.user.access_ended_on).slice(0, 10);
+  return [
+    can("staff-raport-menu") && {
+      key: "raport",
+      icon: Star,
+      label: t("employees.detail.closingActions.raport"),
+      to: { name: "admin.report.dashboard", query: { tab: "staff_raport", raport: e.id } },
+    },
+    can("letter-create") && {
+      key: "letter",
+      icon: FileText,
+      label: t("employees.detail.closingActions.letter"),
+      to: {
+        name: "admin.letters.create",
+        query: { code: "SKT", employee_id: e.id, name: e.user.name, position: e.job_information?.job_title || undefined, start: startDate, end: endDate },
+      },
+    },
+    can("certificate-create") && {
+      key: "certificate",
+      icon: Award,
+      label: t("employees.detail.closingActions.certificate"),
+      to: { name: "admin.certificates.create", query: { employee_id: e.id, start_date: startDate, end_date: endDate } },
+    },
+  ].filter(Boolean);
+});
+
+const closingNotes = ref([]);
+const loadClosingNotes = async () => {
+  try {
+    const { data } = await axiosInstance.get(`employees/${route.params.id}/raport-reviews`);
+    closingNotes.value = data.data ?? [];
+  } catch {
+    closingNotes.value = [];
+  }
+};
+const formatShortDate = (value) => (value ? new Date(value).toLocaleDateString(localeTag(), { day: "numeric", month: "short", year: "numeric" }) : "-");
+
 const handleToggleAccountStatus = async () => {
   const isActive = employee.value?.user?.is_active;
   const name = employee.value?.user?.name;
@@ -403,13 +449,17 @@ const handleToggleAccountStatus = async () => {
 };
 
 onMounted(() => {
+  loadClosingNotes();
   loadEmployee(route.params.id as string);
 });
 // Another employee opened while this page stays mounted (same route).
 watch(
   () => route.params.id,
   (id, old) => {
-    if (id && id !== old && route.name === "admin.employees.detail") loadEmployee(id as string);
+    if (id && id !== old && route.name === "admin.employees.detail") {
+      loadEmployee(id as string);
+      loadClosingNotes();
+    }
   }
 );
 
@@ -537,6 +587,23 @@ const emergencyRows = computed(() => {
         <UiButton :icon="Edit" class="flex-1 sm:flex-none" @click="editEmployee">{{ $t("employees.detail.editProfile") }}</UiButton>
       </div>
     </div>
+
+    <!-- Closing documents, only once the account ended with the contract/probation -->
+    <section v-if="closingActions.length" class="rounded-ui-card border border-ui-warn/30 bg-ui-warn-soft px-4 sm:px-5 py-4 flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-5 ui-anim-fade-up">
+      <div class="flex items-start gap-3 flex-1 min-w-0">
+        <span class="w-9 h-9 shrink-0 rounded-full bg-ui-surface inline-flex items-center justify-center text-ui-warn"><FileBadge class="w-4.5 h-4.5" /></span>
+        <div class="min-w-0">
+          <h2 class="text-ui-body font-semibold text-ui-ink">{{ $t("employees.detail.closingActions.title") }}</h2>
+          <p class="text-ui-small text-ui-muted">
+            {{ $t("employees.detail.account.autoEnded." + (employee.user.access_end_reason || "contract"), { date: formatShortDate(employee.user.access_ended_on) }) }}
+            {{ $t("employees.detail.closingActions.hint") }}
+          </p>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 sm:flex sm:flex-wrap gap-2 shrink-0">
+        <UiButton v-for="action in closingActions" :key="action.key" variant="secondary" size="sm" :icon="action.icon" :to="action.to">{{ action.label }}</UiButton>
+      </div>
+    </section>
 
     <!-- Performance Stats -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 ui-stagger">
@@ -689,6 +756,20 @@ const emergencyRows = computed(() => {
 
     <!-- Performance Tab -->
     <div v-show="activeTab === 'performance'" class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 items-start ui-stagger">
+      <!-- Closing notes from the Staff Report (Manager / OD / Finance) -->
+      <UiCard v-if="closingNotes.length" :title="$t('employees.detail.closingNotes.title')" :subtitle="$t('employees.detail.closingNotes.subtitle')" :padded="false">
+        <ul class="divide-y divide-ui-line">
+          <li v-for="note in closingNotes" :key="note.id" class="px-5 sm:px-6 py-4">
+            <p class="text-ui-cap text-ui-muted">
+              <span class="font-medium text-ui-ink">{{ note.reviewer_name }}</span>
+              <template v-if="note.reviewer_role"> · {{ $t(`reports.raport.review.roles.${note.reviewer_role}`) }}</template>
+              · {{ formatShortDate(note.updated_at) }}
+            </p>
+            <p class="text-ui-small text-ui-text mt-1 whitespace-pre-line break-words">{{ note.review }}</p>
+          </li>
+        </ul>
+      </UiCard>
+
       <!-- Performance Reviews -->
       <UiCard :title="$t('employees.detail.reviews.title')" :subtitle="$t('employees.detail.reviews.subtitle')" :padded="false">
         <template #actions>
@@ -824,6 +905,9 @@ const emergencyRows = computed(() => {
               </div>
               <p class="text-ui-small text-ui-muted mt-0.5">
                 {{ employee.user?.is_active ? $t("employees.detail.account.canLogin") : $t("employees.detail.account.cannotLogin") }}
+                <template v-if="!employee.user?.is_active && employee.user?.access_ended_on">
+                  {{ $t("employees.detail.account.autoEnded." + (employee.user.access_end_reason || "contract"), { date: formatShortDate(employee.user.access_ended_on) }) }}
+                </template>
               </p>
             </div>
           </div>
