@@ -74,7 +74,7 @@ const enumLabel = (group: string, value: any) => {
 const route = useRoute();
 const router = useRouter();
 const employeeStore = useEmployeeStore();
-const { success } = storeToRefs(employeeStore);
+const { success, error: storeError } = storeToRefs(employeeStore);
 const alertModal = useAlertModalStore();
 const toast = useToastStore();
 
@@ -339,6 +339,9 @@ const handleDeleteEmployee = async () => {
       employeeStore.removeFromList(route.params.id as string);
       markListsStale();
       router.push({ name: "admin.employees" });
+    } else {
+      showDeleteModal.value = false;
+      await alertModal.alert(typeof storeError.value === "string" ? storeError.value : t("employees.detail.danger.deleteFailed"), { type: "danger" });
     }
   } catch (error) {
   } finally {
@@ -355,6 +358,11 @@ const targetIsElevated = computed(() =>
   (employee.value?.user?.roles || []).some((r: string) =>
     ["manager", "finance", "operational_director"].includes(r)
   )
+);
+// Deleting: Superadmin and Manager (with employee-delete); elevated accounts
+// Superadmin-only, never one's own profile -- same rules as the API.
+const canDeleteThisEmployee = computed(
+  () => hasAnyRole(["superadmin", "manager"]) && can("employee-delete") && !isOwnAccount.value && (!targetIsElevated.value || hasAnyRole(["superadmin"]))
 );
 const canToggleThisAccount = computed(
   () => canManageAccountStatus.value && (!targetIsElevated.value || hasAnyRole(["superadmin"]))
@@ -840,7 +848,7 @@ const emergencyRows = computed(() => {
       </div>
 
       <!-- Danger Zone -->
-      <div v-if="hasAnyRole(['superadmin'])" class="bg-ui-surface border border-ui-bad/30 rounded-ui-card px-5 py-4 sm:px-6 sm:py-5">
+      <div v-if="canDeleteThisEmployee" class="bg-ui-surface border border-ui-bad/30 rounded-ui-card px-5 py-4 sm:px-6 sm:py-5">
         <div class="flex items-center gap-2">
           <AlertTriangle class="w-4 h-4 text-ui-bad" />
           <h3 class="text-ui-h3 text-ui-bad">{{ $t("employees.detail.danger.title") }}</h3>

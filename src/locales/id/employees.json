@@ -55,7 +55,17 @@
     "searchPlaceholder": "Cari karyawan berdasarkan nama, departemen, jabatan...",
     "allTypes": "Semua Tipe",
     "allStatus": "Semua Status",
-    "empty": "Karyawan tidak ditemukan"
+    "empty": "Karyawan tidak ditemukan",
+    "deletedButton": "Karyawan terhapus",
+    "deletedTitle": "Karyawan terhapus",
+    "deletedSubtitle": "Pulihkan untuk mengembalikan profil, email, dan akses login beserta riwayatnya.",
+    "deletedEmpty": "Tidak ada karyawan yang dihapus.",
+    "deletedOn": "Dihapus {date}",
+    "restore": "Pulihkan",
+    "restoreConfirm": "Pulihkan '{name}'? Profil, email, dan akses login-nya akan kembali seperti semula.",
+    "restored": "'{name}' berhasil dipulihkan.",
+    "restoreFailed": "Gagal memulihkan karyawan.",
+    "emailTaken": "Email {email} sudah dipakai akun lain, jadi tidak bisa dipulihkan. Daftarkan sebagai karyawan baru, atau ganti email akun tersebut dulu."
   },
   "card": {
     "loginDisabled": "Login Dinonaktifkan",
@@ -536,7 +546,8 @@
       "deleteText": "Hapus karyawan dari daftar dan tutup aksesnya: semua sesi login langsung diputus dan akun tidak bisa login lagi. Riwayatnya (absensi, gaji, dokumen) tetap disimpan untuk arsip.",
       "backup": "Cadangkan Data",
       "delete": "Hapus Karyawan",
-      "deleteConfirm": "Hapus '{name}'? Karyawan ini akan hilang dari daftar dan tidak bisa login lagi. Tindakan ini tidak dapat dibatalkan dari aplikasi."
+      "deleteConfirm": "Hapus '{name}'? Karyawan ini akan hilang dari daftar dan tidak bisa login lagi. Tindakan ini tidak dapat dibatalkan dari aplikasi.",
+      "deleteFailed": "Gagal menghapus karyawan."
     },
     "share": {
       "copied": "Tautan profil disalin ke clipboard!"

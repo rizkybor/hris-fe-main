@@ -6,9 +6,10 @@ import { useLookupStore } from "@/stores/lookups";
 import { storeToRefs } from "pinia";
 import { ref, onMounted, watch, computed } from "vue";
 import { debounce } from "lodash-es";
-import { Search, UserPlus, AlertTriangle, Users, X } from "lucide-vue-next";
+import { Search, UserPlus, AlertTriangle, Users, X, UserX } from "lucide-vue-next";
 import Pagination from "@/components/admin/team/Pagination.vue";
-import { can } from "@/helpers/permissionHelper";
+import { can, hasAnyRole } from "@/helpers/permissionHelper";
+import DeletedEmployeesModal from "@/components/admin/employee/DeletedEmployeesModal.vue";
 import Alert from "@/components/common/Alert.vue";
 import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
 import { UiButton, UiEmpty, UiInput, UiPageHeader, UiSelect } from "@/components/ui";
@@ -114,6 +115,12 @@ const statusOptions = computed(() => [
   { value: "", label: t("employees.list.allStatus") },
   ...(jobStatuses.value || []).map((s) => ({ value: s.value, label: enumLabel("jobStatus", s) })),
 ]);
+
+// Deleted employees and restoring them: Superadmin and Manager.
+const canSeeDeleted = computed(() => hasAnyRole(["superadmin", "manager"]) && can("employee-delete"));
+const deletedOpen = ref(false);
+// A restored employee is back on the roster: reload the list.
+const onRestored = () => employeeStore.fetchEmployeeList(params.value);
 </script>
 
 <template>
@@ -123,6 +130,15 @@ const statusOptions = computed(() => [
         {{ $t("employees.list.subtitle", { from: meta.from, to: meta.to, total: meta.total }) }}
       </template>
       <template #actions>
+        <UiButton
+          v-if="canSeeDeleted"
+          variant="secondary"
+          :icon="UserX"
+          class="flex-1 sm:flex-none"
+          @click="deletedOpen = true"
+        >
+          {{ $t("employees.list.deletedButton") }}
+        </UiButton>
         <UiButton
           v-if="can('employee-create')"
           :icon="UserPlus"
@@ -217,5 +233,6 @@ const statusOptions = computed(() => [
       />
     </div>
     </section>
+  <DeletedEmployeesModal v-if="canSeeDeleted" v-model:open="deletedOpen" @restored="onRestored" />
   </div>
 </template>

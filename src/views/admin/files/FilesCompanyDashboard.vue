@@ -63,10 +63,13 @@ const fileTypeMeta = (mime) => {
     return { icon: FileText, tint: "bg-orange-500/10", ink: "text-orange-600", label: "bg-orange-600" };
   return { icon: FileIcon, tint: "bg-ui-subtle", ink: "text-ui-muted", label: "bg-ui-muted" };
 };
+// Cards are narrow (up to 5 per row): "12 Nov 2026".
+const formatShortDate = (date) =>
+  date ? new Date(date).toLocaleDateString(localeTag(), { year: "numeric", month: "short", day: "numeric" }) : "-";
 const isImage = (archive) => String(archive.type_file || "").startsWith("image/") && !!archive.document_path;
 // Covers that failed to load fall back to the document illustration.
 const brokenCovers = ref(new Set());
-const coverUrl = (archive) => (isImage(archive) && !brokenCovers.value.has(archive.id) ? cloudinaryThumb(archive.document_path, { width: 640, height: 360 }) : "");
+const coverUrl = (archive) => (isImage(archive) && !brokenCovers.value.has(archive.id) ? cloudinaryThumb(archive.document_path, { width: 480, height: 360 }) : "");
 const markBroken = (archive) => {
   brokenCovers.value = new Set(brokenCovers.value).add(archive.id);
 };
@@ -208,9 +211,10 @@ const handleDelete = async () => {
       </div>
 
       <div>
-        <SkeletonCardGrid v-if="loading" :count="6" cols="grid-cols-1 md:grid-cols-2 xl:grid-cols-3" />
+        <SkeletonCardGrid v-if="loading" :count="10" cols="grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5" />
 
-        <div v-else-if="archives.length" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 ui-stagger">
+        <!-- 2 per row on phones, up to 5 on wide screens -->
+        <div v-else-if="archives.length" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 ui-stagger">
           <article
             v-for="archive in archives"
             :key="archive.id"
@@ -219,7 +223,7 @@ const handleDelete = async () => {
             <!-- Cover: the picture itself for images, a document sheet for the rest -->
             <router-link
               :to="{ name: 'admin.files-company.detail', params: { id: archive.id } }"
-              class="relative block aspect-[16/9] overflow-hidden border-b border-ui-line"
+              class="relative block aspect-[4/3] overflow-hidden border-b border-ui-line"
               :class="coverUrl(archive) ? 'bg-ui-subtle' : fileTypeMeta(archive.type_file).tint"
               :aria-label="archive.document_name"
               tabindex="-1"
@@ -230,13 +234,13 @@ const handleDelete = async () => {
                 :alt="archive.document_name"
                 loading="lazy"
                 decoding="async"
-                width="640"
+                width="480"
                 height="360"
                 class="w-full h-full object-cover transition-transform duration-ui-base group-hover:scale-[1.02]"
                 @error="markBroken(archive)"
               />
               <div v-else class="absolute inset-0 flex items-center justify-center">
-                <div class="relative w-[88px] h-[108px] rounded-[6px] bg-ui-surface border border-ui-line shadow-ui-raised transition-transform duration-ui-base group-hover:-translate-y-0.5">
+                <div class="relative w-[88px] h-[108px] scale-[0.72] sm:scale-90 xl:scale-100 rounded-[6px] bg-ui-surface border border-ui-line shadow-ui-raised transition-transform duration-ui-base group-hover:-translate-y-0.5">
                   <span class="absolute top-0 right-0 w-5 h-5 bg-ui-subtle rounded-bl-[6px] border-l border-b border-ui-line" aria-hidden="true"></span>
                   <div class="absolute left-3 right-6 top-4 space-y-1.5" aria-hidden="true">
                     <span class="block h-1 rounded-full bg-ui-line"></span>
@@ -252,23 +256,23 @@ const handleDelete = async () => {
               <UiBadge v-if="coverUrl(archive)" tone="neutral" class="absolute top-2.5 left-2.5 font-mono shadow-ui-raised">{{ fileExt(archive.document_path || archive.document_name, archive.type_file) }}</UiBadge>
             </router-link>
 
-            <div class="p-4 flex flex-col flex-1 min-w-0">
+            <div class="p-3 sm:p-3.5 flex flex-col flex-1 min-w-0">
               <router-link
                 :to="{ name: 'admin.files-company.detail', params: { id: archive.id } }"
-                class="block text-ui-h3 text-ui-ink truncate hover:text-ui-accent"
+                class="block text-ui-small sm:text-ui-body font-semibold text-ui-ink truncate hover:text-ui-accent"
                 :title="archive.document_name"
               >
                 {{ archive.document_name }}
               </router-link>
-              <p v-if="archive.description" class="text-ui-small text-ui-muted truncate mt-0.5" :title="archive.description">{{ archive.description }}</p>
-              <p v-else class="text-ui-small text-ui-faint mt-0.5">—</p>
+              <p v-if="archive.description" class="text-ui-cap text-ui-muted truncate mt-0.5" :title="archive.description">{{ archive.description }}</p>
+              <p v-else class="text-ui-cap text-ui-faint mt-0.5">—</p>
 
-              <div class="flex items-center gap-2 mt-auto pt-3">
-                <p class="text-ui-cap text-ui-muted flex-1 min-w-0 truncate tabular-nums">
-                  <span class="font-medium text-ui-text">{{ formatFileSize(archive.size_file) }}</span>
-                  <span class="text-ui-faint"> · </span>{{ formatDate(archive.created_at) }}
-                </p>
-                <div class="flex items-center gap-0.5 -mr-1.5">
+              <p class="text-ui-cap text-ui-muted truncate tabular-nums mt-2">
+                <span class="font-medium text-ui-text">{{ formatFileSize(archive.size_file) }}</span>
+                <span class="text-ui-faint"> · </span>{{ formatShortDate(archive.created_at) }}
+              </p>
+              <div class="flex items-center justify-between mt-auto pt-2 -mx-1.5 -mb-1.5">
+                <div class="contents">
                   <button
                     type="button"
                     :class="iconBtn"
