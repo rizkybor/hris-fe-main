@@ -58,7 +58,9 @@ export const useTaskStore = defineStore("task", {
             }
         },
 
-        async createTask(payload) {
+        // localFields: extra fields for the new card (e.g. the assignee
+        // objects), so it shows complete without a refetch.
+        async createTask(payload, localFields = null) {
             this.loading = true;
             this.error = null;
 
@@ -67,9 +69,8 @@ export const useTaskStore = defineStore("task", {
                 const created = response.data.data;
 
                 // Put the new card on the board straight away (no refetch).
-                // The create response carries no assignee relation.
                 if (created && String(created.project_id) === String(this.tasksProjectId) && !this.tasks.some((t) => t.id === created.id)) {
-                    this.tasks.push({ assignee: null, ...created });
+                    this.tasks.push({ assignee: null, assignees: [], ...created, ...(localFields || {}) });
                 }
 
                 this.success = response.data.message;

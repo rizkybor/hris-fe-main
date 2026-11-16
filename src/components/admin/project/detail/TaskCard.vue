@@ -1,9 +1,10 @@
 <script setup>
+import AssigneeStack from "./AssigneeStack.vue";
+import { assigneesOf } from "@/utils/taskAssignees";
 import { computed } from "vue";
 import { Clock, User, AlertCircle } from "lucide-vue-next";
 import { getPriorityColor, getTaskTypeColorClasses } from "@/utils/styleHelpers";
 import { formatDate } from "@/utils/dateUtils";
-import Avatar from "@/components/common/Avatar.vue";
 import { UiBadge } from "@/components/ui";
 
 const props = defineProps({
@@ -56,19 +57,7 @@ const priorityTone = computed(() => PRIORITY_TONES[props.task.priority?.toLowerC
 
     <!-- Footer with Assignee and Due Date -->
     <div class="flex items-center justify-between gap-2 mt-3">
-      <!-- Assignee Avatar + Name -->
-      <div class="flex items-center gap-1.5 min-w-0">
-        <Avatar
-          :src="task.assignee?.user?.profile_photo"
-          :alt="task.assignee?.user?.name || $t('projects.tasks.unassigned')"
-          size="w-6 h-6"
-          icon-size="w-3 h-3"
-          rounded="rounded-full"
-        />
-        <span class="text-ui-cap text-ui-muted truncate">
-          {{ task.assignee?.user?.name || $t("projects.tasks.unassigned") }}
-        </span>
-      </div>
+      <AssigneeStack :assignees="assigneesOf(task)" />
 
       <!-- Due Date -->
       <div

@@ -14,6 +14,7 @@ import TaskListView from "./TaskListView.vue";
 import { UiAlert, UiButton, UiInput, UiSelect } from "@/components/ui";
 import { useListState } from "@/composables/useListState";
 import { useI18n } from "vue-i18n";
+import { assigneesOf, assigneeIdsOf, assigneeFields } from "@/utils/taskAssignees";
 
 const { t } = useI18n();
 
@@ -69,7 +70,6 @@ watch(searchQuery, (value) => {
 });
 
 const myEmployeeId = computed(() => authStore.user?.employee_profile?.id ?? null);
-const assigneeIdOf = (task) => task.assignee?.id ?? task.assignee_id ?? null;
 const todayStr = (() => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -87,12 +87,13 @@ const filteredTasks = computed(() => {
     tasks = tasks.filter((task) => task.type === filters.type);
   }
   if (filters.assignee) {
-    tasks = tasks.filter((task) =>
-      filters.assignee === "none" ? !assigneeIdOf(task) : String(assigneeIdOf(task)) === filters.assignee
-    );
+    tasks = tasks.filter((task) => {
+      const ids = assigneeIdsOf(task);
+      return filters.assignee === "none" ? ids.length === 0 : ids.some((id) => String(id) === filters.assignee);
+    });
   }
   if (filters.mine && myEmployeeId.value) {
-    tasks = tasks.filter((task) => assigneeIdOf(task) === myEmployeeId.value);
+    tasks = tasks.filter((task) => assigneeIdsOf(task).includes(myEmployeeId.value));
   }
   if (filters.overdue) {
     tasks = tasks.filter(isOverdue);
@@ -104,7 +105,7 @@ const filteredTasks = computed(() => {
         task.name?.toLowerCase().includes(query) ||
         task.description?.toLowerCase().includes(query) ||
         task.type?.toLowerCase().includes(query) ||
-        task.assignee?.user?.name?.toLowerCase().includes(query)
+        assigneesOf(task).some((a) => a.user?.name?.toLowerCase().includes(query))
     );
   }
 
@@ -159,8 +160,9 @@ const typeSuggestions = computed(() => {
 const assigneeOptions = computed(() => {
   const seen = new Map();
   allTasks.value.forEach((task) => {
-    const id = assigneeIdOf(task);
-    if (id && !seen.has(id)) seen.set(id, task.assignee?.user?.name || `#${id}`);
+    assigneesOf(task).forEach((a) => {
+      if (a?.id && !seen.has(a.id)) seen.set(a.id, a.user?.name || `#${a.id}`);
+    });
   });
   return [
     { value: "", label: t("projects.tasks.allAssignees") },
@@ -239,10 +241,10 @@ const closeCreateModal = () => {
 const errorText = (fallbackKey) => (typeof taskStore.error === "string" ? taskStore.error : t(fallbackKey));
 
 // The store adds the created task to the board from the response.
-const handleCreateTask = async (taskData) => {
+const handleCreateTask = async (taskData, assignees = []) => {
   actionError.value = "";
   try {
-    await createTask(taskData);
+    await createTask(taskData, assignees.length ? assigneeFields(assignees) : null);
   } catch {
     actionError.value = errorText("projects.tasks.createFailed");
   }

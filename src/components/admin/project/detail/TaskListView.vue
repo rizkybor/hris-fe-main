@@ -2,7 +2,8 @@
 import { computed, reactive } from "vue";
 import { useI18n } from "vue-i18n";
 import { AlertCircle, ChevronDown, ChevronRight, Clock, Inbox, Plus } from "lucide-vue-next";
-import Avatar from "@/components/common/Avatar.vue";
+import AssigneeStack from "./AssigneeStack.vue";
+import { assigneesOf } from "@/utils/taskAssignees";
 import { UiBadge, UiSelect, UiStatusSelect } from "@/components/ui";
 import { getTaskTypeColorClasses } from "@/utils/styleHelpers";
 import { formatDate } from "@/utils/dateUtils";
@@ -146,8 +147,7 @@ const canEditStatus = can("task-edit");
 
               <!-- Assignee -->
               <div class="flex items-center gap-2 min-w-0 col-span-2 row-start-2" :class="!compact && 'md:col-span-1 md:row-start-auto'">
-                <Avatar :src="task.assignee?.user?.profile_photo" :alt="task.assignee?.user?.name || $t('projects.tasks.unassigned')" size="w-6 h-6" icon-size="w-3 h-3" rounded="rounded-full" />
-                <span class="text-ui-small truncate" :class="task.assignee ? 'text-ui-text' : 'text-ui-faint'">{{ task.assignee?.user?.name || $t("projects.tasks.unassigned") }}</span>
+                <AssigneeStack :assignees="assigneesOf(task)" text-class="text-ui-small text-ui-text" />
                 <!-- Priority + due inline on phones -->
                 <span class="ml-auto flex items-center gap-2 shrink-0" :class="!compact && 'md:hidden'">
                   <UiBadge :tone="PRIORITY_TONE[task.priority?.toLowerCase()] || 'neutral'">{{ priorityLabel(task.priority) }}</UiBadge>
