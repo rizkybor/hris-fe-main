@@ -541,7 +541,8 @@
       "taskScopeDelete": "Hapus Lingkup Tugas",
       "taskScopeEdit": "Ubah Lingkup Tugas",
       "taskScopeList": "Daftar Lingkup Tugas",
-      "upcomingTasks": "Tugas Mendatang"
+      "upcomingTasks": "Tugas Mendatang",
+      "accountStatus": "Aktifkan/Nonaktifkan Akun"
     }
   }
 }
