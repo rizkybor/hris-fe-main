@@ -139,7 +139,9 @@
       "notesSaved": "Catatan disimpan",
       "itemsSaved": "Layanan disimpan",
       "deleted": "Screening dihapus"
-    }
+    },
+    "notFoundTitle": "Screening tidak ditemukan",
+    "notFoundMessage": "Data ini mungkin sudah dihapus, atau Anda tidak memiliki akses."
   },
   "settings": {
     "title": "Katalog & Pertanyaan",
