@@ -771,7 +771,6 @@
     "moreActions": "Aksi lainnya",
     "licenseKeys": "Key lisensi",
     "licenseKey": "Key lisensi",
-    "key1OfEach": "key 1 dari masing-masing {total}",
     "sections": "Bagian lisensi",
     "deviceKeys": "Key perangkat",
     "sideBySide": "Key {platforms} berdampingan.",
@@ -801,7 +800,10 @@
     "releasing": "Melepas...",
     "noDevices": "Belum ada perangkat",
     "noDevicesPerDevice": "Perangkat muncul di sini setelah key dimasukkan di {product}.",
-    "noDevicesShared": "Perangkat muncul di sini setelah key dimasukkan di {product}."
+    "noDevicesShared": "Perangkat muncul di sini setelah key dimasukkan di {product}.",
+    "keyNOf": "key {n} dari {total}",
+    "firstAvailableEach": "key tersedia pertama masing-masing",
+    "noKeyAvailable": "tidak ada key tersedia"
   },
   "ipa": {
     "label": "iPad",

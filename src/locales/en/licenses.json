@@ -771,7 +771,6 @@
     "moreActions": "More actions",
     "licenseKeys": "License keys",
     "licenseKey": "License key",
-    "key1OfEach": "key 1 of {total} each",
     "sections": "License sections",
     "deviceKeys": "Device keys",
     "sideBySide": "{platforms} keys side by side.",
@@ -801,7 +800,10 @@
     "releasing": "Releasing...",
     "noDevices": "No devices yet",
     "noDevicesPerDevice": "Devices appear here once a key is entered in {product}.",
-    "noDevicesShared": "Devices appear here once the key is entered in {product}."
+    "noDevicesShared": "Devices appear here once the key is entered in {product}.",
+    "keyNOf": "key {n} of {total}",
+    "firstAvailableEach": "first available key each",
+    "noKeyAvailable": "no key available"
   },
   "ipa": {
     "label": "iPad",
