@@ -438,6 +438,65 @@ export const useLicenseManagerStore = defineStore("licenseManager", {
       setTimeout(() => URL.revokeObjectURL(url), 10000);
     },
 
+    // iPad installer (.ipa, up to 2 GB): the API reads its bundle id,
+    // version, build and provisioning profile on upload.
+    async uploadReleaseIpa(id, file, onProgress = null) {
+      const form = new FormData();
+      form.append("file", file);
+      const { data } = await axiosInstance.post(`${this.releasesBase}/${id}/ipa`, form, {
+        timeout: 0,
+        onUploadProgress: (event) => {
+          if (onProgress && event.total) onProgress(Math.round((event.loaded / event.total) * 100));
+        },
+      });
+      this.releases = this.releases.map((r) => (r.id === id ? data.data : r));
+      return data.data;
+    },
+
+    async deleteReleaseIpa(id) {
+      const { data } = await axiosInstance.delete(`${this.releasesBase}/${id}/ipa`);
+      const updated = data?.data && typeof data.data === "object" ? data.data : null;
+      this.releases = this.releases.map((r) => (r.id === id ? updated || { ...r, ipa: null } : r));
+      return updated;
+    },
+
+    async downloadReleaseIpa(release) {
+      const response = await axiosInstance.get(`${this.releasesBase}/${release.id}/ipa`, {
+        responseType: "blob",
+        timeout: 0,
+      });
+      const url = URL.createObjectURL(response.data);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = release.ipa?.name || `${release.version}.ipa`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    },
+
+    // Single-use iPad install links of a version.
+    async fetchInstallLinks(releaseId) {
+      const { data } = await axiosInstance.get(`${this.releasesBase}/${releaseId}/install-links`);
+      return data.data;
+    },
+
+    async createInstallLink(releaseId, payload) {
+      const { data } = await axiosInstance.post(`${this.releasesBase}/${releaseId}/install-links`, payload);
+      return data.data;
+    },
+
+    async revokeInstallLink(releaseId, linkId) {
+      const { data } = await axiosInstance.post(`${this.releasesBase}/${releaseId}/install-links/${linkId}/revoke`);
+      return data.data;
+    },
+
+    // iPad licenses of the product (picker for install links).
+    async fetchIpadLicenses() {
+      const { data } = await axiosInstance.get(this.base, { params: { platform: "ipad", limit: 500 } });
+      return Array.isArray(data.data) ? data.data : [];
+    },
+
     async deleteRelease(id) {
       try {
         await axiosInstance.delete(`${this.releasesBase}/${id}`);

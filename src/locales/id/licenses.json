@@ -121,13 +121,18 @@
     "refreshed": "Lisensi diperbarui",
     "deviceReleased": "Perangkat dilepas dari aplikasi",
     "appUpdated": "Aplikasi diperbarui",
+    "deviceRestored": "Lisensi dipulihkan di perangkat (instal ulang)",
+    "deviceRebound": "Perangkat pindah ke ID perangkat baru",
     "deniedDeviceLimit": "Ditolak: batas perangkat tercapai",
     "deniedInactive": "Ditolak: lisensi nonaktif",
     "deniedExpired": "Ditolak: lisensi kedaluwarsa",
     "deniedWrongPlatform": "Ditolak: platform salah",
     "deniedKeyUsed": "Ditolak: key sudah dipakai",
     "deniedKeyInUse": "Ditolak: key sedang dipakai di perangkat lain",
-    "deniedKeyReplaced": "Ditolak: key lama (diganti setelah paket diubah)"
+    "deniedKeyReplaced": "Ditolak: key lama (diganti setelah paket diubah)",
+    "installLinkCreated": "Tautan pemasangan iPad dibuat",
+    "installLinkRevoked": "Tautan pemasangan iPad dibatalkan",
+    "installLinkUsed": "Aplikasi iPad dipasang dari tautan"
   },
   "keyMode": {
     "perDevice": {
@@ -228,7 +233,9 @@
       "releasedAt": "Versi yang terbit perlu tanggal rilis.",
       "build": "Build harus bilangan bulat.",
       "downloadUrl": "Masukkan URL lengkap, mis. https://example.com/OCCA.dmg",
-      "changeText": "Jelaskan perubahannya."
+      "changeText": "Jelaskan perubahannya.",
+      "ipaType": "Gunakan file .ipa.",
+      "publishNeedsIpa": "Unggah installer iPad (.ipa) sebelum menerbitkan versi ini."
     }
   },
   "title": "License Manager",
@@ -450,7 +457,7 @@
     "removeChange": "Hapus perubahan",
     "installer": "Installer",
     "installerMac": "Installer Mac (.dmg, .zip, atau .pkg, maks. 2 GB) disimpan di HRIS dan diperlukan untuk menerbitkan.",
-    "installerIpad": "Versi khusus iPad dipasang lewat Apple; tidak perlu installer.",
+    "installerIpad": "Versi khusus iPad tidak memerlukan installer Mac.",
     "serverLimits": "Batas unggah server (PHP {upload} / {post}, nginx {body}) harus mengizinkan file sebesar ini.",
     "chooseAnother": "Pilih file lain",
     "replaceInstaller": "Ganti installer",
@@ -461,7 +468,8 @@
     "internalNotesHint": "Hanya terlihat di HRIS.",
     "uploadingPercent": "Mengunggah {n}%...",
     "save": "Simpan Versi",
-    "add": "Tambah Versi"
+    "add": "Tambah Versi",
+    "installerIpaNote": "Installer iPad (.ipa) diunggah di daftar versi setelah disimpan; wajib untuk menerbitkan."
   },
   "form": {
     "saveLicense": "Simpan Lisensi",
@@ -794,5 +802,64 @@
     "noDevices": "Belum ada perangkat",
     "noDevicesPerDevice": "Perangkat muncul di sini setelah key dimasukkan di {product}.",
     "noDevicesShared": "Perangkat muncul di sini setelah key dimasukkan di {product}."
+  },
+  "ipa": {
+    "label": "iPad",
+    "uploadFailed": "Gagal mengunggah installer iPad.",
+    "downloadFailed": "Gagal mengunduh installer iPad.",
+    "removeFailed": "Gagal menghapus installer iPad.",
+    "removeConfirm": "Hapus installer iPad {name} dari versi {version}? Tautan pemasangannya tidak akan berfungsi lagi.",
+    "removeTitle": "Hapus Installer iPad",
+    "missingTitle": "Belum ada installer iPad",
+    "missingMessage": "Unggah installer iPad Ad Hoc (.ipa, maks. 2 GB). Wajib untuk menerbitkan.",
+    "missingMessageDrop": "Unggah installer iPad Ad Hoc (.ipa, maks. 2 GB), atau letakkan di sini. Wajib untuk menerbitkan.",
+    "versionBuild": "Versi {version} (build {build})",
+    "minimumOs": "iPadOS {version}+",
+    "team": "Tim {team}",
+    "profileExpires": "Profil berlaku sampai {date}",
+    "profileExpired": "Profil kedaluwarsa pada {date}",
+    "noProfile": "Tidak ada provisioning profile di .ipa ini: tidak bisa dipasang lewat tautan.",
+    "devices": "{n} iPad dalam profil | {n} iPad dalam profil",
+    "devicesHint": "Hanya iPad ini (UDID) yang bisa memasang build ini. Untuk iPad lain: tambahkan UDID-nya di Apple Developer › Devices, build ulang, lalu unggah .ipa baru."
+  },
+  "installLinks": {
+    "button": "Tautan pasang",
+    "open": "Tautan pemasangan iPad sekali pakai",
+    "title": "Tautan pemasangan · {product} {version}",
+    "description": "Satu tautan untuk memasang aplikasi di satu iPad. Untuk iPad lain, buat tautan baru.",
+    "notHttps": "URL server (APP_URL) bukan https. iPad hanya bisa memasang lewat https dengan sertifikat yang valid.",
+    "created": "Tautan dibuat. Salin sekarang dan kirim ke pengguna iPad.",
+    "sendHint": "Buka tautan di Safari pada iPad lalu ketuk Pasang. Tautan hanya berlaku sekali.",
+    "license": "Lisensi (opsional)",
+    "noLicense": "Tanpa lisensi",
+    "searchLicense": "Cari nama atau kunci...",
+    "licenseHint": "Lisensi iPad: pemasangan dicatat di riwayatnya.",
+    "deviceName": "Nama iPad",
+    "deviceNamePlaceholder": "mis. iPad Budi",
+    "expiresIn": "Berlaku selama",
+    "days": "{n} hari | {n} hari",
+    "note": "Catatan",
+    "notePlaceholder": "Catatan internal (opsional)",
+    "create": "Buat tautan",
+    "needsIpa": "Unggah dulu installer iPad (.ipa) versi ini.",
+    "list": "Tautan",
+    "empty": "Belum ada tautan pemasangan.",
+    "status": {
+      "active": "Aktif",
+      "used": "Terpakai",
+      "expired": "Kedaluwarsa",
+      "revoked": "Dibatalkan"
+    },
+    "usedAt": "Terpakai {date}",
+    "revokedAt": "Dibatalkan {date}",
+    "expiredAt": "Kedaluwarsa {date}",
+    "createdBy": "Dibuat {date} oleh {name}",
+    "expiresAt": "berlaku sampai {date}",
+    "revoke": "Batalkan",
+    "revokeTitle": "Batalkan Tautan Pemasangan",
+    "revokeConfirm": "Batalkan tautan ini? Tautan tidak bisa lagi dipakai untuk memasang aplikasi.",
+    "loadFailed": "Gagal memuat tautan pemasangan.",
+    "createFailed": "Gagal membuat tautan pemasangan.",
+    "revokeFailed": "Gagal membatalkan tautan pemasangan."
   }
 }
