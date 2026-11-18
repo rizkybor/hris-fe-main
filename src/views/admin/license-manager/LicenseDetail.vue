@@ -228,11 +228,28 @@ const headerMeta = computed(() => {
   );
   return parts.filter(Boolean).join(" · ");
 });
+// The key shown up top: with one key per device, the first key (lowest
+// position) that is still available, so it can be handed straight to the
+// next device; otherwise the license key itself.
+const firstAvailableKey = (keys) =>
+  [...(keys || [])].sort((a, b) => (a.position ?? 0) - (b.position ?? 0)).find((k) => k.status === "available") || null;
 const mainKeys = computed(() => {
   const l = license.value;
   if (!l) return [];
   return [l, ...(l.bundle || [])]
-    .map((x) => ({ id: x.id, key: x.key, platform: x.platform, label: x.id === l.id ? licensePlatformLabel(l) : x.platform_label }))
+    .map((x) => {
+      const keys = x.id === l.id ? l.keys : x.keys;
+      const next = perDevice.value ? firstAvailableKey(keys) : null;
+      return {
+        id: x.id,
+        key: next?.key || x.key,
+        position: next?.position ?? null,
+        total: keys?.length || 0,
+        noneAvailable: perDevice.value && Array.isArray(keys) && keys.length > 0 && !next,
+        platform: x.platform,
+        label: x.id === l.id ? licensePlatformLabel(l) : x.platform_label,
+      };
+    })
     .sort((a, b) => (a.platform === "mac" ? -1 : b.platform === "mac" ? 1 : 0));
 });
 const platformsLabel = computed(() => mainKeys.value.map((k) => k.label).join(" + "));
@@ -485,8 +502,10 @@ const isMac = (platform) => /mac/i.test(platform || "");
                     &middot;
                     {{
                       mainKeys.length > 1
-                        ? $t("licenses.detail.key1OfEach", { total: keyGroups[0]?.summary.total })
-                        : $t("licenses.create.key1Of", { total: keysSummary.total })
+                        ? $t("licenses.detail.firstAvailableEach")
+                        : mainKeys[0]?.position
+                          ? $t("licenses.detail.keyNOf", { n: mainKeys[0].position, total: mainKeys[0].total })
+                          : $t("licenses.detail.noKeyAvailable")
                     }}</template>
                 </p>
                 <p class="hidden sm:block text-ui-cap text-ui-muted text-right truncate">
@@ -495,7 +514,10 @@ const isMac = (platform) => /mac/i.test(platform || "");
               </div>
               <div v-for="k in mainKeys" :key="k.id" class="flex items-center gap-3 py-1">
                 <span v-if="mainKeys.length > 1" class="text-ui-cap font-medium px-2 py-0.5 rounded-ui-control shrink-0 w-12 text-center" :class="platformChipClass(k.platform)">{{ k.label }}</span>
-                <span class="font-mono text-ui-body sm:text-ui-h1 font-semibold tracking-wider text-ui-ink break-all flex-1 select-all">{{ k.key }}</span>
+                <span class="font-mono text-ui-body sm:text-ui-h1 font-semibold tracking-wider break-all flex-1 select-all" :class="k.noneAvailable ? 'text-ui-faint' : 'text-ui-ink'">{{ k.key }}</span>
+                <span v-if="mainKeys.length > 1 && perDevice" class="hidden sm:inline text-ui-cap text-ui-muted tabular-nums shrink-0">
+                  {{ k.position ? $t("licenses.detail.keyNOf", { n: k.position, total: k.total }) : $t("licenses.detail.noKeyAvailable") }}
+                </span>
                 <CopyKeyButton :value="k.key" size="md" />
               </div>
             </section>
