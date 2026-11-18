@@ -121,13 +121,18 @@
     "refreshed": "License refreshed",
     "deviceReleased": "Device released from the app",
     "appUpdated": "App updated",
+    "deviceRestored": "License restored on the device (reinstall)",
+    "deviceRebound": "Device moved to a new device ID",
     "deniedDeviceLimit": "Denied: device limit reached",
     "deniedInactive": "Denied: license switched off",
     "deniedExpired": "Denied: license expired",
     "deniedWrongPlatform": "Denied: wrong platform",
     "deniedKeyUsed": "Denied: key already used",
     "deniedKeyInUse": "Denied: key in use on another device",
-    "deniedKeyReplaced": "Denied: old key (replaced after a plan change)"
+    "deniedKeyReplaced": "Denied: old key (replaced after a plan change)",
+    "installLinkCreated": "iPad install link created",
+    "installLinkRevoked": "iPad install link revoked",
+    "installLinkUsed": "iPad app installed from a link"
   },
   "keyMode": {
     "perDevice": {
@@ -228,7 +233,9 @@
       "releasedAt": "A published version needs a release date.",
       "build": "Build must be a whole number.",
       "downloadUrl": "Enter a full URL, e.g. https://example.com/OCCA.dmg",
-      "changeText": "Describe the change."
+      "changeText": "Describe the change.",
+      "ipaType": "Use an .ipa file.",
+      "publishNeedsIpa": "Upload the iPad installer (.ipa) before publishing this version."
     }
   },
   "title": "License Manager",
@@ -450,7 +457,7 @@
     "removeChange": "Remove change",
     "installer": "Installer",
     "installerMac": "The Mac installer (.dmg, .zip or .pkg, up to 2 GB) is kept in HRIS and is needed to publish.",
-    "installerIpad": "iPad-only versions install through Apple; no installer is needed.",
+    "installerIpad": "iPad-only versions need no Mac installer.",
     "serverLimits": "The server's upload limits (PHP {upload} / {post}, nginx {body}) must allow files this large.",
     "chooseAnother": "Choose another file",
     "replaceInstaller": "Replace installer",
@@ -461,7 +468,8 @@
     "internalNotesHint": "Only visible in HRIS.",
     "uploadingPercent": "Uploading {n}%...",
     "save": "Save Version",
-    "add": "Add Version"
+    "add": "Add Version",
+    "installerIpaNote": "The iPad installer (.ipa) is uploaded on the version list after saving; it is needed to publish."
   },
   "form": {
     "saveLicense": "Save License",
@@ -794,5 +802,64 @@
     "noDevices": "No devices yet",
     "noDevicesPerDevice": "Devices appear here once a key is entered in {product}.",
     "noDevicesShared": "Devices appear here once the key is entered in {product}."
+  },
+  "ipa": {
+    "label": "iPad",
+    "uploadFailed": "Failed to upload the iPad installer.",
+    "downloadFailed": "Failed to download the iPad installer.",
+    "removeFailed": "Failed to remove the iPad installer.",
+    "removeConfirm": "Remove the iPad installer {name} from version {version}? Its install links stop working.",
+    "removeTitle": "Remove iPad Installer",
+    "missingTitle": "No iPad installer yet",
+    "missingMessage": "Upload the Ad Hoc iPad installer (.ipa, up to 2 GB). It is needed to publish.",
+    "missingMessageDrop": "Upload the Ad Hoc iPad installer (.ipa, up to 2 GB), or drop it here. It is needed to publish.",
+    "versionBuild": "Version {version} (build {build})",
+    "minimumOs": "iPadOS {version}+",
+    "team": "Team {team}",
+    "profileExpires": "Profile valid until {date}",
+    "profileExpired": "Profile expired on {date}",
+    "noProfile": "No provisioning profile in this .ipa: it cannot be installed over the air.",
+    "devices": "{n} iPad in the profile | {n} iPads in the profile",
+    "devicesHint": "Only these iPads (UDIDs) can install this build. For another iPad: add its UDID in Apple Developer › Devices, rebuild and upload the new .ipa."
+  },
+  "installLinks": {
+    "button": "Install links",
+    "open": "Single-use iPad install links",
+    "title": "Install links · {product} {version}",
+    "description": "One link installs the app on one iPad. For another iPad, make a new link.",
+    "notHttps": "The server URL (APP_URL) is not https. iPads only install over https with a valid certificate.",
+    "created": "Link created. Copy it now and send it to the iPad user.",
+    "sendHint": "Open the link in Safari on the iPad and tap Install. The link works once.",
+    "license": "License (optional)",
+    "noLicense": "No license",
+    "searchLicense": "Search name or key...",
+    "licenseHint": "An iPad license: the installation is logged in its history.",
+    "deviceName": "iPad name",
+    "deviceNamePlaceholder": "e.g. iPad Budi",
+    "expiresIn": "Valid for",
+    "days": "{n} day | {n} days",
+    "note": "Note",
+    "notePlaceholder": "Internal note (optional)",
+    "create": "Create link",
+    "needsIpa": "Upload the iPad installer (.ipa) of this version first.",
+    "list": "Links",
+    "empty": "No install links yet.",
+    "status": {
+      "active": "Active",
+      "used": "Used",
+      "expired": "Expired",
+      "revoked": "Revoked"
+    },
+    "usedAt": "Used {date}",
+    "revokedAt": "Revoked {date}",
+    "expiredAt": "Expired {date}",
+    "createdBy": "Created {date} by {name}",
+    "expiresAt": "expires {date}",
+    "revoke": "Revoke",
+    "revokeTitle": "Revoke Install Link",
+    "revokeConfirm": "Revoke this link? It can no longer be used to install the app.",
+    "loadFailed": "Failed to load the install links.",
+    "createFailed": "Failed to create the install link.",
+    "revokeFailed": "Failed to revoke the install link."
   }
 }

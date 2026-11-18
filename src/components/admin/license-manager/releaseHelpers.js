@@ -107,11 +107,36 @@ export const installerFileError = (file) => {
   return "";
 };
 
-// The publish check of the API: versions that run on the Mac need an installer.
+// iPad installer: an Ad Hoc signed .ipa (up to 2 GB).
+export const IPA_ACCEPT = ".ipa";
+export const ipaFileError = (file) => {
+  if (!file) return "";
+  if (!/\.ipa$/i.test(file.name)) return t("licenses.releases.validation.ipaType");
+  if (file.size > INSTALLER_MAX_BYTES) return t("licenses.releases.validation.fileSize");
+  return "";
+};
+
+// The publish check of the API: versions that run on the Mac need the
+// .dmg, versions that run on the iPad the .ipa.
 export const needsFile = (release) =>
   release?.needs_file ?? (release?.platforms ? release.platforms !== "ipad" : true);
 
+export const needsIpa = (release) =>
+  release?.needs_ipa ?? (release?.platforms ? release.platforms !== "mac" : true);
+
 export const publishNeedsFileMessage = () => t("licenses.releases.validation.publishNeedsFile");
+
+export const publishNeedsIpaMessage = () => t("licenses.releases.validation.publishNeedsIpa");
+
+// The first missing installer of a version, as a message ("" when it can be published).
+export const publishBlockedMessage = (release) => {
+  if (needsFile(release) && !release?.file) return publishNeedsFileMessage();
+  if (needsIpa(release) && !release?.ipa) return publishNeedsIpaMessage();
+  return "";
+};
+
+// Install link status: badge tone.
+export const INSTALL_LINK_TONE = { active: "ok", used: "neutral", expired: "warn", revoked: "bad" };
 
 export const blankChange = (type = "feature") => ({ type, area: "", text: "" });
 

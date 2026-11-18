@@ -34,6 +34,7 @@ import ProductIcon from "@/components/admin/license-manager/ProductIcon.vue";
 import LicenseProductGate from "@/components/admin/license-manager/LicenseProductGate.vue";
 import ReleaseFormModal from "@/components/admin/license-manager/ReleaseFormModal.vue";
 import ReleaseInstaller from "@/components/admin/license-manager/ReleaseInstaller.vue";
+import InstallLinksModal from "@/components/admin/license-manager/InstallLinksModal.vue";
 import { useLicenseProduct, onProductReady } from "@/components/admin/license-manager/useLicenseProduct";
 import { useLicenseManagerStore } from "@/stores/licenseManager";
 import { useAlertModalStore } from "@/stores/alertModal";
@@ -44,13 +45,12 @@ import {
   RELEASE_STATUS_CHIP,
   KIND_BADGES,
   KIND_CHIP,
-  publishNeedsFileMessage,
+  publishBlockedMessage,
   releasePlatformLabel,
   changeCountsLine,
   groupChanges,
   formatReleaseDate,
   todayInput,
-  needsFile,
 } from "@/components/admin/license-manager/releaseHelpers";
 
 const { t } = useI18n();
@@ -129,12 +129,17 @@ const areas = computed(() => {
 const toggle = (id) => (expanded.value = { ...expanded.value, [id]: !expanded.value[id] });
 // "3 devices" / "1 license" (word: device | license).
 const plural = (n, word) => t(`licenses.versions.count.${word}`, { n }, n);
-const canPublish = (release) => !needsFile(release) || !!release.file;
+// A Mac version needs its .dmg, an iPad version its .ipa (shared: both).
+const canPublish = (release) => !publishBlockedMessage(release);
 
 const replaceRelease = (updated) => {
   if (!updated) return;
   store.releases = store.releases.map((r) => (r.id === updated.id ? updated : r));
 };
+
+/* ---------- iPad install links ---------- */
+const linksRelease = ref(null);
+const openLinks = (release) => (linksRelease.value = release);
 
 /* ---------- Create / edit ---------- */
 const showForm = ref(false);
@@ -408,10 +413,21 @@ const onPublishOpenChange = (value) => {
                       size="sm"
                       :icon="Send"
                       :disabled="!canPublish(release)"
-                      :title="canPublish(release) ? $t('licenses.versions.publishVersion') : publishNeedsFileMessage()"
+                      :title="canPublish(release) ? $t('licenses.versions.publishVersion') : publishBlockedMessage(release)"
                       @click="openPublish(release)"
                     >
                       {{ $t("licenses.versions.publish") }}
+                    </UiButton>
+                    <UiButton
+                      v-if="release.ipa || release.install_links_active || release.install_links_used"
+                      variant="secondary"
+                      size="sm"
+                      :icon="Link2"
+                      :title="$t('licenses.installLinks.open')"
+                      @click="openLinks(release)"
+                    >
+                      {{ $t("licenses.installLinks.button") }}
+                      <span v-if="release.install_links_active" class="tabular-nums text-ui-muted">({{ release.install_links_active }})</span>
                     </UiButton>
                     <button
                       v-if="canEdit"
@@ -437,11 +453,12 @@ const onPublishOpenChange = (value) => {
                 </div>
 
                 <p v-if="canEdit && release.status === 'draft' && !canPublish(release)" class="text-ui-cap text-ui-warn mt-1.5">
-                  {{ publishNeedsFileMessage() }}
+                  {{ publishBlockedMessage(release) }}
                 </p>
 
                 <!-- Installer -->
                 <ReleaseInstaller :release="release" class="mt-3" @updated="replaceRelease" />
+                <ReleaseInstaller :release="release" platform="ipad" class="mt-2" @updated="replaceRelease" />
 
                 <!-- Changes -->
                 <button
@@ -491,6 +508,8 @@ const onPublishOpenChange = (value) => {
         @close="onFormClose"
         @saved="onSaved"
       />
+
+      <InstallLinksModal :release="linksRelease" :product-name="productName" @close="linksRelease = null" @changed="load" />
 
       <!-- Publish: pick the release date -->
       <UiModal

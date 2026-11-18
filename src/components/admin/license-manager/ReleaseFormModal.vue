@@ -17,6 +17,7 @@ import {
   KIND_LABELS,
   INSTALLER_ACCEPT,
   publishNeedsFileMessage,
+  publishNeedsIpaMessage,
   kindOfVersion,
   releaseToForm,
   releasePayload,
@@ -82,6 +83,9 @@ const kindHint = computed(() =>
 
 const hasFile = computed(() => !!(installer.value || savedRelease.value?.file || props.release?.file));
 const needsInstaller = computed(() => form.value.platforms !== "ipad");
+// The .ipa is uploaded on the version list (after saving); the form only checks it.
+const needsIpaFile = computed(() => form.value.platforms !== "mac");
+const hasIpa = computed(() => !!(savedRelease.value?.ipa || props.release?.ipa));
 
 // A published date defaults to today.
 watch(
@@ -126,6 +130,8 @@ const save = async () => {
   // Publishing a Mac version needs the installer first.
   if (form.value.status === "published" && needsInstaller.value && !hasFile.value) {
     errors.value.status = publishNeedsFileMessage();
+  } else if (form.value.status === "published" && needsIpaFile.value && !hasIpa.value) {
+    errors.value.status = publishNeedsIpaMessage();
   }
   if (Object.keys(errors.value).length) {
     error.value = t("licenses.fixFields");
@@ -362,6 +368,7 @@ const onOpenChange = (value) => {
         </div>
         <p class="text-ui-cap text-ui-muted mb-3">
           {{ needsInstaller ? $t("licenses.releaseForm.installerMac") : $t("licenses.releaseForm.installerIpad") }}
+          <template v-if="needsIpaFile">{{ $t("licenses.releaseForm.installerIpaNote") }}</template>
           <i18n-t keypath="licenses.releaseForm.serverLimits" tag="span" scope="global">
             <template #upload><span class="font-mono">upload_max_filesize</span></template>
             <template #post><span class="font-mono">post_max_size</span></template>

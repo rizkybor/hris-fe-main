@@ -23,6 +23,11 @@ import {
   ExternalLink,
   KeyRound,
   KeySquare,
+  ArchiveRestore,
+  ArrowRightLeft,
+  Link2,
+  Link2Off,
+  TabletSmartphone,
 } from "lucide-vue-next";
 
 export const EVENT_ICONS = {
@@ -38,11 +43,16 @@ export const EVENT_ICONS = {
   certificate_emailed: Mail,
   certificate_shared_whatsapp: MessageCircle,
   certificate_link_opened: ExternalLink,
+  install_link_created: Link2,
+  install_link_revoked: Link2Off,
+  install_link_used: TabletSmartphone,
   device_activated: MonitorCheck,
   device_reactivated: RotateCcw,
   refreshed: RefreshCw,
   device_released: LogOut,
   app_updated: CircleArrowUp,
+  device_restored: ArchiveRestore,
+  device_rebound: ArrowRightLeft,
   denied_device_limit: ShieldX,
   denied_inactive: CircleSlash,
   denied_expired: CalendarX2,
