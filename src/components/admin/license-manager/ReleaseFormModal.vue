@@ -15,7 +15,7 @@ import {
   RELEASE_STATUS_OPTIONS,
   CHANGE_TYPES,
   KIND_LABELS,
-  INSTALLER_ACCEPT,
+  installerAcceptFor,
   publishNeedsFileMessage,
   publishNeedsIpaMessage,
   kindOfVersion,
@@ -84,7 +84,8 @@ const kindHint = computed(() =>
 const hasFile = computed(() => !!(installer.value || savedRelease.value?.file || props.release?.file));
 const needsInstaller = computed(() => form.value.platforms !== "ipad");
 // The .ipa is uploaded on the version list (after saving); the form only checks it.
-const needsIpaFile = computed(() => form.value.platforms !== "mac");
+const needsIpaFile = computed(() => ["both", "ipad"].includes(form.value.platforms));
+const isWindows = computed(() => form.value.platforms === "windows");
 const hasIpa = computed(() => !!(savedRelease.value?.ipa || props.release?.ipa));
 
 // A published date defaults to today.
@@ -116,10 +117,23 @@ const pickInstaller = (event) => {
   const file = event.target.files?.[0];
   event.target.value = "";
   if (!file) return;
-  const message = installerFileError(file);
+  const message = installerFileError(file, form.value.platforms);
   errors.value = { ...errors.value, file: message };
   installer.value = message ? null : file;
 };
+// A picked .dmg no longer fits once the version is switched to Windows (and
+// an .msi no longer fits a Mac version): drop it and say why.
+watch(
+  () => form.value.platforms,
+  (platforms) => {
+    if (!installer.value) return;
+    const message = installerFileError(installer.value, platforms);
+    if (message) {
+      installer.value = null;
+      errors.value = { ...errors.value, file: message };
+    }
+  }
+);
 
 /* ---------- Save ---------- */
 const save = async () => {
@@ -129,7 +143,7 @@ const save = async () => {
   errors.value = validateReleaseForm(form.value);
   // Publishing a Mac version needs the installer first.
   if (form.value.status === "published" && needsInstaller.value && !hasFile.value) {
-    errors.value.status = publishNeedsFileMessage();
+    errors.value.status = publishNeedsFileMessage(form.value.platforms);
   } else if (form.value.status === "published" && needsIpaFile.value && !hasIpa.value) {
     errors.value.status = publishNeedsIpaMessage();
   }
@@ -279,7 +293,7 @@ const onOpenChange = (value) => {
         </div>
 
         <LicenseFormField field="download_url" :label="$t('licenses.releaseForm.downloadUrl')" :error="fieldError('download_url')" wide v-slot="{ id }">
-          <input :id="id" v-model.trim="form.download_url" type="url" placeholder="https://example.com/OCCA-1.1.0.dmg" :class="inputClass('download_url')" />
+          <input :id="id" v-model.trim="form.download_url" type="url" :placeholder="isWindows ? 'https://example.com/OCCA-1.1.0.msi' : 'https://example.com/OCCA-1.1.0.dmg'" :class="inputClass('download_url')" />
         </LicenseFormField>
       </div>
 
@@ -367,7 +381,13 @@ const onOpenChange = (value) => {
           <span class="text-ui-cap text-ui-faint">({{ $t("common.states.optional") }})</span>
         </div>
         <p class="text-ui-cap text-ui-muted mb-3">
-          {{ needsInstaller ? $t("licenses.releaseForm.installerMac") : $t("licenses.releaseForm.installerIpad") }}
+          {{
+            isWindows
+              ? $t("licenses.releaseForm.installerWindows")
+              : needsInstaller
+                ? $t("licenses.releaseForm.installerMac")
+                : $t("licenses.releaseForm.installerIpad")
+          }}
           <template v-if="needsIpaFile">{{ $t("licenses.releaseForm.installerIpaNote") }}</template>
           <i18n-t keypath="licenses.releaseForm.serverLimits" tag="span" scope="global">
             <template #upload><span class="font-mono">upload_max_filesize</span></template>
@@ -375,7 +395,7 @@ const onOpenChange = (value) => {
             <template #body><span class="font-mono">client_max_body_size</span></template>
           </i18n-t>
         </p>
-        <input ref="installerInput" type="file" :accept="INSTALLER_ACCEPT" class="hidden" @change="pickInstaller" />
+        <input ref="installerInput" type="file" :accept="installerAcceptFor(form.platforms)" class="hidden" @change="pickInstaller" />
         <div class="flex flex-wrap items-center gap-3">
           <UiButton variant="secondary" size="sm" :icon="Upload" :disabled="saving" @click="installerInput?.click()">
             {{

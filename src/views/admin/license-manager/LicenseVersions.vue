@@ -16,8 +16,6 @@ import {
   History,
   KeyRound,
   Monitor,
-  Laptop,
-  Tablet,
   AlertTriangle,
   CalendarDays,
   Link2,
@@ -40,7 +38,7 @@ import { useLicenseManagerStore } from "@/stores/licenseManager";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { can } from "@/helpers/permissionHelper";
 import { errorMessage } from "@/helpers/errorHelper";
-import { platformLabel, platformChipClass, validationErrors } from "@/components/admin/license-manager/licenseHelpers";
+import { platformLabel, platformChipClass, platformIcon, validationErrors } from "@/components/admin/license-manager/licenseHelpers";
 import {
   RELEASE_STATUS_CHIP,
   KIND_BADGES,
@@ -115,7 +113,6 @@ const compareVersions = (a, b) => {
   return 0;
 };
 const versionsInUse = computed(() => [...(releasesInfo.value.versions_in_use || [])].sort((a, b) => compareVersions(a.version, b.version)));
-const isIpadPlatform = (platform) => /ip(ad|hone)|ios/i.test(String(platform || ""));
 
 /* ---------- Rows ---------- */
 const sortedReleases = computed(() =>
@@ -225,6 +222,7 @@ const PLATFORM_FILTERS = computed(() => [
   { value: "", label: t("licenses.dashboard.allPlatforms") },
   { value: "mac", label: "Mac" },
   { value: "ipad", label: "iPad" },
+  { value: "windows", label: "Windows" },
 ]);
 const devicesReporting = computed(() => versionsInUse.value.reduce((sum, item) => sum + (Number(item.devices) || 0), 0));
 // The publish modal's open state follows `publishing`.
@@ -298,7 +296,7 @@ const onPublishOpenChange = (value) => {
               :key="`${item.version}-${item.platform}`"
               class="inline-flex items-center gap-1.5 h-8 px-3 rounded-ui-control border border-ui-line bg-ui-subtle/60 text-ui-cap"
             >
-              <component :is="isIpadPlatform(item.platform) ? Tablet : Laptop" class="w-3.5 h-3.5 text-ui-faint" />
+              <component :is="platformIcon(item.platform)" class="w-3.5 h-3.5 text-ui-faint" />
               <span class="font-mono font-medium text-ui-ink">{{ item.version }}</span>
               <span class="text-ui-faint">·</span>
               <span class="text-ui-muted">{{ platformLabel(item.platform) }}</span>

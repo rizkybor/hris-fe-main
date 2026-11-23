@@ -1,5 +1,6 @@
 import { DateTime } from "luxon";
 import { t, localeTag } from "@/i18n";
+import { Laptop, Monitor, Tablet } from "lucide-vue-next";
 
 // Labels are getters so they follow the interface language; the values,
 // class maps and shapes stay the same.
@@ -60,10 +61,12 @@ export const PLAN_GROUPS = [
 export const PLATFORM_OPTIONS = [
   { value: "mac", label: "Mac", note: "macOS", plans: ["trial", "professional", "lifetime", "organization"] },
   { value: "ipad", label: "iPad", get note() { return t("licenses.platform.ipadNote"); }, plans: ["professional", "lifetime", "organization"] },
+  { value: "windows", label: "Windows", get note() { return t("licenses.platform.windowsNote"); }, plans: ["trial", "professional", "lifetime", "organization"] },
 ];
 
 // Create-only choice: a Mac and an iPad key generated together (one
-// bundle, same licensee / plan / period). Not for Trial.
+// bundle, same licensee / plan / period). Not for Trial. Windows is always
+// a license of its own.
 export const PLATFORM_BOTH = "both";
 export const PLATFORM_CHOICES = [
   ...PLATFORM_OPTIONS,
@@ -92,10 +95,20 @@ export const planGroupsFor = (platform) =>
 export const PLATFORM_CHIP = {
   mac: "bg-ui-subtle text-ui-text",
   ipad: "bg-ui-accent-soft text-ui-accent",
+  windows: "bg-ui-info-soft text-ui-info",
   both: "bg-ui-surface text-ui-ink border border-ui-line",
 };
 
 export const platformChipClass = (platform) => PLATFORM_CHIP[normalizePlatform(platform)];
+
+// Icon for a license platform ("mac" / "ipad" / "windows") or an OS an app
+// reports ("macOS", "iPadOS", "Windows 11", ...).
+export const platformIcon = (platform) => {
+  const value = String(platform || "").toLowerCase();
+  if (/win/.test(value)) return Monitor;
+  if (/ip(ad|hone)|ios/.test(value)) return Tablet;
+  return Laptop;
+};
 
 export const CATEGORY_LABELS = translatedMap({
   individual: "licenses.category.individual",
@@ -143,7 +156,7 @@ const PLAN_BAR = {
 
 export const planBarClass = (plan) => PLAN_BAR[normalizePlan(plan)] || "bg-ui-line-strong";
 
-export const PLATFORM_CODES = { mac: "3", ipad: "5" };
+export const PLATFORM_CODES = { mac: "3", ipad: "5", windows: "7" };
 export const PLAN_DIGITS = { trial: "1", professional: "2", lifetime: "3", organization: "4" };
 
 export const planCode = (plan, platform = "mac") =>
@@ -289,6 +302,9 @@ const PLATFORM_LABELS = {
   mac: "macOS",
   maccatalyst: "macOS (Catalyst)",
   mac_catalyst: "macOS (Catalyst)",
+  windows: "Windows",
+  win32: "Windows",
+  win64: "Windows",
 };
 
 // In the browser's timezone, month names in the interface language.

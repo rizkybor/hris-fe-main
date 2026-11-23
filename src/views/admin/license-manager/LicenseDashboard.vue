@@ -26,8 +26,6 @@ import {
   PieChart,
   History,
   SlidersHorizontal,
-  Laptop,
-  Tablet,
   Check,
 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
@@ -55,6 +53,7 @@ import {
   PLATFORM_OPTIONS,
   licensePlatformLabel,
   platformChipClass,
+  platformIcon,
   organizationTypeLabel,
   formatDate,
   formatDateTime,
@@ -342,7 +341,6 @@ const shortKey = (key) => {
   const parts = String(key || "").split("-");
   return parts.length > 2 ? `${parts[0]}-•••••${parts[parts.length - 1]}` : maskKey(key);
 };
-const platformIcon = (platform) => (platform === "ipad" ? Tablet : Laptop);
 const PLATFORM_FILTERS = computed(() => [{ value: "", label: t("licenses.dashboard.allPlatforms") }, ...PLATFORM_OPTIONS]);
 const planChipOptions = computed(() => [
   { value: "", label: t("common.labels.all"), count: summary.value?.total ?? undefined },
@@ -634,7 +632,7 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
                             <span
                               class="w-[52px] shrink-0 inline-flex items-center justify-center gap-1 h-5 rounded-md border border-ui-line bg-ui-surface text-ui-cap text-ui-text"
                             >
-                              <component :is="platformIcon(lane.platform)" class="w-3 h-3 text-ui-faint" />{{ lane.platform === "ipad" ? "iPad" : "Mac" }}
+                              <component :is="platformIcon(lane.platform)" class="w-3 h-3 text-ui-faint" />{{ lane.platform_label }}
                             </span>
                             <span class="font-mono text-ui-cap font-medium whitespace-nowrap text-ui-ink">{{ maskKey(lane.key) }}</span>
                             <CopyKeyButton :value="lane.key" class="opacity-60 group-hover:opacity-100" />
@@ -772,7 +770,7 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
                       <div v-for="lane in lanes(license)" :key="lane.id" class="min-w-0">
                         <div class="flex items-center gap-1.5 min-w-0">
                           <span class="shrink-0 inline-flex items-center gap-1 h-5 px-1.5 rounded-md border border-ui-line bg-ui-surface text-ui-cap text-ui-text">
-                            <component :is="platformIcon(lane.platform)" class="w-3 h-3 text-ui-faint" />{{ lane.platform === "ipad" ? "iPad" : "Mac" }}
+                            <component :is="platformIcon(lane.platform)" class="w-3 h-3 text-ui-faint" />{{ lane.platform_label }}
                           </span>
                           <span class="font-mono text-ui-cap font-medium text-ui-ink whitespace-nowrap shrink-0" :title="maskKey(lane.key)">{{ shortKey(lane.key) }}</span>
                           <CopyKeyButton :value="lane.key" />

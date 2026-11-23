@@ -400,7 +400,8 @@ export const useLicenseManagerStore = defineStore("licenseManager", {
       return data.data;
     },
 
-    // Installer upload (.dmg / .zip / .pkg, up to 2 GB): multipart, no
+    // Installer upload (.dmg / .zip / .pkg, or .msi / .msix / .exe for a
+    // Windows version; up to 2 GB): multipart, no
     // timeout, progress reported as 0-100.
     async uploadReleaseFile(id, file, onProgress = null) {
       const form = new FormData();
@@ -431,7 +432,7 @@ export const useLicenseManagerStore = defineStore("licenseManager", {
       const url = URL.createObjectURL(response.data);
       const link = document.createElement("a");
       link.href = url;
-      link.download = release.file?.name || `${release.version}.dmg`;
+      link.download = release.file?.name || `${release.version}.${release.platforms === "windows" ? "msi" : "dmg"}`;
       document.body.appendChild(link);
       link.click();
       link.remove();
