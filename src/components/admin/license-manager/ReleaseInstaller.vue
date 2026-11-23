@@ -10,7 +10,7 @@ import { can } from "@/helpers/permissionHelper";
 import { errorMessage } from "@/helpers/errorHelper";
 import { formatDateTime, validationErrors } from "@/components/admin/license-manager/licenseHelpers";
 import {
-  INSTALLER_ACCEPT,
+  installerAcceptFor,
   IPA_ACCEPT,
   formatBytes,
   formatReleaseDate,
@@ -37,10 +37,12 @@ const canEdit = computed(() => can("license-release-edit"));
 const canDownload = computed(() => can("license-release-download"));
 
 const isIpad = computed(() => props.platform === "ipad");
+// A Windows version keeps its .msi in the same slot as the Mac .dmg.
+const isWindows = computed(() => !isIpad.value && props.release.platforms === "windows");
 const file = computed(() => (isIpad.value ? props.release.ipa : props.release.file) || null);
 const required = computed(() => (isIpad.value ? needsIpa(props.release) : needsFile(props.release)));
 const isDraft = computed(() => props.release.status === "draft");
-const accept = computed(() => (isIpad.value ? IPA_ACCEPT : INSTALLER_ACCEPT));
+const accept = computed(() => (isIpad.value ? IPA_ACCEPT : installerAcceptFor(props.release.platforms)));
 const prefix = computed(() => (isIpad.value ? "licenses.ipa" : "licenses.installer"));
 
 const input = ref(null);
@@ -57,7 +59,7 @@ const profileDate = (value) => (value ? formatReleaseDate(String(value).slice(0,
 
 const upload = async (picked) => {
   if (!picked || !canEdit.value) return;
-  error.value = isIpad.value ? ipaFileError(picked) : installerFileError(picked);
+  error.value = isIpad.value ? ipaFileError(picked) : installerFileError(picked, props.release.platforms);
   if (error.value) return;
   busy.value = true;
   progress.value = 0;
@@ -227,7 +229,11 @@ const remove = async () => {
         <div class="min-w-0">
           <p class="text-ui-small font-semibold text-ui-warn">{{ $t(`${prefix}.missingTitle`) }}</p>
           <p class="text-ui-cap text-ui-text">
-            {{ canEdit ? $t(`${prefix}.missingMessageDrop`) : $t(`${prefix}.missingMessage`) }}
+            {{
+              isWindows
+                ? $t(canEdit ? "licenses.installer.windowsMissingMessageDrop" : "licenses.installer.windowsMissingMessage")
+                : canEdit ? $t(`${prefix}.missingMessageDrop`) : $t(`${prefix}.missingMessage`)
+            }}
           </p>
         </div>
       </div>

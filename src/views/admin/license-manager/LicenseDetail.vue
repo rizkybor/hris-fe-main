@@ -9,8 +9,6 @@ import {
   Mail,
   MonitorSmartphone,
   Unplug,
-  Laptop,
-  Tablet,
   Phone,
   MapPin,
   Globe,
@@ -54,6 +52,7 @@ import {
   planChipClass,
   licensePlatformLabel,
   platformChipClass,
+  platformIcon,
   categoryLabel,
   planCategory,
   KEY_STATUS,
@@ -419,7 +418,6 @@ const handleDelete = async () => {
   }
 };
 
-const isMac = (platform) => /mac/i.test(platform || "");
 </script>
 
 <template>
@@ -606,7 +604,7 @@ const isMac = (platform) => /mac/i.test(platform || "");
                     :aria-pressed="mobileKeyGroup === gi"
                     @click="mobileKeyGroup = gi"
                   >
-                    <component :is="isMac(group.platform) ? Laptop : Tablet" class="w-4 h-4" />
+                    <component :is="platformIcon(group.platform)" class="w-4 h-4" />
                     {{ group.label }}
                     <span class="tabular-nums" :class="mobileKeyGroup === gi ? 'text-white/70' : 'text-ui-faint'">{{ group.summary.in_use + group.summary.used }}/{{ group.summary.total }}</span>
                   </button>
@@ -620,7 +618,7 @@ const isMac = (platform) => /mac/i.test(platform || "");
                   >
                     <div class="flex items-center gap-2 px-4 py-2.5 bg-ui-subtle border-b border-ui-line">
                       <span class="inline-flex items-center gap-1 text-ui-cap font-medium px-2 py-0.5 rounded-ui-control bg-ui-surface border border-ui-line text-ui-text">
-                        <component :is="isMac(group.platform) ? Laptop : Tablet" class="w-3.5 h-3.5" /> {{ group.label }}
+                        <component :is="platformIcon(group.platform)" class="w-3.5 h-3.5" /> {{ group.label }}
                       </span>
                       <span class="text-ui-cap text-ui-muted">{{ $t("licenses.detail.keysWord") }}</span>
                       <span class="ml-auto text-ui-cap text-ui-muted tabular-nums">
@@ -954,8 +952,7 @@ const isMac = (platform) => /mac/i.test(platform || "");
 
               <ul v-if="activations.length" class="divide-y divide-ui-line">
                 <li v-for="activation in activations" :key="activation.id" class="flex items-start gap-3 py-3.5">
-                  <Laptop v-if="isMac(activation.platform)" class="w-[18px] h-[18px] text-ui-muted shrink-0 mt-0.5" />
-                  <Tablet v-else class="w-[18px] h-[18px] text-ui-muted shrink-0 mt-0.5" />
+                  <component :is="platformIcon(activation.platform)" class="w-[18px] h-[18px] text-ui-muted shrink-0 mt-0.5" />
                   <div class="min-w-0 flex-1">
                     <p class="flex items-center gap-1.5 min-w-0">
                       <span class="text-ui-h3 text-ui-ink truncate">{{ activation.device_name || $t("licenses.detail.unnamedDevice") }}</span>
