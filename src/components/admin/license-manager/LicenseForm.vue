@@ -22,8 +22,6 @@ import {
   Minus,
   Plus,
   Circle,
-  Laptop,
-  Tablet,
   Lock,
   Layers,
   Check,
@@ -59,6 +57,7 @@ import {
   planDefaultMaxDevices,
   periodPreview,
   validateLicenseForm,
+  platformIcon as platformIconOf,
 } from "@/components/admin/license-manager/licenseHelpers";
 
 // v-model'd form object; the parent owns submission and the API call.
@@ -97,10 +96,10 @@ const isLifetimePlan = computed(() => planType(form.value.plan) === "lifetime");
 // iPad has no Trial, so its picker shows one card less.
 const planGroups = computed(() => planGroupsFor(form.value.platform));
 const individualCount = computed(() => planGroups.value.find((g) => g.plans[0]?.category === "individual")?.plans.length || 0);
-// Create offers Mac, iPad, or both at once; edit shows the fixed platform.
+// Create offers Mac, iPad, both at once, or Windows; edit shows the fixed platform.
 const platformChoices = computed(() => (props.isEdit ? PLATFORM_OPTIONS : PLATFORM_CHOICES));
 const platformInfo = computed(() => PLATFORM_CHOICES.find((p) => p.value === form.value.platform) || null);
-const platformIcon = (value) => (value === "ipad" ? Tablet : value === "both" ? Layers : Laptop);
+const platformIcon = (value) => (value === "both" ? Layers : platformIconOf(value));
 const durations = computed(() => durationOptionsFor(form.value.plan));
 const required = (field) => isRequiredField(category.value, field, form.value.country);
 const fullAddress = computed(() => formatAddress(form.value));

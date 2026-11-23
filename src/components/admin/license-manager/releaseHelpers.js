@@ -16,6 +16,7 @@ export const RELEASE_PLATFORM_OPTIONS = [
   { value: "both", label: "Mac + iPad" },
   { value: "mac", label: "Mac" },
   { value: "ipad", label: "iPad" },
+  { value: "windows", label: "Windows" },
 ];
 
 export const releasePlatformLabel = (value) => RELEASE_PLATFORM_OPTIONS.find((o) => o.value === value)?.label || value || "-";
@@ -97,12 +98,18 @@ export const formatBytes = (bytes) => {
   return `${value.toFixed(value >= 100 ? 0 : 1)} ${units[unit]}`;
 };
 
-// Installer files the API accepts (up to 2 GB).
+// Installer files the API accepts (up to 2 GB): the Mac disk image (or a
+// zipped app / .pkg), or for a Windows version the .msi (or .msix / .exe).
 export const INSTALLER_ACCEPT = ".dmg,.zip,.pkg";
+export const WINDOWS_INSTALLER_ACCEPT = ".msi,.msix,.exe";
+export const installerAcceptFor = (platforms) => (platforms === "windows" ? WINDOWS_INSTALLER_ACCEPT : INSTALLER_ACCEPT);
 export const INSTALLER_MAX_BYTES = 2 * 1024 * 1024 * 1024;
-export const installerFileError = (file) => {
+export const installerFileError = (file, platforms) => {
   if (!file) return "";
-  if (!/\.(dmg|zip|pkg)$/i.test(file.name)) return t("licenses.releases.validation.fileType");
+  const windows = platforms === "windows";
+  if (!(windows ? /\.(msi|msix|exe)$/i : /\.(dmg|zip|pkg)$/i).test(file.name)) {
+    return t(windows ? "licenses.releases.validation.windowsFileType" : "licenses.releases.validation.fileType");
+  }
   if (file.size > INSTALLER_MAX_BYTES) return t("licenses.releases.validation.fileSize");
   return "";
 };
@@ -117,20 +124,21 @@ export const ipaFileError = (file) => {
 };
 
 // The publish check of the API: versions that run on the Mac need the
-// .dmg, versions that run on the iPad the .ipa.
+// .dmg, Windows versions the .msi, versions that run on the iPad the .ipa.
 export const needsFile = (release) =>
   release?.needs_file ?? (release?.platforms ? release.platforms !== "ipad" : true);
 
 export const needsIpa = (release) =>
-  release?.needs_ipa ?? (release?.platforms ? release.platforms !== "mac" : true);
+  release?.needs_ipa ?? (release?.platforms ? ["both", "ipad"].includes(release.platforms) : true);
 
-export const publishNeedsFileMessage = () => t("licenses.releases.validation.publishNeedsFile");
+export const publishNeedsFileMessage = (platforms) =>
+  t(platforms === "windows" ? "licenses.releases.validation.publishNeedsWindowsFile" : "licenses.releases.validation.publishNeedsFile");
 
 export const publishNeedsIpaMessage = () => t("licenses.releases.validation.publishNeedsIpa");
 
 // The first missing installer of a version, as a message ("" when it can be published).
 export const publishBlockedMessage = (release) => {
-  if (needsFile(release) && !release?.file) return publishNeedsFileMessage();
+  if (needsFile(release) && !release?.file) return publishNeedsFileMessage(release?.platforms);
   if (needsIpa(release) && !release?.ipa) return publishNeedsIpaMessage();
   return "";
 };

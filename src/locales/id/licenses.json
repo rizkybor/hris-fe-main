@@ -27,7 +27,8 @@
   },
   "platform": {
     "ipadNote": "iPadOS · tanpa Trial",
-    "bothNote": "Dua key sekaligus · tanpa Trial"
+    "bothNote": "Dua key sekaligus · tanpa Trial",
+    "windowsNote": "Windows · semua paket"
   },
   "duration": {
     "days14": "14 hari",
@@ -74,7 +75,7 @@
       "address": "Alamat jalan wajib diisi.",
       "generic": "Kolom ini wajib diisi."
     },
-    "platform": "Pilih Mac, iPad, atau Mac + iPad.",
+    "platform": "Pilih Mac, iPad, Mac + iPad, atau Windows.",
     "plan": "Pilih paket.",
     "planNotOnPlatform": "Paket {plan} tidak tersedia untuk lisensi {platform}.",
     "postalCodeId": "Gunakan kode pos 5 digit.",
@@ -235,7 +236,9 @@
       "downloadUrl": "Masukkan URL lengkap, mis. https://example.com/OCCA.dmg",
       "changeText": "Jelaskan perubahannya.",
       "ipaType": "Gunakan file .ipa.",
-      "publishNeedsIpa": "Unggah installer iPad (.ipa) sebelum menerbitkan versi ini."
+      "publishNeedsIpa": "Unggah installer iPad (.ipa) sebelum menerbitkan versi ini.",
+      "windowsFileType": "Gunakan file .msi, .msix, atau .exe.",
+      "publishNeedsWindowsFile": "Unggah installer Windows (.msi) sebelum menerbitkan versi ini."
     }
   },
   "title": "License Manager",
@@ -315,7 +318,9 @@
     "missingTitle": "Belum ada installer",
     "missingMessage": "Unggah installer Mac (.dmg, .zip, atau .pkg, maks. 2 GB). Diperlukan untuk menerbitkan.",
     "missingMessageDrop": "Unggah installer Mac (.dmg, .zip, atau .pkg, maks. 2 GB), atau letakkan di sini. Diperlukan untuk menerbitkan.",
-    "uploading": "Mengunggah…"
+    "uploading": "Mengunggah…",
+    "windowsMissingMessage": "Unggah installer Windows (.msi, .msix, atau .exe, maks. 2 GB). Diperlukan untuk menerbitkan.",
+    "windowsMissingMessageDrop": "Unggah installer Windows (.msi, .msix, atau .exe, maks. 2 GB), atau letakkan di sini. Diperlukan untuk menerbitkan."
   },
   "location": {
     "loadError": "Daftar wilayah tidak bisa dimuat. Periksa koneksi lalu coba lagi.",
@@ -469,7 +474,8 @@
     "uploadingPercent": "Mengunggah {n}%...",
     "save": "Simpan Versi",
     "add": "Tambah Versi",
-    "installerIpaNote": "Installer iPad (.ipa) diunggah di daftar versi setelah disimpan; wajib untuk menerbitkan."
+    "installerIpaNote": "Installer iPad (.ipa) diunggah di daftar versi setelah disimpan; wajib untuk menerbitkan.",
+    "installerWindows": "Installer Windows (.msi, .msix, atau .exe, maks. 2 GB) disimpan di HRIS dan diperlukan untuk menerbitkan."
   },
   "form": {
     "saveLicense": "Simpan Lisensi",

@@ -27,7 +27,8 @@
   },
   "platform": {
     "ipadNote": "iPadOS · no Trial",
-    "bothNote": "Two keys at once · no Trial"
+    "bothNote": "Two keys at once · no Trial",
+    "windowsNote": "Windows · all plans"
   },
   "duration": {
     "days14": "14 days",
@@ -74,7 +75,7 @@
       "address": "Street address is required.",
       "generic": "This field is required."
     },
-    "platform": "Choose Mac, iPad, or Mac + iPad.",
+    "platform": "Choose Mac, iPad, Mac + iPad, or Windows.",
     "plan": "Choose a plan.",
     "planNotOnPlatform": "The {plan} plan is not available for {platform} licenses.",
     "postalCodeId": "Use the 5-digit postal code.",
@@ -235,7 +236,9 @@
       "downloadUrl": "Enter a full URL, e.g. https://example.com/OCCA.dmg",
       "changeText": "Describe the change.",
       "ipaType": "Use an .ipa file.",
-      "publishNeedsIpa": "Upload the iPad installer (.ipa) before publishing this version."
+      "publishNeedsIpa": "Upload the iPad installer (.ipa) before publishing this version.",
+      "windowsFileType": "Use an .msi, .msix, or .exe file.",
+      "publishNeedsWindowsFile": "Upload the Windows installer (.msi) before publishing this version."
     }
   },
   "title": "License Manager",
@@ -315,7 +318,9 @@
     "missingTitle": "No installer yet",
     "missingMessage": "Upload the Mac installer (.dmg, .zip or .pkg, up to 2 GB). It is needed to publish.",
     "missingMessageDrop": "Upload the Mac installer (.dmg, .zip or .pkg, up to 2 GB), or drop it here. It is needed to publish.",
-    "uploading": "Uploading…"
+    "uploading": "Uploading…",
+    "windowsMissingMessage": "Upload the Windows installer (.msi, .msix, or .exe, up to 2 GB). Required to publish.",
+    "windowsMissingMessageDrop": "Upload the Windows installer (.msi, .msix, or .exe, up to 2 GB), or drop it here. Required to publish."
   },
   "location": {
     "loadError": "Could not load the region list. Check the connection and try again.",
@@ -469,7 +474,8 @@
     "uploadingPercent": "Uploading {n}%...",
     "save": "Save Version",
     "add": "Add Version",
-    "installerIpaNote": "The iPad installer (.ipa) is uploaded on the version list after saving; it is needed to publish."
+    "installerIpaNote": "The iPad installer (.ipa) is uploaded on the version list after saving; it is needed to publish.",
+    "installerWindows": "The Windows installer (.msi, .msix, or .exe, up to 2 GB) is stored in HRIS and required to publish."
   },
   "form": {
     "saveLicense": "Save License",
