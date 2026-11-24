@@ -238,7 +238,12 @@
       "ipaType": "Use an .ipa file.",
       "publishNeedsIpa": "Upload the iPad installer (.ipa) before publishing this version.",
       "windowsFileType": "Use an .msi, .msix, or .exe file.",
-      "publishNeedsWindowsFile": "Upload the Windows installer (.msi) before publishing this version."
+      "publishNeedsWindowsFile": "Upload the Windows installer (.msi) before publishing this version.",
+      "androidFileType": "Use an .apk or .aab file.",
+      "multiFileType": "Use a .zip, .dmg, .pkg, .msi, .msix, .exe, .apk, or .aab file.",
+      "targetPlatforms": "Pick at least two platforms for a Multiplatform version.",
+      "androidTargetSdk": "The target Android can't be lower than the minimum.",
+      "publishNeedsAndroidFile": "Upload the Android app (.apk / .aab) before publishing this version."
     }
   },
   "title": "License Manager",
@@ -323,7 +328,12 @@
     "missingMessageDrop": "Upload the Mac installer (.dmg, .zip or .pkg, up to 2 GB), or drop it here. It is needed to publish.",
     "uploading": "Uploading…",
     "windowsMissingMessage": "Upload the Windows installer (.msi, .msix, or .exe, up to 2 GB). Required to publish.",
-    "windowsMissingMessageDrop": "Upload the Windows installer (.msi, .msix, or .exe, up to 2 GB), or drop it here. Required to publish."
+    "windowsMissingMessageDrop": "Upload the Windows installer (.msi, .msix, or .exe, up to 2 GB), or drop it here. Required to publish.",
+    "optionalTitle": "{label} (optional)",
+    "optionalMessage": "A Multiplatform version doesn't require an {label}. Upload one if you have it.",
+    "optionalMessageDrop": "A Multiplatform version doesn't require an {label}. Upload or drop one here if you have it.",
+    "androidMissingMessage": "Upload the Android app (.apk or .aab, up to 2 GB). Required to publish.",
+    "androidMissingMessageDrop": "Upload the Android app (.apk or .aab, up to 2 GB), or drop it here. Required to publish."
   },
   "location": {
     "loadError": "Could not load the region list. Check the connection and try again.",
@@ -491,7 +501,16 @@
     "save": "Save Version",
     "add": "Add Version",
     "installerIpaNote": "The iPad installer (.ipa) is uploaded on the version list after saving; it is needed to publish.",
-    "installerWindows": "The Windows installer (.msi, .msix, or .exe, up to 2 GB) is stored in HRIS and required to publish."
+    "installerWindows": "The Windows installer (.msi, .msix, or .exe, up to 2 GB) is stored in HRIS and required to publish.",
+    "multiplatform": "Multiplatform",
+    "targetPlatforms": "Platforms this version covers (pick at least 2)",
+    "androidMinSdk": "Minimum Android",
+    "androidMinSdkHint": "Lowest Android version that can install it (minSdkVersion).",
+    "androidTargetSdk": "Target Android",
+    "androidTargetSdkHint": "API level the build targets (targetSdkVersion).",
+    "installerAndroid": "The Android app (.apk or .aab, up to 2 GB) is stored in HRIS and required to publish.",
+    "installerIos": "An iOS version uses the .ipa uploaded on the version list after saving; required to publish.",
+    "installerMulti": "Optional for Multiplatform: one file (.zip, .dmg, .msi, .apk, and so on). A download URL alone also works."
   },
   "form": {
     "saveLicense": "Save License",
@@ -763,7 +782,9 @@
     "publishDescription": "The apps will see it in their version history.",
     "publishAria": "Publish version {version}",
     "publishing": "Publishing...",
-    "latest": "Latest version"
+    "latest": "Latest version",
+    "androidMin": "Android {version}+ (API {api})",
+    "androidTarget": "target API {api}"
   },
   "detail": {
     "was": "was",
@@ -846,7 +867,10 @@
     "profileExpired": "Profile expired on {date}",
     "noProfile": "No provisioning profile in this .ipa: it cannot be installed over the air.",
     "devices": "{n} iPad in the profile | {n} iPads in the profile",
-    "devicesHint": "Only these iPads (UDIDs) can install this build. For another iPad: add its UDID in Apple Developer › Devices, rebuild and upload the new .ipa."
+    "devicesHint": "Only these iPads (UDIDs) can install this build. For another iPad: add its UDID in Apple Developer › Devices, rebuild and upload the new .ipa.",
+    "iosMissingTitle": "No iOS app yet",
+    "iosMissingMessage": "Upload the Ad Hoc iOS app (.ipa, up to 2 GB). Required to publish.",
+    "iosMissingMessageDrop": "Upload the Ad Hoc iOS app (.ipa, up to 2 GB), or drop it here. Required to publish."
   },
   "installLinks": {
     "button": "Install links",

@@ -18,6 +18,8 @@ import {
   ipaFileError,
   needsFile,
   needsIpa,
+  allowsOptionalFile,
+  allowsOptionalIpa,
 } from "@/components/admin/license-manager/releaseHelpers";
 
 // One installer of a version: the Mac .dmg (platform "mac") or the iPad
@@ -41,6 +43,24 @@ const isIpad = computed(() => props.platform === "ipad");
 const isWindows = computed(() => !isIpad.value && props.release.platforms === "windows");
 const file = computed(() => (isIpad.value ? props.release.ipa : props.release.file) || null);
 const required = computed(() => (isIpad.value ? needsIpa(props.release) : needsFile(props.release)));
+// Multiplatform versions: the slot is offered but not required.
+const optional = computed(() => !required.value && (isIpad.value ? allowsOptionalIpa(props.release) : allowsOptionalFile(props.release)));
+// What the .ipa is for: "iOS" (iPhone), "iPad", or both on a multiplatform version.
+const ipaLabel = computed(() => {
+  const list = props.release.platforms === "multi" ? props.release.target_platforms || [] : [props.release.platforms];
+  const ios = list.includes("ios");
+  const ipad = list.includes("ipad") || list.includes("both");
+  if (ios && ipad) return `${t("licenses.ipa.label")} / iOS`;
+  return ios ? "iOS" : t("licenses.ipa.label");
+});
+const missingMessage = computed(() => {
+  const drop = canEdit.value;
+  if (optional.value) return t(drop ? "licenses.installer.optionalMessageDrop" : "licenses.installer.optionalMessage", { label: isIpad.value ? ".ipa" : "installer" });
+  if (isWindows.value) return t(drop ? "licenses.installer.windowsMissingMessageDrop" : "licenses.installer.windowsMissingMessage");
+  if (!isIpad.value && props.release.platforms === "android") return t(drop ? "licenses.installer.androidMissingMessageDrop" : "licenses.installer.androidMissingMessage");
+  if (isIpad.value && props.release.platforms === "ios") return t(drop ? "licenses.ipa.iosMissingMessageDrop" : "licenses.ipa.iosMissingMessage");
+  return t(drop ? `${prefix.value}.missingMessageDrop` : `${prefix.value}.missingMessage`);
+});
 const isDraft = computed(() => props.release.status === "draft");
 const accept = computed(() => (isIpad.value ? IPA_ACCEPT : installerAcceptFor(props.release.platforms)));
 const prefix = computed(() => (isIpad.value ? "licenses.ipa" : "licenses.installer"));
@@ -129,10 +149,10 @@ const remove = async () => {
 
 <template>
   <div
-    v-if="file || required"
+    v-if="file || required || optional"
     class="rounded-ui-control border px-3.5 py-3 transition-colors"
     :class="[
-      file ? 'border-ui-line bg-ui-subtle/60' : 'border-dashed border-ui-warn/40 bg-ui-warn-soft',
+      file ? 'border-ui-line bg-ui-subtle/60' : optional ? 'border-dashed border-ui-line-strong bg-ui-surface' : 'border-dashed border-ui-warn/40 bg-ui-warn-soft',
       dragging ? '!border-ui-accent !bg-ui-accent-soft' : '',
     ]"
     @dragover.prevent="canEdit && !busy && (dragging = true)"
@@ -149,7 +169,7 @@ const remove = async () => {
         </div>
         <div class="min-w-0">
           <p class="text-ui-small font-medium text-ui-ink truncate" :title="file.name">
-            <span v-if="isIpad" class="text-ui-muted font-normal">{{ $t("licenses.ipa.label") }} · </span>{{ file.name }}
+            <span v-if="isIpad" class="text-ui-muted font-normal">{{ ipaLabel }} · </span>{{ file.name }}
           </p>
           <p class="text-ui-cap text-ui-muted flex flex-wrap items-center gap-x-1.5">
             <span class="tabular-nums">{{ formatBytes(file.size) }}</span>
@@ -225,16 +245,13 @@ const remove = async () => {
     <!-- Missing and needed -->
     <div v-if="!file" class="flex flex-col sm:flex-row sm:items-center gap-3">
       <div class="flex items-center gap-3 min-w-0 flex-1">
-        <AlertTriangle class="w-[18px] h-[18px] text-ui-warn shrink-0" />
+        <AlertTriangle v-if="!optional" class="w-[18px] h-[18px] text-ui-warn shrink-0" />
+        <Upload v-else class="w-[18px] h-[18px] text-ui-faint shrink-0" />
         <div class="min-w-0">
-          <p class="text-ui-small font-semibold text-ui-warn">{{ $t(`${prefix}.missingTitle`) }}</p>
-          <p class="text-ui-cap text-ui-text">
-            {{
-              isWindows
-                ? $t(canEdit ? "licenses.installer.windowsMissingMessageDrop" : "licenses.installer.windowsMissingMessage")
-                : canEdit ? $t(`${prefix}.missingMessageDrop`) : $t(`${prefix}.missingMessage`)
-            }}
+          <p class="text-ui-small font-semibold" :class="optional ? 'text-ui-ink' : 'text-ui-warn'">
+            {{ optional ? $t("licenses.installer.optionalTitle", { label: isIpad ? ipaLabel : "Installer" }) : isIpad && release.platforms === "ios" ? $t("licenses.ipa.iosMissingTitle") : $t(`${prefix}.missingTitle`) }}
           </p>
+          <p class="text-ui-cap text-ui-text">{{ missingMessage }}</p>
         </div>
       </div>
       <UiButton v-if="canEdit" variant="secondary" size="sm" :icon="Upload" :disabled="busy" @click="input?.click()">{{ $t("common.actions.upload") }}</UiButton>

@@ -39,13 +39,15 @@ import { useLicenseManagerStore } from "@/stores/licenseManager";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { can } from "@/helpers/permissionHelper";
 import { errorMessage } from "@/helpers/errorHelper";
-import { platformLabel, platformChipClass, platformIcon, validationErrors } from "@/components/admin/license-manager/licenseHelpers";
+import { platformLabel, platformIcon, validationErrors } from "@/components/admin/license-manager/licenseHelpers";
 import {
   RELEASE_STATUS_CHIP,
   KIND_BADGES,
   KIND_CHIP,
   publishBlockedMessage,
   releasePlatformLabel,
+  releasePlatformChip,
+  androidVersionOf,
   changeCountsLine,
   groupChanges,
   formatReleaseDate,
@@ -226,6 +228,8 @@ const PLATFORM_FILTERS = computed(() => [
   { value: "mac", label: "Mac" },
   { value: "ipad", label: "iPad" },
   { value: "windows", label: "Windows" },
+  { value: "android", label: "Android" },
+  { value: "ios", label: "iOS" },
 ]);
 const devicesReporting = computed(() => versionsInUse.value.reduce((sum, item) => sum + (Number(item.devices) || 0), 0));
 // The publish modal's open state follows `publishing`.
@@ -395,8 +399,13 @@ const onPublishOpenChange = (value) => {
                         {{ release.status === "published" ? $t("licenses.releases.status.published") : $t("licenses.releases.status.draft") }}
                       </UiBadge>
                       <UiBadge v-if="release.is_critical" tone="bad"><AlertTriangle class="w-3 h-3" /> {{ $t("licenses.versions.critical") }}</UiBadge>
-                      <span class="inline-flex items-center h-[22px] px-2 rounded-md text-ui-cap font-medium" :class="platformChipClass(release.platforms)">
-                        {{ releasePlatformLabel(release.platforms) }}
+                      <span class="inline-flex items-center h-[22px] px-2 rounded-md text-ui-cap font-medium" :class="releasePlatformChip(release.platforms)">
+                        {{ releasePlatformLabel(release.platforms, release.target_platforms) }}
+                      </span>
+                      <span v-if="release.android_min_sdk || release.android_target_sdk" class="inline-flex items-center h-[22px] px-2 rounded-md text-ui-cap font-medium bg-ui-ok-soft text-ui-ok">
+                        <template v-if="release.android_min_sdk">{{ $t("licenses.versions.androidMin", { version: androidVersionOf(release.android_min_sdk) || `API ${release.android_min_sdk}`, api: release.android_min_sdk }) }}</template>
+                        <template v-if="release.android_min_sdk && release.android_target_sdk"> · </template>
+                        <template v-if="release.android_target_sdk">{{ $t("licenses.versions.androidTarget", { api: release.android_target_sdk }) }}</template>
                       </span>
                       <span class="inline-flex items-center gap-1 text-ui-cap text-ui-muted ml-1">
                         <CalendarDays class="w-3.5 h-3.5" />

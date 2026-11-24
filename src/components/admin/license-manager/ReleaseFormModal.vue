@@ -1,17 +1,20 @@
 <script setup>
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { Save, Plus, Trash2, ArrowUp, ArrowDown, ListChecks, FileArchive, Upload, ChevronDown } from "lucide-vue-next";
+import { Save, Plus, Trash2, ArrowUp, ArrowDown, ListChecks, FileArchive, Upload, ChevronDown, Check } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import LicenseFormField from "@/components/admin/license-manager/LicenseFormField.vue";
 import LicenseStatusSwitch from "@/components/admin/license-manager/LicenseStatusSwitch.vue";
-import { UiModal, UiButton, UiSpinner } from "@/components/ui";
+import { UiModal, UiButton, UiSpinner, UiSelect } from "@/components/ui";
 import { useLicenseManagerStore } from "@/stores/licenseManager";
 import { can } from "@/helpers/permissionHelper";
 import { errorMessage } from "@/helpers/errorHelper";
 import { validationErrors } from "@/components/admin/license-manager/licenseHelpers";
 import {
   RELEASE_PLATFORM_OPTIONS,
+  TARGET_PLATFORM_OPTIONS,
+  ANDROID_API_LEVELS,
+  platformListOf,
   RELEASE_STATUS_OPTIONS,
   CHANGE_TYPES,
   KIND_LABELS,
@@ -82,10 +85,34 @@ const kindHint = computed(() =>
 );
 
 const hasFile = computed(() => !!(installer.value || savedRelease.value?.file || props.release?.file));
-const needsInstaller = computed(() => form.value.platforms !== "ipad");
+// Required installer file: Mac (.dmg), Windows (.msi), Android (.apk);
+// a multiplatform version may carry one optional file.
+const needsInstaller = computed(() => ["both", "mac", "windows", "android"].includes(form.value.platforms));
+const isMulti = computed(() => form.value.platforms === "multi");
+const canHaveInstaller = computed(() => needsInstaller.value || isMulti.value);
 // The .ipa is uploaded on the version list (after saving); the form only checks it.
-const needsIpaFile = computed(() => ["both", "ipad"].includes(form.value.platforms));
+const needsIpaFile = computed(() => ["both", "ipad", "ios"].includes(form.value.platforms));
 const isWindows = computed(() => form.value.platforms === "windows");
+const platformList = computed(() => platformListOf(form.value.platforms, form.value.target_platforms));
+const hasAndroid = computed(() => platformList.value.includes("android"));
+const toggleTarget = (value) => {
+  const list = form.value.target_platforms || [];
+  form.value.target_platforms = list.includes(value) ? list.filter((p) => p !== value) : [...list, value];
+};
+const sdkOptions = computed(() => [{ value: "", label: "—" }, ...ANDROID_API_LEVELS]);
+const installerText = computed(() => {
+  if (isWindows.value) return t("licenses.releaseForm.installerWindows");
+  if (form.value.platforms === "android") return t("licenses.releaseForm.installerAndroid");
+  if (isMulti.value) return t("licenses.releaseForm.installerMulti");
+  if (form.value.platforms === "ios") return t("licenses.releaseForm.installerIos");
+  return needsInstaller.value ? t("licenses.releaseForm.installerMac") : t("licenses.releaseForm.installerIpad");
+});
+const downloadPlaceholder = computed(
+  () =>
+    ({ windows: "https://example.com/App-1.1.0.msi", android: "https://play.google.com/store/apps/details?id=…", ios: "https://apps.apple.com/app/…" })[
+      form.value.platforms
+    ] || "https://example.com/App-1.1.0.dmg"
+);
 const hasIpa = computed(() => !!(savedRelease.value?.ipa || props.release?.ipa));
 
 // A published date defaults to today.
@@ -127,7 +154,7 @@ watch(
   () => form.value.platforms,
   (platforms) => {
     if (!installer.value) return;
-    const message = installerFileError(installer.value, platforms);
+    const message = canHaveInstaller.value ? installerFileError(installer.value, platforms) : t("licenses.releaseForm.installerIpad");
     if (message) {
       installer.value = null;
       errors.value = { ...errors.value, file: message };
@@ -230,9 +257,9 @@ const onOpenChange = (value) => {
           <input :id="id" v-model="form.title" type="text" :placeholder="$t('licenses.releaseForm.titlePlaceholder')" :class="inputClass('title')" />
         </LicenseFormField>
 
-        <div data-field="platforms">
+        <div data-field="platforms" class="md:col-span-2">
           <p class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("licenses.releaseForm.platforms") }} <span class="text-ui-bad">*</span></p>
-          <div class="inline-flex p-0.5 bg-ui-subtle rounded-ui-control" role="radiogroup" :aria-label="$t('licenses.releaseForm.platforms')">
+          <div class="inline-flex flex-wrap gap-0.5 p-0.5 bg-ui-subtle rounded-ui-control" role="radiogroup" :aria-label="$t('licenses.releaseForm.platforms')">
             <button
               v-for="opt in RELEASE_PLATFORM_OPTIONS"
               :key="opt.value"
@@ -247,6 +274,45 @@ const onOpenChange = (value) => {
             </button>
           </div>
           <p v-if="fieldError('platforms')" class="text-ui-cap text-ui-bad mt-1.5">{{ fieldError("platforms") }}</p>
+
+          <!-- Multiplatform: which platforms this version covers -->
+          <div v-if="isMulti" data-field="target_platforms" class="mt-3">
+            <p class="text-ui-cap text-ui-muted mb-1.5">{{ $t("licenses.releaseForm.targetPlatforms") }}</p>
+            <div class="flex flex-wrap gap-2" role="group" :aria-label="$t('licenses.releaseForm.targetPlatforms')">
+              <button
+                v-for="opt in TARGET_PLATFORM_OPTIONS"
+                :key="opt.value"
+                type="button"
+                role="checkbox"
+                :aria-checked="form.target_platforms.includes(opt.value)"
+                @click="toggleTarget(opt.value)"
+                class="ui-press inline-flex items-center gap-1.5 h-8 px-3 rounded-full border text-ui-small font-medium"
+                :class="form.target_platforms.includes(opt.value) ? 'bg-ui-ink text-white border-ui-ink' : 'bg-ui-surface text-ui-text border-ui-line hover:bg-ui-hover'"
+              >
+                <Check v-if="form.target_platforms.includes(opt.value)" class="w-3.5 h-3.5" />
+                {{ opt.label }}
+              </button>
+            </div>
+            <p v-if="fieldError('target_platforms')" class="text-ui-cap text-ui-bad mt-1.5">{{ fieldError("target_platforms") }}</p>
+          </div>
+
+          <!-- Android: minimum / target SDK -->
+          <div v-if="hasAndroid" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3">
+            <UiSelect
+              v-model="form.android_min_sdk"
+              :label="$t('licenses.releaseForm.androidMinSdk')"
+              :options="sdkOptions"
+              :error="fieldError('android_min_sdk')"
+              :hint="$t('licenses.releaseForm.androidMinSdkHint')"
+            />
+            <UiSelect
+              v-model="form.android_target_sdk"
+              :label="$t('licenses.releaseForm.androidTargetSdk')"
+              :options="sdkOptions"
+              :error="fieldError('android_target_sdk')"
+              :hint="$t('licenses.releaseForm.androidTargetSdkHint')"
+            />
+          </div>
         </div>
 
         <div data-field="status">
@@ -293,7 +359,7 @@ const onOpenChange = (value) => {
         </div>
 
         <LicenseFormField field="download_url" :label="$t('licenses.releaseForm.downloadUrl')" :error="fieldError('download_url')" wide v-slot="{ id }">
-          <input :id="id" v-model.trim="form.download_url" type="url" :placeholder="isWindows ? 'https://example.com/OCCA-1.1.0.msi' : 'https://example.com/OCCA-1.1.0.dmg'" :class="inputClass('download_url')" />
+          <input :id="id" v-model.trim="form.download_url" type="url" :placeholder="downloadPlaceholder" :class="inputClass('download_url')" />
         </LicenseFormField>
       </div>
 
@@ -381,13 +447,7 @@ const onOpenChange = (value) => {
           <span class="text-ui-cap text-ui-faint">({{ $t("common.states.optional") }})</span>
         </div>
         <p class="text-ui-cap text-ui-muted mb-3">
-          {{
-            isWindows
-              ? $t("licenses.releaseForm.installerWindows")
-              : needsInstaller
-                ? $t("licenses.releaseForm.installerMac")
-                : $t("licenses.releaseForm.installerIpad")
-          }}
+          {{ installerText }}
           <template v-if="needsIpaFile">{{ $t("licenses.releaseForm.installerIpaNote") }}</template>
           <i18n-t keypath="licenses.releaseForm.serverLimits" tag="span" scope="global">
             <template #upload><span class="font-mono">upload_max_filesize</span></template>
@@ -396,7 +456,8 @@ const onOpenChange = (value) => {
           </i18n-t>
         </p>
         <input ref="installerInput" type="file" :accept="installerAcceptFor(form.platforms)" class="hidden" @change="pickInstaller" />
-        <div class="flex flex-wrap items-center gap-3">
+        <!-- iPad / iOS only: the .ipa goes in on the version list, not here -->
+        <div v-if="canHaveInstaller" class="flex flex-wrap items-center gap-3">
           <UiButton variant="secondary" size="sm" :icon="Upload" :disabled="saving" @click="installerInput?.click()">
             {{
               installer
