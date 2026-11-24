@@ -34,6 +34,8 @@ import {
   Wrench,
   Link2,
   Flag,
+  CalendarClock,
+  PauseCircle,
 } from "lucide-vue-next";
 import { useRoute } from "vue-router";
 import router from "@/router";
@@ -146,6 +148,9 @@ const projectHealth = computed(() =>
 );
 
 const healthBannerStyles = {
+  "not-started": { icon: CalendarClock },
+  planning: { icon: CalendarClock },
+  paused: { icon: PauseCircle },
   overdue: {
     icon: AlertOctagon,
     wrapper: "bg-red-50 border-red-200",
@@ -186,8 +191,11 @@ const healthBannerStyles = {
 // ---- Presentation only (redesign): tabs, tone maps, small view helpers ----
 const pageReady = ref(false);
 
-const PROJECT_STATUS_TONES = { active: "accent", completed: "ok", cancelled: "bad", "on-hold": "warn", overdue: "bad" };
+const PROJECT_STATUS_TONES = { active: "accent", completed: "ok", cancelled: "bad", on_hold: "warn", "on-hold": "warn", planning: "neutral", draft: "neutral", overdue: "bad" };
 const HEALTH_TONES = {
+  "not-started": { box: "bg-ui-warn-soft border-ui-warn/20", ink: "text-ui-warn" },
+  planning: { box: "bg-ui-subtle border-ui-line", ink: "text-ui-ink" },
+  paused: { box: "bg-ui-subtle border-ui-line", ink: "text-ui-ink" },
   overdue: { box: "bg-ui-bad-soft border-ui-bad/20", ink: "text-ui-bad" },
   critical: { box: "bg-ui-bad-soft border-ui-bad/20", ink: "text-ui-bad" },
   "at-risk": { box: "bg-ui-warn-soft border-ui-warn/20", ink: "text-ui-warn" },
@@ -339,7 +347,7 @@ onMounted(async () => {
                 <div class="ui-bar-fill h-full rounded-full bg-ui-ink transition-all duration-300" :style="{ width: `${projectProgress}%` }"></div>
               </div>
               <p class="text-ui-cap text-ui-faint mt-1 truncate">
-                {{ projectHealth ? $t("projects.detail.expectedByNow", { n: projectHealth.expectedProgress }) : $t("projects.detail.projectCompletion") }}
+                {{ projectHealth?.expectedProgress != null ? $t("projects.detail.expectedByNow", { n: projectHealth.expectedProgress }) : $t("projects.detail.projectCompletion") }}
               </p>
             </div>
             <UiButton
@@ -368,9 +376,15 @@ onMounted(async () => {
           <div class="flex flex-wrap items-center gap-2">
             <h4 class="text-ui-small font-semibold" :class="HEALTH_TONES[projectHealth.level].ink">{{ projectHealth.label }}</h4>
             <span class="px-1.5 rounded-md bg-ui-surface/70 text-ui-cap font-medium tabular-nums" :class="HEALTH_TONES[projectHealth.level].ink">
-              {{ projectHealth.daysRemaining >= 0 ? $t("projects.detail.daysLeft", { n: projectHealth.daysRemaining }) : $t("projects.card.healthOverdue", { n: Math.abs(projectHealth.daysRemaining) }) }}
+              {{
+                projectHealth.level === "planning"
+                  ? $t("projects.health.startsIn", { n: projectHealth.daysToStart }, projectHealth.daysToStart)
+                  : projectHealth.daysRemaining >= 0
+                    ? $t("projects.detail.daysLeft", { n: projectHealth.daysRemaining })
+                    : $t("projects.card.healthOverdue", { n: Math.abs(projectHealth.daysRemaining) })
+              }}
             </span>
-            <span class="px-1.5 rounded-md bg-ui-surface/70 text-ui-cap font-medium tabular-nums" :class="HEALTH_TONES[projectHealth.level].ink">
+            <span v-if="projectHealth.expectedProgress != null" class="px-1.5 rounded-md bg-ui-surface/70 text-ui-cap font-medium tabular-nums" :class="HEALTH_TONES[projectHealth.level].ink">
               {{ $t("projects.detail.doneVsExpected", { done: projectHealth.actualProgress, expected: projectHealth.expectedProgress }) }}
             </span>
           </div>

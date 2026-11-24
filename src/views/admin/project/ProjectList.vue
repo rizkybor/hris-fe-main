@@ -47,9 +47,12 @@ const toggleAnalysis = () => {
 const STATUS_OPTIONS = computed(() => [
   { value: "", label: t("common.labels.allStatuses") },
   { value: "active", label: t("projects.status.active") },
-  { value: "completed", label: t("projects.status.completed") },
-  { value: "on-hold", label: t("projects.status.onHold") },
   { value: "overdue", label: t("projects.health.overdue") },
+  { value: "planning", label: t("projects.status.planning") },
+  { value: "on_hold", label: t("projects.status.onHold") },
+  { value: "draft", label: t("projects.status.draft") },
+  { value: "completed", label: t("projects.status.completed") },
+  { value: "cancelled", label: t("projects.status.cancelled") },
 ]);
 
 const projectStore = useProjectStore();

@@ -32,7 +32,15 @@
     "criticalMessage": "Tinggal {n} hari menuju tenggat, tetapi progres baru {progress}%.",
     "atRiskMessage": "Dengan laju saat ini, proyek seharusnya sudah sekitar {expected}%, tetapi baru {progress}% dengan sisa {n} hari.",
     "behindMessage": "Progres ({progress}%) sedikit tertinggal dari laju yang diharapkan ({expected}%) untuk titik ini dalam linimasa.",
-    "onTrackMessage": "Progres ({progress}%) sejalan dengan linimasa (diharapkan {expected}%)."
+    "onTrackMessage": "Progres ({progress}%) sejalan dengan linimasa (diharapkan {expected}%).",
+    "paused": "Ditunda",
+    "pausedMessage": "Proyek sedang ditunda, jadi laju progres tidak dinilai. Progres saat ini {progress}%.",
+    "planning": "Perencanaan",
+    "planningMessage": "Proyek masih dalam perencanaan dan dijadwalkan mulai {n} hari lagi. Laju progres dinilai setelah status menjadi Aktif.",
+    "notStarted": "Belum dimulai",
+    "notStartedMessage": "Jadwal mulai sudah lewat {n} hari, tetapi proyek masih dalam Perencanaan. Ubah status ke Aktif saat pengerjaan dimulai.",
+    "notStartedPastEndMessage": "Jadwal mulai sudah lewat {n} hari dan tenggat lewat {end} hari, tetapi proyek masih dalam Perencanaan. Perbarui jadwal atau statusnya.",
+    "startsIn": "Mulai {n} hari lagi"
   },
   "list": {
     "title": "Semua Proyek",
