@@ -175,7 +175,7 @@ const activeTab = computed({
 });
 
 // Presentation only: project status tones, header initials.
-const PROJECT_TONE = { active: "info", completed: "ok", cancelled: "bad", "on-hold": "warn", overdue: "bad" };
+const PROJECT_TONE = { active: "info", completed: "ok", cancelled: "bad", on_hold: "warn", "on-hold": "warn", planning: "neutral", draft: "neutral", overdue: "bad" };
 const clientInitials = (name) =>
   (name || "").replace(/^(PT|CV)\.?\s+/i, "").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "—";
 const projectStatusLabel = (status) =>
