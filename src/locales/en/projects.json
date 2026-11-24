@@ -32,7 +32,15 @@
     "criticalMessage": "Only {n} day left until the deadline, but progress is just {progress}%. | Only {n} days left until the deadline, but progress is just {progress}%.",
     "atRiskMessage": "At today's pace the project should be around {expected}% done, but it's at {progress}% with {n} day remaining. | At today's pace the project should be around {expected}% done, but it's at {progress}% with {n} days remaining.",
     "behindMessage": "Progress ({progress}%) is slightly behind the expected pace ({expected}%) for this point in the timeline.",
-    "onTrackMessage": "Progress ({progress}%) is keeping pace with the timeline (expected {expected}%)."
+    "onTrackMessage": "Progress ({progress}%) is keeping pace with the timeline (expected {expected}%).",
+    "paused": "On hold",
+    "pausedMessage": "The project is on hold, so its pace isn't judged. Progress so far: {progress}%.",
+    "planning": "Planning",
+    "planningMessage": "The project is still in planning and is scheduled to start in {n} days. Its pace is judged once the status is Active.",
+    "notStarted": "Not started",
+    "notStartedMessage": "The start date passed {n} days ago, but the project is still in Planning. Set it to Active once work begins.",
+    "notStartedPastEndMessage": "The start date passed {n} days ago and the deadline {end} days ago, but the project is still in Planning. Update its schedule or status.",
+    "startsIn": "Starts in {n} days"
   },
   "list": {
     "title": "All Projects",

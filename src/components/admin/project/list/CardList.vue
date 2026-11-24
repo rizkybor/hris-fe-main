@@ -48,9 +48,12 @@ const progress = computed(() => Math.max(0, Math.min(100, props.data.progress ??
 
 // Overdue / critical / at-risk / behind only -- on-track projects get no chip.
 const health = computed(() => getProjectHealth(props.data));
-const HEALTH_TONE = { overdue: "bad", critical: "bad", "at-risk": "warn", behind: "warn" };
+const HEALTH_TONE = { overdue: "bad", critical: "bad", "at-risk": "warn", behind: "warn", "not-started": "warn" };
+// Planning (not due to start yet) and paused projects get no chip: their
+// status already says it. A planning project past its start date does.
 const healthText = computed(() => {
-  if (!health.value || health.value.level === "on-track") return null;
+  if (!health.value || ["on-track", "planning", "paused"].includes(health.value.level)) return null;
+  if (health.value.level === "not-started") return health.value.label;
   const d = health.value.daysRemaining;
   return d >= 0
     ? t("projects.card.healthLeft", { label: health.value.label, n: d })
