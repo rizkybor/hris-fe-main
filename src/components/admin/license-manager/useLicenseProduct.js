@@ -2,7 +2,9 @@ import { computed, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useLicenseManagerStore } from "@/stores/licenseManager";
 
-export function useLicenseProduct() {
+// licensePage: the page is about licenses (list / create / edit / detail),
+// so an app without licensing gets the "unlicensed" state instead.
+export function useLicenseProduct({ licensePage = true } = {}) {
   const route = useRoute();
   const store = useLicenseManagerStore();
 
@@ -13,6 +15,7 @@ export function useLicenseProduct() {
     if (!store.productsLoaded) return store.error && !store.productsLoading ? "missing" : "loading";
     if (!product.value) return "missing";
     if (!product.value.is_active) return "inactive";
+    if (licensePage && product.value.is_licensed === false) return "unlicensed";
     return "ready";
   });
 

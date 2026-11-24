@@ -1,7 +1,7 @@
 <script setup>
 // Wraps a per-product License Manager page: shows a skeleton while the
 // products load, a not-found or inactive state, else the page itself.
-import { PackageX, PowerOff, ArrowLeft } from "lucide-vue-next";
+import { PackageX, PowerOff, ArrowLeft, Package, History } from "lucide-vue-next";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { can } from "@/helpers/permissionHelper";
 import { UiButton } from "@/components/ui";
@@ -43,6 +43,21 @@ defineProps({
     <div class="flex flex-col sm:flex-row items-center justify-center gap-2">
       <UiButton variant="secondary" :icon="ArrowLeft" :to="{ name: 'admin.license-manager.overview' }">{{ $t("licenses.title") }}</UiButton>
       <UiButton v-if="can('license-manager-edit')" :to="{ name: 'admin.license-manager.overview' }">{{ $t("licenses.gate.manageProducts") }}</UiButton>
+    </div>
+  </div>
+
+  <div
+    v-else-if="state === 'unlicensed'"
+    class="max-w-xl mx-auto text-center py-14 px-6 bg-ui-surface border border-dashed border-ui-line-strong rounded-ui-card"
+  >
+    <div class="w-12 h-12 rounded-full bg-ui-subtle text-ui-muted flex items-center justify-center mx-auto mb-4">
+      <Package class="w-6 h-6" />
+    </div>
+    <h3 class="text-ui-h2 text-ui-ink mb-1.5">{{ $t("licenses.gate.unlicensedTitle", { name: productName }) }}</h3>
+    <p class="text-ui-small text-ui-muted mb-6">{{ $t("licenses.gate.unlicensedMessage") }}</p>
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-2">
+      <UiButton variant="secondary" :icon="ArrowLeft" :to="{ name: 'admin.license-manager.overview' }">{{ $t("licenses.title") }}</UiButton>
+      <UiButton v-if="can('license-release-menu')" :icon="History" :to="{ name: 'admin.license-manager.versions', params: { product: code } }">{{ $t("licenses.gate.openVersions") }}</UiButton>
     </div>
   </div>
 

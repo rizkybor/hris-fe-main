@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { Trash2, Save, ImagePlus, RefreshCw, ScrollText, Eye, Code2 } from "lucide-vue-next";
+import { Trash2, Save, ImagePlus, RefreshCw, ScrollText, Eye, Code2, KeyRound, Package, Lock } from "lucide-vue-next";
 import { renderMarkdown } from "@/components/admin/license-manager/markdown";
 import Alert from "@/components/common/Alert.vue";
 import ProductIcon from "@/components/admin/license-manager/ProductIcon.vue";
@@ -63,11 +63,14 @@ watch(
       ? {
           ...props.product,
           description: props.product.description || "",
+          website_url: props.product.website_url || "",
+          is_licensed: props.product.is_licensed !== false,
+          key_prefix: props.product.key_prefix || "",
           terms: props.product.terms || "",
           terms_version: props.product.terms_version || "",
           terms_effective_at: props.product.terms_effective_at || "",
         }
-      : { code: "", name: "", key_prefix: "", description: "", is_active: true, icon_url: null, terms: "", terms_version: "", terms_effective_at: "" };
+      : { code: "", name: "", is_licensed: true, key_prefix: "", description: "", website_url: "", is_active: true, icon_url: null, terms: "", terms_version: "", terms_effective_at: "" };
     termsPreview.value = false;
   },
   { immediate: true }
@@ -116,6 +119,16 @@ const dropIcon = () => {
   removeIcon.value = !!form.value.icon_url;
 };
 
+// Licensed apps sell keys; apps without licensing are only kept here
+// (versions and installers). Licensing can't be switched off once the app
+// has licenses.
+const licensingLocked = computed(() => isEdit.value && props.product?.is_licensed !== false && (props.product?.licenses_count || 0) > 0);
+const LICENSING_OPTIONS = computed(() => [
+  { value: true, icon: KeyRound, label: t("licenses.product.licensing.licensed"), hint: t("licenses.product.licensing.licensedHint") },
+  { value: false, icon: Package, label: t("licenses.product.licensing.unlicensed"), hint: t("licenses.product.licensing.unlicensedHint") },
+]);
+const URL_RE = /^https?:\/\/\S+\.\S+/i;
+
 const validate = () => {
   const e = {};
   if (!isEdit.value) {
@@ -123,7 +136,8 @@ const validate = () => {
     else if (!CODE_RE.test(form.value.code)) e.code = t("licenses.product.validation.codeFormat");
   }
   if (!String(form.value.name || "").trim()) e.name = t("licenses.product.validation.nameRequired");
-  if (!PREFIX_RE.test(String(form.value.key_prefix || "").toUpperCase())) e.key_prefix = t("licenses.product.validation.prefix");
+  if (form.value.is_licensed && !PREFIX_RE.test(String(form.value.key_prefix || "").toUpperCase())) e.key_prefix = t("licenses.product.validation.prefix");
+  if (form.value.website_url && !URL_RE.test(String(form.value.website_url).trim())) e.website_url = t("licenses.product.validation.websiteUrl");
   const version = String(form.value.terms_version || "").trim();
   if (normalizeTerms(form.value.terms)) {
     if (!version) e.terms_version = t("licenses.product.validation.termsVersionRequired");
@@ -141,17 +155,20 @@ const save = async () => {
 
   saving.value = true;
   error.value = "";
+  const licensed = !!form.value.is_licensed;
   const payload = {
     name: form.value.name.trim(),
-    key_prefix: String(form.value.key_prefix).toUpperCase(),
+    is_licensed: licensed,
+    key_prefix: licensed ? String(form.value.key_prefix).toUpperCase() : null,
     description: form.value.description?.trim() || null,
+    website_url: String(form.value.website_url || "").trim() || null,
     is_active: !!form.value.is_active,
   };
-  // Terms only travel when they changed (or are new).
-  if (!isEdit.value ? normalizeTerms(form.value.terms) : termsChanged.value) {
+  // Terms only travel when they changed (or are new), and only for licensed apps.
+  if (licensed && (!isEdit.value ? normalizeTerms(form.value.terms) : termsChanged.value)) {
     payload.terms = normalizeTerms(form.value.terms) || null;
   }
-  if (normalizeTerms(form.value.terms)) {
+  if (licensed && normalizeTerms(form.value.terms)) {
     payload.terms_version = String(form.value.terms_version || "").trim() || null;
     payload.terms_effective_at = form.value.terms_effective_at || null;
   }
@@ -217,6 +234,33 @@ const onOpenChange = (value) => {
         <p v-else class="text-ui-cap text-ui-bad mt-1.5">{{ fieldError("icon") }}</p>
       </div>
 
+      <!-- Licensed (keys) or just kept here -->
+      <div data-field="is_licensed">
+        <p class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("licenses.product.licensing.label") }}</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2" role="radiogroup" :aria-label="$t('licenses.product.licensing.label')">
+          <button
+            v-for="opt in LICENSING_OPTIONS"
+            :key="String(opt.value)"
+            type="button"
+            role="radio"
+            :aria-checked="form.is_licensed === opt.value"
+            :disabled="licensingLocked && opt.value === false"
+            class="ui-press flex items-start gap-3 rounded-ui-control border px-3 py-2.5 text-left focus:outline-none focus-visible:shadow-ui-focus disabled:opacity-50 disabled:cursor-not-allowed"
+            :class="form.is_licensed === opt.value ? 'border-ui-accent bg-ui-accent-soft' : 'border-ui-line-strong bg-ui-surface hover:bg-ui-hover'"
+            @click="form.is_licensed = opt.value"
+          >
+            <component :is="opt.icon" class="w-4 h-4 mt-0.5 shrink-0" :class="form.is_licensed === opt.value ? 'text-ui-accent' : 'text-ui-faint'" />
+            <span class="min-w-0">
+              <span class="block text-ui-small font-medium text-ui-ink">{{ opt.label }}</span>
+              <span class="block text-ui-cap text-ui-muted">{{ opt.hint }}</span>
+            </span>
+          </button>
+        </div>
+        <p v-if="licensingLocked" class="text-ui-cap text-ui-muted mt-1.5 flex items-center gap-1">
+          <Lock class="w-3.5 h-3.5" /> {{ $t("licenses.product.licensing.locked", { n: product.licenses_count }) }}
+        </p>
+      </div>
+
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <LicenseFormField field="name" :label="$t('common.labels.name')" required :error="fieldError('name')" v-slot="{ id }">
           <input :id="id" v-model="form.name" type="text" :placeholder="$t('licenses.product.namePlaceholder')" :class="inputClass('name')" />
@@ -240,6 +284,7 @@ const onOpenChange = (value) => {
           />
         </LicenseFormField>
         <LicenseFormField
+          v-if="form.is_licensed"
           field="key_prefix"
           :label="$t('licenses.product.keyPrefix')"
           required
@@ -252,17 +297,31 @@ const onOpenChange = (value) => {
         <div>
           <p class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("common.labels.status") }}</p>
           <div class="flex items-center justify-between gap-4 h-[38px] px-3 border border-ui-line-strong rounded-ui-control">
-            <p class="text-ui-small text-ui-muted truncate">{{ form.is_active ? $t("licenses.product.activeHint") : $t("licenses.product.inactiveHint") }}</p>
+            <p class="text-ui-small text-ui-muted truncate">{{
+              form.is_licensed
+                ? form.is_active ? $t("licenses.product.activeHint") : $t("licenses.product.inactiveHint")
+                : form.is_active ? $t("licenses.product.activeHintUnlicensed") : $t("licenses.product.inactiveHintUnlicensed")
+            }}</p>
             <LicenseStatusSwitch v-model="form.is_active" />
           </div>
         </div>
+        <LicenseFormField
+          field="website_url"
+          :label="$t('licenses.product.websiteUrl')"
+          :error="fieldError('website_url')"
+          :hint="$t('licenses.product.websiteUrlHint')"
+          :wide="!form.is_licensed ? false : true"
+          v-slot="{ id }"
+        >
+          <input :id="id" v-model.trim="form.website_url" type="url" placeholder="https://" :class="inputClass('website_url')" />
+        </LicenseFormField>
         <LicenseFormField field="description" :label="$t('common.labels.description')" :error="fieldError('description')" wide v-slot="{ id }">
           <textarea :id="id" v-model="form.description" rows="2" :class="[inputClass('description'), '!h-auto py-2.5 resize-none']"></textarea>
         </LicenseFormField>
       </div>
 
-      <!-- Terms & Conditions -->
-      <div class="border-t border-ui-line pt-5" data-field="terms">
+      <!-- Terms & Conditions (printed on license certificates) -->
+      <div v-if="form.is_licensed" class="border-t border-ui-line pt-5" data-field="terms">
         <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
           <div class="flex items-center gap-2 flex-wrap">
             <ScrollText class="w-4 h-4 text-ui-faint" />
