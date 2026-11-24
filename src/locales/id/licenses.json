@@ -238,7 +238,12 @@
       "ipaType": "Gunakan file .ipa.",
       "publishNeedsIpa": "Unggah installer iPad (.ipa) sebelum menerbitkan versi ini.",
       "windowsFileType": "Gunakan file .msi, .msix, atau .exe.",
-      "publishNeedsWindowsFile": "Unggah installer Windows (.msi) sebelum menerbitkan versi ini."
+      "publishNeedsWindowsFile": "Unggah installer Windows (.msi) sebelum menerbitkan versi ini.",
+      "androidFileType": "Gunakan file .apk atau .aab.",
+      "multiFileType": "Gunakan file .zip, .dmg, .pkg, .msi, .msix, .exe, .apk, atau .aab.",
+      "targetPlatforms": "Pilih minimal dua platform untuk versi Multiplatform.",
+      "androidTargetSdk": "Target Android tidak boleh lebih rendah dari minimumnya.",
+      "publishNeedsAndroidFile": "Unggah aplikasi Android (.apk / .aab) sebelum menerbitkan versi ini."
     }
   },
   "title": "License Manager",
@@ -323,7 +328,12 @@
     "missingMessageDrop": "Unggah installer Mac (.dmg, .zip, atau .pkg, maks. 2 GB), atau letakkan di sini. Diperlukan untuk menerbitkan.",
     "uploading": "Mengunggah…",
     "windowsMissingMessage": "Unggah installer Windows (.msi, .msix, atau .exe, maks. 2 GB). Diperlukan untuk menerbitkan.",
-    "windowsMissingMessageDrop": "Unggah installer Windows (.msi, .msix, atau .exe, maks. 2 GB), atau letakkan di sini. Diperlukan untuk menerbitkan."
+    "windowsMissingMessageDrop": "Unggah installer Windows (.msi, .msix, atau .exe, maks. 2 GB), atau letakkan di sini. Diperlukan untuk menerbitkan.",
+    "optionalTitle": "{label} (opsional)",
+    "optionalMessage": "Versi Multiplatform tidak mewajibkan {label}. Unggah jika ada.",
+    "optionalMessageDrop": "Versi Multiplatform tidak mewajibkan {label}. Unggah atau letakkan di sini jika ada.",
+    "androidMissingMessage": "Unggah aplikasi Android (.apk atau .aab, maks. 2 GB). Diperlukan untuk menerbitkan.",
+    "androidMissingMessageDrop": "Unggah aplikasi Android (.apk atau .aab, maks. 2 GB), atau letakkan di sini. Diperlukan untuk menerbitkan."
   },
   "location": {
     "loadError": "Daftar wilayah tidak bisa dimuat. Periksa koneksi lalu coba lagi.",
@@ -491,7 +501,16 @@
     "save": "Simpan Versi",
     "add": "Tambah Versi",
     "installerIpaNote": "Installer iPad (.ipa) diunggah di daftar versi setelah disimpan; wajib untuk menerbitkan.",
-    "installerWindows": "Installer Windows (.msi, .msix, atau .exe, maks. 2 GB) disimpan di HRIS dan diperlukan untuk menerbitkan."
+    "installerWindows": "Installer Windows (.msi, .msix, atau .exe, maks. 2 GB) disimpan di HRIS dan diperlukan untuk menerbitkan.",
+    "multiplatform": "Multiplatform",
+    "targetPlatforms": "Platform yang dicakup versi ini (pilih minimal 2)",
+    "androidMinSdk": "Minimum Android",
+    "androidMinSdkHint": "Versi Android terendah yang bisa memasang (minSdkVersion).",
+    "androidTargetSdk": "Target Android",
+    "androidTargetSdkHint": "API yang dijadikan target build (targetSdkVersion).",
+    "installerAndroid": "Aplikasi Android (.apk atau .aab, maks. 2 GB) disimpan di HRIS dan diperlukan untuk menerbitkan.",
+    "installerIos": "Versi iOS memakai .ipa yang diunggah di daftar versi setelah disimpan; wajib untuk menerbitkan.",
+    "installerMulti": "Opsional untuk Multiplatform: satu file (.zip, .dmg, .msi, .apk, dan lainnya). Bisa juga hanya memakai URL unduhan."
   },
   "form": {
     "saveLicense": "Simpan Lisensi",
@@ -763,7 +782,9 @@
     "publishDescription": "Aplikasi akan melihatnya di riwayat versi.",
     "publishAria": "Terbitkan versi {version}",
     "publishing": "Menerbitkan...",
-    "latest": "Versi terbaru"
+    "latest": "Versi terbaru",
+    "androidMin": "Android {version}+ (API {api})",
+    "androidTarget": "target API {api}"
   },
   "detail": {
     "was": "sebelumnya",
@@ -846,7 +867,10 @@
     "profileExpired": "Profil kedaluwarsa pada {date}",
     "noProfile": "Tidak ada provisioning profile di .ipa ini: tidak bisa dipasang lewat tautan.",
     "devices": "{n} iPad dalam profil | {n} iPad dalam profil",
-    "devicesHint": "Hanya iPad ini (UDID) yang bisa memasang build ini. Untuk iPad lain: tambahkan UDID-nya di Apple Developer › Devices, build ulang, lalu unggah .ipa baru."
+    "devicesHint": "Hanya iPad ini (UDID) yang bisa memasang build ini. Untuk iPad lain: tambahkan UDID-nya di Apple Developer › Devices, build ulang, lalu unggah .ipa baru.",
+    "iosMissingTitle": "Belum ada aplikasi iOS",
+    "iosMissingMessage": "Unggah aplikasi iOS Ad Hoc (.ipa, maks. 2 GB). Wajib untuk menerbitkan.",
+    "iosMissingMessageDrop": "Unggah aplikasi iOS Ad Hoc (.ipa, maks. 2 GB), atau letakkan di sini. Wajib untuk menerbitkan."
   },
   "installLinks": {
     "button": "Tautan pasang",

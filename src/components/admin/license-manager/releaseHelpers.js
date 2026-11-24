@@ -17,9 +17,49 @@ export const RELEASE_PLATFORM_OPTIONS = [
   { value: "mac", label: "Mac" },
   { value: "ipad", label: "iPad" },
   { value: "windows", label: "Windows" },
+  { value: "android", label: "Android" },
+  { value: "ios", label: "iOS" },
+  { value: "multi", get label() { return t("licenses.releaseForm.multiplatform"); } },
 ];
 
-export const releasePlatformLabel = (value) => RELEASE_PLATFORM_OPTIONS.find((o) => o.value === value)?.label || value || "-";
+// What a multiplatform version can list.
+export const TARGET_PLATFORM_OPTIONS = [
+  { value: "mac", label: "Mac" },
+  { value: "ipad", label: "iPad" },
+  { value: "windows", label: "Windows" },
+  { value: "android", label: "Android" },
+  { value: "ios", label: "iOS" },
+];
+
+// The platforms a version runs on ("both" = Mac and iPad; "multi" = its list).
+export const platformListOf = (platforms, targets = []) =>
+  platforms === "both" ? ["mac", "ipad"] : platforms === "multi" ? targets || [] : platforms ? [platforms] : [];
+
+// "Multiplatform · Mac, Windows, Android"; plain label otherwise.
+export const releasePlatformLabel = (value, targets = null) => {
+  const label = RELEASE_PLATFORM_OPTIONS.find((o) => o.value === value)?.label || value || "-";
+  if (value !== "multi" || !targets?.length) return label;
+  return `${label} · ${targets.map((p) => TARGET_PLATFORM_OPTIONS.find((o) => o.value === p)?.label || p).join(", ")}`;
+};
+
+export const RELEASE_PLATFORM_CHIP = {
+  both: "bg-ui-surface text-ui-ink border border-ui-line",
+  mac: "bg-ui-subtle text-ui-text",
+  ipad: "bg-ui-accent-soft text-ui-accent",
+  windows: "bg-ui-info-soft text-ui-info",
+  android: "bg-ui-ok-soft text-ui-ok",
+  ios: "bg-ui-accent-soft text-ui-accent",
+  multi: "bg-ui-ink text-white",
+};
+export const releasePlatformChip = (value) => RELEASE_PLATFORM_CHIP[value] || RELEASE_PLATFORM_CHIP.mac;
+
+// Android API levels with their Android version, for minimum / target SDK.
+export const ANDROID_API_LEVELS = [
+  [21, "5.0"], [22, "5.1"], [23, "6.0"], [24, "7.0"], [25, "7.1"], [26, "8.0"], [27, "8.1"], [28, "9"],
+  [29, "10"], [30, "11"], [31, "12"], [32, "12L"], [33, "13"], [34, "14"], [35, "15"], [36, "16"],
+].map(([level, version]) => ({ value: level, label: `API ${level} · Android ${version}` }));
+// API level -> Android version number ("26" -> "8.0"); null when unknown.
+export const androidVersionOf = (level) => ANDROID_API_LEVELS.find((o) => o.value === Number(level))?.label.split(" · Android ")[1] || null;
 
 export const RELEASE_STATUS_OPTIONS = [
   { value: "published", get label() { return t("licenses.releases.status.published"); } },
@@ -98,18 +138,23 @@ export const formatBytes = (bytes) => {
   return `${value.toFixed(value >= 100 ? 0 : 1)} ${units[unit]}`;
 };
 
-// Installer files the API accepts (up to 2 GB): the Mac disk image (or a
-// zipped app / .pkg), or for a Windows version the .msi (or .msix / .exe).
+// Installer files the API accepts (up to 2 GB), per platform: the Mac disk
+// image (or a zipped app / .pkg), the Windows .msi (or .msix / .exe), the
+// Android .apk / .aab, or for a multiplatform version any of them.
+const INSTALLER_TYPES = {
+  mac: { ext: ["dmg", "zip", "pkg"], error: "licenses.releases.validation.fileType" },
+  windows: { ext: ["msi", "msix", "exe"], error: "licenses.releases.validation.windowsFileType" },
+  android: { ext: ["apk", "aab"], error: "licenses.releases.validation.androidFileType" },
+  multi: { ext: ["dmg", "zip", "pkg", "msi", "msix", "exe", "apk", "aab"], error: "licenses.releases.validation.multiFileType" },
+};
+const installerType = (platforms) => INSTALLER_TYPES[platforms] || INSTALLER_TYPES.mac;
 export const INSTALLER_ACCEPT = ".dmg,.zip,.pkg";
-export const WINDOWS_INSTALLER_ACCEPT = ".msi,.msix,.exe";
-export const installerAcceptFor = (platforms) => (platforms === "windows" ? WINDOWS_INSTALLER_ACCEPT : INSTALLER_ACCEPT);
+export const installerAcceptFor = (platforms) => installerType(platforms).ext.map((e) => `.${e}`).join(",");
 export const INSTALLER_MAX_BYTES = 2 * 1024 * 1024 * 1024;
 export const installerFileError = (file, platforms) => {
   if (!file) return "";
-  const windows = platforms === "windows";
-  if (!(windows ? /\.(msi|msix|exe)$/i : /\.(dmg|zip|pkg)$/i).test(file.name)) {
-    return t(windows ? "licenses.releases.validation.windowsFileType" : "licenses.releases.validation.fileType");
-  }
+  const type = installerType(platforms);
+  if (!new RegExp(`\\.(${type.ext.join("|")})$`, "i").test(file.name)) return t(type.error);
   if (file.size > INSTALLER_MAX_BYTES) return t("licenses.releases.validation.fileSize");
   return "";
 };
@@ -126,13 +171,25 @@ export const ipaFileError = (file) => {
 // The publish check of the API: versions that run on the Mac need the
 // .dmg, Windows versions the .msi, versions that run on the iPad the .ipa.
 export const needsFile = (release) =>
-  release?.needs_file ?? (release?.platforms ? release.platforms !== "ipad" : true);
+  release?.needs_file ?? (release?.platforms ? ["both", "mac", "windows", "android"].includes(release.platforms) : true);
 
 export const needsIpa = (release) =>
-  release?.needs_ipa ?? (release?.platforms ? ["both", "ipad"].includes(release.platforms) : true);
+  release?.needs_ipa ?? (release?.platforms ? ["both", "ipad", "ios"].includes(release.platforms) : true);
+
+// A multiplatform version has no required installer, but may carry one
+// file and, when it lists iPad or iOS, an .ipa.
+export const allowsOptionalFile = (release) => release?.platforms === "multi";
+export const allowsOptionalIpa = (release) =>
+  release?.platforms === "multi" && (release.target_platforms || []).some((p) => p === "ipad" || p === "ios");
 
 export const publishNeedsFileMessage = (platforms) =>
-  t(platforms === "windows" ? "licenses.releases.validation.publishNeedsWindowsFile" : "licenses.releases.validation.publishNeedsFile");
+  t(
+    platforms === "windows"
+      ? "licenses.releases.validation.publishNeedsWindowsFile"
+      : platforms === "android"
+        ? "licenses.releases.validation.publishNeedsAndroidFile"
+        : "licenses.releases.validation.publishNeedsFile"
+  );
 
 export const publishNeedsIpaMessage = () => t("licenses.releases.validation.publishNeedsIpa");
 
@@ -152,6 +209,9 @@ export const releaseToForm = (release) => ({
   version: release?.version || "",
   title: release?.title || "",
   platforms: release?.platforms || "both",
+  target_platforms: release?.target_platforms ? [...release.target_platforms] : [],
+  android_min_sdk: release?.android_min_sdk ?? "",
+  android_target_sdk: release?.android_target_sdk ?? "",
   status: release?.status || "draft",
   released_at: release?.released_at || "",
   build: release?.build ?? "",
@@ -178,6 +238,9 @@ export const validateReleaseForm = (form) => {
   if (blank(form.version)) errors.version = t("licenses.releases.validation.versionRequired");
   else if (!VERSION_RE.test(String(form.version).trim())) errors.version = t("licenses.releases.validation.versionFormat");
   if (!RELEASE_PLATFORM_OPTIONS.some((o) => o.value === form.platforms)) errors.platforms = t("licenses.releases.validation.platforms");
+  else if (form.platforms === "multi" && (form.target_platforms || []).length < 2) errors.target_platforms = t("licenses.releases.validation.targetPlatforms");
+  if (!blank(form.android_min_sdk) && !blank(form.android_target_sdk) && Number(form.android_target_sdk) < Number(form.android_min_sdk))
+    errors.android_target_sdk = t("licenses.releases.validation.androidTargetSdk");
   if (!RELEASE_STATUS_OPTIONS.some((o) => o.value === form.status)) errors.status = t("licenses.releases.validation.status");
   if (form.status === "published" && blank(form.released_at)) errors.released_at = t("licenses.releases.validation.releasedAt");
   if (!blank(form.build)) {
@@ -192,10 +255,16 @@ export const validateReleaseForm = (form) => {
   return errors;
 };
 
-export const releasePayload = (form) => ({
+export const releasePayload = (form) => {
+  const list = platformListOf(form.platforms, form.target_platforms);
+  const android = list.includes("android");
+  return {
   version: String(form.version).trim(),
   title: blank(form.title) ? null : form.title.trim(),
   platforms: form.platforms,
+  target_platforms: form.platforms === "multi" ? TARGET_PLATFORM_OPTIONS.map((o) => o.value).filter((p) => form.target_platforms.includes(p)) : null,
+  android_min_sdk: android && !blank(form.android_min_sdk) ? Number(form.android_min_sdk) : null,
+  android_target_sdk: android && !blank(form.android_target_sdk) ? Number(form.android_target_sdk) : null,
   status: form.status,
   released_at: blank(form.released_at) ? null : form.released_at,
   build: blank(form.build) ? null : Number(form.build),
@@ -203,4 +272,5 @@ export const releasePayload = (form) => ({
   download_url: blank(form.download_url) ? null : form.download_url.trim(),
   changes: (form.changes || []).map((c) => ({ type: c.type, area: blank(c.area) ? null : c.area.trim(), text: c.text.trim() })),
   notes: blank(form.notes) ? null : form.notes.trim(),
-});
+  };
+};
