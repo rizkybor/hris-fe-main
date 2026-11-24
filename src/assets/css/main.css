@@ -3276,6 +3276,10 @@ button:disabled,
   border-color: rgb(var(--ui-ok) / 0.25);
 }
 
+.border-ui-ok\/30 {
+  border-color: rgb(var(--ui-ok) / 0.3);
+}
+
 .border-ui-ok\/40 {
   border-color: rgb(var(--ui-ok) / 0.4);
 }

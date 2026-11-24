@@ -27,14 +27,18 @@ const licenseItems = computed(() => {
   }
   if (canListLicenses.value || canSeeVersions.value) {
     for (const product of licenseProducts.value) {
+      // Apps without licensing only have their Versions page.
+      const licensed = product.is_licensed !== false;
+      if (!licensed && !canSeeVersions.value) continue;
+      const toLicenses = canListLicenses.value && licensed;
       rows.push({
         key: `lm-${product.code}`,
         label: product.name,
         product,
-        to: { name: canListLicenses.value ? "admin.license-manager.licenses.dashboard" : "admin.license-manager.versions", params: { product: product.code } },
-        active: canListLicenses.value ? isLicenseProductRoute(product.code) : isLicenseVersionsRoute(product.code),
+        to: { name: toLicenses ? "admin.license-manager.licenses.dashboard" : "admin.license-manager.versions", params: { product: product.code } },
+        active: toLicenses ? isLicenseProductRoute(product.code) : isLicenseVersionsRoute(product.code),
       });
-      if (canListLicenses.value && canSeeVersions.value) {
+      if (toLicenses && canSeeVersions.value) {
         rows.push({ key: `lm-${product.code}-v`, label: t("nav.shell.versionsOf", { product: product.name }), icon: HistoryIcon, to: { name: "admin.license-manager.versions", params: { product: product.code } }, active: isLicenseVersionsRoute(product.code) });
       }
     }

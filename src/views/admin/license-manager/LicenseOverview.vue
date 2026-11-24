@@ -15,6 +15,7 @@ import {
   Hourglass,
   CalendarX2,
   KeyRound,
+  ExternalLink,
 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
@@ -128,6 +129,9 @@ const statusShare = (p) => {
 
 const dashboardRoute = (p) => ({ name: "admin.license-manager.licenses.dashboard", params: { product: p.code } });
 const createRoute = (p) => ({ name: "admin.license-manager.licenses.create", params: { product: p.code } });
+const versionsRoute = (p) => ({ name: "admin.license-manager.versions", params: { product: p.code } });
+// Apps without licensing are only kept here (versions and installers).
+const isLicensed = (p) => p.is_licensed !== false;
 
 const openAdd = () => (modal.value = { show: true, product: null });
 const openEdit = (product) => {
@@ -255,13 +259,30 @@ const menuItem =
                 </div>
                 <div class="flex items-center gap-1.5 mt-1 flex-wrap">
                   <span class="text-ui-cap font-mono text-ui-muted bg-ui-subtle border border-ui-line rounded-md px-1.5 py-px">{{ p.code }}</span>
-                  <span class="text-ui-cap font-mono text-ui-accent bg-ui-accent-soft rounded-md px-1.5 py-px">{{ keyExample(p.key_prefix) }}</span>
+                  <span v-if="isLicensed(p)" class="text-ui-cap font-mono text-ui-accent bg-ui-accent-soft rounded-md px-1.5 py-px">{{ keyExample(p.key_prefix) }}</span>
+                  <span v-else class="inline-flex items-center gap-1 text-ui-cap font-medium text-ui-text bg-ui-subtle border border-ui-line rounded-md px-1.5 py-px">
+                    <Package class="w-3 h-3" /> {{ $t("licenses.product.licensing.unlicensed") }}
+                  </span>
                 </div>
               </div>
             </div>
 
+            <!-- App without licensing: what it stores instead of license counts -->
+            <div v-if="!isLicensed(p)" class="mt-5 space-y-2">
+              <div class="flex items-end justify-between gap-3">
+                <div>
+                  <p class="text-ui-display text-ui-ink font-mono">{{ p.latest_version || "—" }}</p>
+                  <p class="text-ui-cap text-ui-muted">{{ $t("licenses.versions.latest") }}</p>
+                </div>
+              </div>
+              <p v-if="p.description" class="text-ui-small text-ui-muted line-clamp-2">{{ p.description }}</p>
+              <a v-if="p.website_url" :href="p.website_url" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-ui-cap text-ui-accent hover:underline break-all" @click.stop>
+                <ExternalLink class="w-3.5 h-3.5 shrink-0" /> {{ p.website_url }}
+              </a>
+            </div>
+
             <!-- Counts -->
-            <div class="mt-5 flex items-end justify-between gap-3">
+            <div v-else class="mt-5 flex items-end justify-between gap-3">
               <div>
                 <p class="text-ui-display text-ui-ink tabular-nums">{{ p.total ?? 0 }}</p>
                 <p class="text-ui-cap text-ui-muted">{{ $t("licenses.overview.licenseWord", p.total ?? 0) }}</p>
@@ -276,7 +297,7 @@ const menuItem =
             </div>
 
             <!-- Per-plan bar (status share when the API has no plan counts) -->
-            <div class="mt-4">
+            <div v-if="isLicensed(p)" class="mt-4">
               <PlanDistributionBar v-if="p.by_plan" :counts="p.by_plan" :height="6" :legend="false" />
               <div v-else class="flex w-full h-1.5 overflow-hidden rounded-full bg-ui-subtle gap-px" role="img" :aria-label="$t('licenses.overview.byStatus')">
                 <template v-for="s in statusShare(p)" :key="s.key">
@@ -288,9 +309,10 @@ const menuItem =
 
           <!-- Actions -->
           <div class="px-5 pb-5 flex items-center gap-2">
-            <UiButton v-if="p.is_active" :to="dashboardRoute(p)" :icon-right="ArrowRight" class="flex-1">{{ $t("licenses.overview.openLicenses") }}</UiButton>
+            <UiButton v-if="p.is_active && !isLicensed(p)" :to="versionsRoute(p)" :icon-right="ArrowRight" class="flex-1">{{ $t("licenses.overview.openVersions") }}</UiButton>
+            <UiButton v-else-if="p.is_active" :to="dashboardRoute(p)" :icon-right="ArrowRight" class="flex-1">{{ $t("licenses.overview.openLicenses") }}</UiButton>
             <span v-else class="flex-1 text-ui-cap text-ui-muted py-2">{{ $t("licenses.overview.switchOnHint") }}</span>
-            <UiButton v-if="p.is_active && canCreateLicense" variant="secondary" :icon="Plus" :to="createRoute(p)" :title="$t('licenses.overview.createLicense')">
+            <UiButton v-if="p.is_active && isLicensed(p) && canCreateLicense" variant="secondary" :icon="Plus" :to="createRoute(p)" :title="$t('licenses.overview.createLicense')">
               <span class="hidden sm:inline">{{ $t("licenses.overview.createLicense") }}</span>
             </UiButton>
           </div>

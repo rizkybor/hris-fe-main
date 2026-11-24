@@ -258,7 +258,10 @@
     "inactiveTitle": "{name} is inactive",
     "notFoundMessage": "There is no product with the code {code}.",
     "inactiveMessage": "This product is switched off: its keys cannot be activated. Switch it on in the License Manager overview to manage its licenses.",
-    "manageProducts": "Manage products"
+    "manageProducts": "Manage products",
+    "unlicensedTitle": "{name} doesn't use licenses",
+    "unlicensedMessage": "This app is only kept in the License Manager: its versions and installers are on the Versions page.",
+    "openVersions": "Open Versions page"
   },
   "productIcon": {
     "named": "{name} icon",
@@ -395,7 +398,8 @@
       "prefix": "1-6 uppercase letters (e.g. OC).",
       "termsVersionRequired": "Give the terms a version, e.g. 1.0.",
       "termsVersionFormat": "Use a version like 1.0 or 1.1.",
-      "termsVersionChanged": "The terms changed: give them a new version (now {version})."
+      "termsVersionChanged": "The terms changed: give them a new version (now {version}).",
+      "websiteUrl": "Enter a full URL starting with http:// or https://."
     },
     "saveFailed": "Failed to save the product.",
     "editTitle": "Edit {name}",
@@ -424,7 +428,19 @@
     "termsVersionPlaceholder": "e.g. 1.0",
     "effectiveDate": "Effective Date",
     "effectiveDateHint": "Defaults to today when the terms change.",
-    "save": "Save Product"
+    "save": "Save Product",
+    "licensing": {
+      "label": "App type",
+      "licensed": "Licensed",
+      "licensedHint": "Sells license keys; the app activates with a key.",
+      "unlicensed": "No licensing",
+      "unlicensedHint": "Just kept here: app details, versions, and installers. No keys.",
+      "locked": "This app already has {n} licenses, so it stays licensed."
+    },
+    "websiteUrl": "App link",
+    "websiteUrlHint": "Optional: website, App Store, or download page.",
+    "activeHintUnlicensed": "On: shown in the menu",
+    "inactiveHintUnlicensed": "Off: hidden from the menu"
   },
   "releaseForm": {
     "versionHint": "major.minor.patch, e.g. 1.1.0",
@@ -644,9 +660,10 @@
     "activate": "Activate",
     "cannotDelete": "Products with licenses cannot be deleted. Deactivate it instead.",
     "addProduct": "Add product",
-    "addProductHint": "Register another app for license keys",
+    "addProductHint": "Add another app, with or without licensing",
     "emptyTitle": "No products yet",
-    "emptyMessage": "Products appear here once they are added."
+    "emptyMessage": "Products appear here once they are added.",
+    "openVersions": "Open versions"
   },
   "dashboard": {
     "sort": {
@@ -745,7 +762,8 @@
     "publishTitle": "Publish {product} {version}",
     "publishDescription": "The apps will see it in their version history.",
     "publishAria": "Publish version {version}",
-    "publishing": "Publishing..."
+    "publishing": "Publishing...",
+    "latest": "Latest version"
   },
   "detail": {
     "was": "was",

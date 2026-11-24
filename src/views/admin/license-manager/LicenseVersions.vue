@@ -24,6 +24,7 @@ import {
   Tag,
   Infinity as InfinityIcon,
   Layers,
+  Package,
 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
@@ -53,7 +54,7 @@ import {
 
 const { t } = useI18n();
 const store = useLicenseManagerStore();
-const { code: productCode, product, productName, state: productState } = useLicenseProduct();
+const { code: productCode, product, productName, state: productState } = useLicenseProduct({ licensePage: false });
 const { releases, releasesInfo, releasesLoading } = storeToRefs(store);
 const alertModal = useAlertModalStore();
 
@@ -104,6 +105,8 @@ const flash = (message) => {
 /* ---------- Header ---------- */
 const latestVersion = computed(() => releasesInfo.value.latest_version || product.value?.latest_version || null);
 const currentMajor = computed(() => releasesInfo.value.current_major ?? product.value?.current_major ?? null);
+// Apps without licensing: no keys, so no license coverage or device reports.
+const isLicensed = computed(() => product.value?.is_licensed !== false);
 
 // Versions the apps report: "1.1.0 · macOS · 3 devices", newest first.
 const compareVersions = (a, b) => {
@@ -248,7 +251,17 @@ const onPublishOpenChange = (value) => {
               <span class="text-ui-small text-ui-ink font-medium truncate">{{ productName }}</span>
             </div>
           </template>
-          <template #subtitle>
+          <template v-if="!isLicensed" #subtitle>
+            <span class="inline-flex items-center gap-1 font-medium text-ui-ink"><Package class="w-3.5 h-3.5 text-ui-faint" />{{ $t("licenses.product.licensing.unlicensed") }}</span>
+            <span class="text-ui-faint mx-1">·</span>
+            {{ $t("licenses.versions.latest") }}:
+            <span class="font-mono font-medium text-ui-ink">{{ latestVersion || "—" }}</span>
+            <template v-if="product?.website_url">
+              <span class="text-ui-faint mx-1">·</span>
+              <a :href="product.website_url" target="_blank" rel="noopener noreferrer" class="text-ui-accent hover:underline break-all">{{ product.website_url }}</a>
+            </template>
+          </template>
+          <template v-else #subtitle>
             {{ $t("licenses.versions.onSale") }}:
             <span class="font-mono font-medium text-ui-ink">{{ latestVersion || "—" }}</span>
             <span class="text-ui-faint mx-1">·</span>
@@ -257,7 +270,7 @@ const onPublishOpenChange = (value) => {
           </template>
           <template #actions>
             <UiButton
-              v-if="canListLicenses"
+              v-if="canListLicenses && isLicensed"
               variant="secondary"
               :icon="KeyRound"
               :to="{ name: 'admin.license-manager.licenses.dashboard', params: { product: productCode } }"
@@ -270,15 +283,15 @@ const onPublishOpenChange = (value) => {
         </UiPageHeader>
 
         <!-- KPI tiles -->
-        <div class="grid grid-cols-2 xl:grid-cols-4 gap-3 ui-stagger">
-          <UiStat :label="$t('licenses.versions.onSale')" :value="latestVersion || '—'" :icon="Tag" :loading="!loadedOnce" />
-          <UiStat :label="$t('licenses.versions.lifetimeCover')" :value="`${currentMajor ?? '—'}.x`" :icon="InfinityIcon" :loading="!loadedOnce" />
+        <div class="grid grid-cols-2 gap-3 ui-stagger" :class="isLicensed ? 'xl:grid-cols-4' : ''">
+          <UiStat :label="isLicensed ? $t('licenses.versions.onSale') : $t('licenses.versions.latest')" :value="latestVersion || '—'" :icon="Tag" :loading="!loadedOnce" />
+          <UiStat v-if="isLicensed" :label="$t('licenses.versions.lifetimeCover')" :value="`${currentMajor ?? '—'}.x`" :icon="InfinityIcon" :loading="!loadedOnce" />
           <UiStat :label="$t('licenses.dashboard.versions')" :value="sortedReleases.length" :icon="Layers" :loading="!loadedOnce" />
-          <UiStat :label="$t('licenses.versions.devicesReporting')" :value="plural(devicesReporting, 'device')" :hint="$t('licenses.versions.asReported')" :icon="Monitor" :loading="!loadedOnce" />
+          <UiStat v-if="isLicensed" :label="$t('licenses.versions.devicesReporting')" :value="plural(devicesReporting, 'device')" :hint="$t('licenses.versions.asReported')" :icon="Monitor" :loading="!loadedOnce" />
         </div>
 
-        <!-- Versions in use -->
-        <section class="bg-ui-surface border border-ui-line rounded-ui-card px-5 py-4">
+        <!-- Versions in use (reported by licensed apps on activation) -->
+        <section v-if="isLicensed" class="bg-ui-surface border border-ui-line rounded-ui-card px-5 py-4">
           <div class="flex items-center justify-between gap-3 mb-3">
             <div class="flex items-center gap-2">
               <Monitor class="w-4 h-4 text-ui-faint" />
@@ -395,11 +408,13 @@ const onPublishOpenChange = (value) => {
                     <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-ui-cap text-ui-muted">
                       <span v-if="changeCountsLine(release.change_counts)">{{ changeCountsLine(release.change_counts) }}</span>
                       <span v-else class="text-ui-faint">{{ $t("licenses.versions.noChanges") }}</span>
+                      <template v-if="isLicensed">
                       <span class="tabular-nums">{{ $t("licenses.versions.covers", { count: plural(release.licenses_covered ?? 0, "license") }) }}</span>
                       <span v-if="release.licenses_needing_upgrade > 0" class="tabular-nums font-medium text-ui-warn">
                         {{ $t("licenses.versions.needUpgrade", { n: release.licenses_needing_upgrade }, release.licenses_needing_upgrade) }}
                       </span>
                       <span class="tabular-nums">{{ $t("licenses.versions.onThisVersion", { count: plural(release.devices_on_version ?? 0, "device") }) }}</span>
+                      </template>
                     </div>
                   </div>
 
