@@ -258,7 +258,10 @@
     "inactiveTitle": "{name} nonaktif",
     "notFoundMessage": "Tidak ada produk dengan kode {code}.",
     "inactiveMessage": "Produk ini dimatikan: key-nya tidak bisa diaktifkan. Aktifkan di ringkasan License Manager untuk mengelola lisensinya.",
-    "manageProducts": "Kelola produk"
+    "manageProducts": "Kelola produk",
+    "unlicensedTitle": "{name} tidak memakai lisensi",
+    "unlicensedMessage": "Aplikasi ini hanya disimpan di License Manager: versi dan installernya ada di halaman Versi.",
+    "openVersions": "Buka halaman Versi"
   },
   "productIcon": {
     "named": "Ikon {name}",
@@ -395,7 +398,8 @@
       "prefix": "1-6 huruf kapital (mis. OC).",
       "termsVersionRequired": "Beri versi pada ketentuan, mis. 1.0.",
       "termsVersionFormat": "Gunakan versi seperti 1.0 atau 1.1.",
-      "termsVersionChanged": "Ketentuan berubah: beri versi baru (saat ini {version})."
+      "termsVersionChanged": "Ketentuan berubah: beri versi baru (saat ini {version}).",
+      "websiteUrl": "Masukkan URL lengkap yang diawali http:// atau https://."
     },
     "saveFailed": "Gagal menyimpan produk.",
     "editTitle": "Ubah {name}",
@@ -424,7 +428,19 @@
     "termsVersionPlaceholder": "mis. 1.0",
     "effectiveDate": "Tanggal Berlaku",
     "effectiveDateHint": "Default hari ini saat ketentuan berubah.",
-    "save": "Simpan Produk"
+    "save": "Simpan Produk",
+    "licensing": {
+      "label": "Jenis aplikasi",
+      "licensed": "Dengan lisensi",
+      "licensedHint": "Menjual key lisensi; aplikasi diaktivasi dengan key.",
+      "unlicensed": "Tanpa lisensi",
+      "unlicensedHint": "Hanya disimpan: data aplikasi, versi, dan installer. Tanpa key.",
+      "locked": "Aplikasi ini sudah punya {n} lisensi, jadi tetap memakai lisensi."
+    },
+    "websiteUrl": "Link aplikasi",
+    "websiteUrlHint": "Opsional: website, App Store, atau halaman unduhan.",
+    "activeHintUnlicensed": "Aktif: tampil di menu",
+    "inactiveHintUnlicensed": "Nonaktif: disembunyikan dari menu"
   },
   "releaseForm": {
     "versionHint": "mayor.minor.patch, mis. 1.1.0",
@@ -644,9 +660,10 @@
     "activate": "Aktifkan",
     "cannotDelete": "Produk yang punya lisensi tidak bisa dihapus. Nonaktifkan saja.",
     "addProduct": "Tambah produk",
-    "addProductHint": "Daftarkan aplikasi lain untuk key lisensi",
+    "addProductHint": "Daftarkan aplikasi lain, dengan atau tanpa lisensi",
     "emptyTitle": "Belum ada produk",
-    "emptyMessage": "Produk muncul di sini setelah ditambahkan."
+    "emptyMessage": "Produk muncul di sini setelah ditambahkan.",
+    "openVersions": "Buka versi"
   },
   "dashboard": {
     "sort": {
@@ -745,7 +762,8 @@
     "publishTitle": "Terbitkan {product} {version}",
     "publishDescription": "Aplikasi akan melihatnya di riwayat versi.",
     "publishAria": "Terbitkan versi {version}",
-    "publishing": "Menerbitkan..."
+    "publishing": "Menerbitkan...",
+    "latest": "Versi terbaru"
   },
   "detail": {
     "was": "sebelumnya",

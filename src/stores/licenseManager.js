@@ -55,7 +55,7 @@ const toProductFormData = (payload) => {
   for (const [key, value] of Object.entries(payload)) {
     if (value === undefined) continue;
     if (value === null) form.append(key, "");
-    if (typeof value === "boolean") form.append(key, value ? "1" : "0");
+    else if (typeof value === "boolean") form.append(key, value ? "1" : "0");
     else form.append(key, value);
   }
   return form;

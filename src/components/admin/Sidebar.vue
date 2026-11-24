@@ -244,11 +244,12 @@ const labelClass = computed(() => ["nav-label truncate", collapsed.value ? "lg:h
             <template v-for="product in licenseProducts" :key="product.code">
               <!-- Without license-manager-list the product opens its Versions page -->
               <RouterLink
+                v-if="product.is_licensed !== false || canSeeVersions"
                 :to="{
-                  name: canListLicenses ? 'admin.license-manager.licenses.dashboard' : 'admin.license-manager.versions',
+                  name: canListLicenses && product.is_licensed !== false ? 'admin.license-manager.licenses.dashboard' : 'admin.license-manager.versions',
                   params: { product: product.code },
                 }"
-                :class="itemClass(canListLicenses ? isLicenseProductRoute(product.code) : isLicenseVersionsRoute(product.code))"
+                :class="itemClass(canListLicenses && product.is_licensed !== false ? isLicenseProductRoute(product.code) : isLicenseVersionsRoute(product.code))"
                 @click="onNavigate"
                 @mouseenter="showTooltip"
                 @mouseleave="hideTooltip"
@@ -258,7 +259,7 @@ const labelClass = computed(() => ["nav-label truncate", collapsed.value ? "lg:h
               </RouterLink>
               <!-- The product's release history, shown while one of its pages is open -->
               <RouterLink
-                v-if="canListLicenses && canSeeVersions && (isLicenseProductRoute(product.code) || isLicenseVersionsRoute(product.code))"
+                v-if="canListLicenses && canSeeVersions && product.is_licensed !== false && (isLicenseProductRoute(product.code) || isLicenseVersionsRoute(product.code))"
                 :to="{ name: 'admin.license-manager.versions', params: { product: product.code } }"
                 :class="[itemClass(isLicenseVersionsRoute(product.code)), collapsed ? '' : 'ml-5']"
                 @click="onNavigate"
