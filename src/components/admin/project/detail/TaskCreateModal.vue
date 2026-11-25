@@ -208,7 +208,7 @@ const handleSubmit = async () => {
       </div>
 
       <!-- Image (Optional) -->
-      <div>
+      <div v-file-drop>
         <p class="block text-ui-small font-medium text-ui-ink mb-1.5">
           {{ $t("projects.tasks.form.image") }} <span class="text-ui-muted font-normal">{{ $t("projects.tasks.form.imageOptional") }}</span>
         </p>

@@ -191,6 +191,7 @@ const handleSubmit = async () => {
             </div>
 
             <label
+              v-file-drop
               class="flex items-center gap-2 justify-center text-center border border-dashed border-ui-line-strong rounded-ui-control px-3 py-4 text-ui-small text-ui-muted cursor-pointer hover:border-ui-accent hover:text-ui-accent hover:bg-ui-accent-soft transition-colors"
             >
               <Paperclip class="w-4 h-4 shrink-0" />

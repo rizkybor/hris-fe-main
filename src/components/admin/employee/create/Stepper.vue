@@ -43,7 +43,7 @@ const stateOf = (index: number) => {
       />
       <div class="min-w-0">
         <p class="flex items-center gap-1.5 text-ui-h3 text-ui-ink">
-          HRIS+
+          TEMPO
           <span class="text-ui-cap font-normal px-1.5 rounded border border-ui-line text-ui-muted tabular-nums">v{{ APP_VERSION_SHORT }}</span>
         </p>
         <p class="text-ui-cap text-ui-muted truncate">Jendela Cakra Digital</p>

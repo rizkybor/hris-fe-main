@@ -549,7 +549,7 @@ const FORMAT_OPTIONS = [
 </script>
 
 <template>
-  <div class="border border-ui-line rounded-ui-card overflow-hidden" :class="{ 'opacity-60': disabled }">
+  <div v-file-drop class="border border-ui-line rounded-ui-card overflow-hidden" :class="{ 'opacity-60': disabled }">
     <div v-if="!disabled" class="flex flex-wrap items-center gap-1 border-b border-ui-line bg-ui-subtle px-2 py-1.5">
       <select
         @change="setFormatBlock($event.target.value)"

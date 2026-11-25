@@ -193,6 +193,7 @@ const submit = async () => {
           {{ $t("files.form.uploadFile") }} <span class="text-ui-bad">*</span>
         </p>
         <label
+          v-file-drop
           class="flex flex-col items-center justify-center gap-2 w-full py-10 px-4 border border-dashed rounded-ui-card cursor-pointer text-center transition-colors focus-within:shadow-ui-focus"
           :class="fileError ? 'border-ui-bad/50 bg-ui-bad-soft' : 'border-ui-line-strong bg-ui-subtle/50 hover:border-ui-accent hover:bg-ui-accent-soft/40'"
         >

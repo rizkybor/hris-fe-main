@@ -194,5 +194,12 @@
   "pwa": {
     "offline": "No internet connection",
     "backOnline": "Back online"
+  },
+  "fileDrop": {
+    "dropHere": "Drop files here",
+    "notAccepted": "File type not supported",
+    "allowed": "Accepted: {types}",
+    "someSkipped": "{n} file(s) skipped: type not supported.",
+    "oneOnly": "Only one file is used: {name}"
   }
 }

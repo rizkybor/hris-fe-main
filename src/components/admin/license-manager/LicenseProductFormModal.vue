@@ -210,7 +210,7 @@ const onOpenChange = (value) => {
       <Alert v-if="error" type="danger" :title="error" message="" :show="!!error" @close="error = ''" />
 
       <!-- Icon -->
-      <div data-field="icon">
+      <div v-file-drop data-field="icon">
         <p class="block text-ui-small font-medium text-ui-ink mb-1.5">
           {{ $t("licenses.product.appIcon") }} <span class="text-ui-faint font-normal">({{ $t("common.states.optional") }})</span>
         </p>
