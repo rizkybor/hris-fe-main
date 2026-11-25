@@ -64,7 +64,7 @@
   },
   "form": {
     "name": "Nama VPS",
-    "namePlaceholder": "cth. VPS Produksi HRIS",
+    "namePlaceholder": "cth. VPS Produksi TEMPO",
     "ip": "IP Address",
     "ipPlaceholder": "cth. 103.10.20.30",
     "description": "Keterangan",

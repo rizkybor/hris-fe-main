@@ -467,3 +467,29 @@ html {
         scroll-behavior: auto !important;
     }
 }
+
+/* v-file-drop: an upload area while files are dragged over it. */
+.ui-dropzone-active {
+  position: relative;
+  outline: 2px dashed rgb(var(--ui-accent));
+  outline-offset: 3px;
+  border-radius: var(--ui-radius-control, 10px);
+}
+.ui-dropzone-active::after {
+  content: attr(data-drop-label);
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  border-radius: inherit;
+  /* Opaque enough that the area's own text doesn't show through. */
+  background: linear-gradient(rgb(var(--ui-accent) / 0.12), rgb(var(--ui-accent) / 0.12)), rgb(var(--ui-surface) / 0.94);
+  color: rgb(var(--ui-accent));
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: center;
+  pointer-events: none;
+}

@@ -440,7 +440,7 @@ const onOpenChange = (value) => {
       </div>
 
       <!-- Installer -->
-      <div v-if="canUpload" class="border-t border-ui-line pt-5" data-field="file">
+      <div v-if="canUpload" v-file-drop class="border-t border-ui-line pt-5" data-field="file">
         <div class="flex items-center gap-2 mb-1">
           <FileArchive class="w-4 h-4 text-ui-faint" />
           <h4 class="text-ui-h3 text-ui-ink">{{ $t("licenses.releaseForm.installer") }}</h4>

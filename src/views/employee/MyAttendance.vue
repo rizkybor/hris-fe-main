@@ -523,7 +523,7 @@ onMounted(async () => {
           />
 
           <!-- Attachment -->
-          <div>
+          <div v-file-drop>
             <label for="leave-attachment" class="block text-ui-small font-medium text-ui-ink mb-1.5">
               {{ $t("myAttendance.form.attachment") }}
               <span v-if="attachmentRequired" class="text-ui-bad"> *</span>

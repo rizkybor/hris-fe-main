@@ -92,7 +92,7 @@ const removeItem = (i) => listItems.value.splice(i, 1);
   <div class="min-h-full bg-ui-bg font-sans text-ui-text -m-3 p-4 sm:p-8 space-y-8">
     <header class="flex flex-wrap items-end gap-4">
       <div class="flex-1 min-w-0">
-        <p class="text-ui-over uppercase text-ui-faint">HRIS+ redesign · development only</p>
+        <p class="text-ui-over uppercase text-ui-faint">TEMPO redesign · development only</p>
         <h1 class="text-ui-display text-ui-ink mt-1">UI kit</h1>
         <p class="text-ui-small text-ui-muted mt-1">Palette B · Navy + Blue · Inter. App version v{{ APP_VERSION_SHORT }} ({{ APP_VERSION }}, from package.json).</p>
       </div>

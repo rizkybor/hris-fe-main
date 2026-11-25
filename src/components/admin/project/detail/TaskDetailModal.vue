@@ -290,7 +290,7 @@ const closePanel = () => emit("close");
       </div>
 
       <!-- Image -->
-      <div>
+      <div v-file-drop>
         <h3 class="flex items-center gap-1.5 text-ui-over uppercase text-ui-muted mb-2">
           <ImageIcon class="w-3.5 h-3.5" /> {{ $t("projects.tasks.form.image") }}
           <span class="normal-case tracking-normal font-normal text-ui-faint">{{ $t("projects.tasks.form.optional") }}</span>

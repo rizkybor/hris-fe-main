@@ -314,7 +314,7 @@ watch(
             <!-- Project Photo -->
             <div class="md:col-span-2">
               <p class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("projects.form.photoOptional") }}</p>
-              <div class="flex flex-col sm:flex-row items-start gap-4">
+              <div v-file-drop class="flex flex-col sm:flex-row items-start gap-4">
                 <button
                   type="button"
                   class="group relative w-full sm:w-64 h-40 shrink-0 rounded-ui-card overflow-hidden border border-dashed border-ui-line-strong bg-ui-subtle flex items-center justify-center focus:outline-none focus-visible:shadow-ui-focus"

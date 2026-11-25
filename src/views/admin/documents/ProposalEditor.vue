@@ -380,7 +380,7 @@ const lastSaved = computed(() => {
             </div>
 
             <!-- Cover -->
-            <div class="mb-4">
+            <div v-file-drop class="mb-4">
               <p class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("documents.proposal.editor.cover") }}</p>
               <div v-if="doc.cover_image_url" class="relative h-40 rounded-ui-control overflow-hidden border border-ui-line">
                 <img :src="doc.cover_image_url" class="w-full h-full object-cover" :alt="$t('documents.proposal.editor.cover')" />

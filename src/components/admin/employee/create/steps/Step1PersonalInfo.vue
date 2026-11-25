@@ -68,7 +68,7 @@ const deletePhoto = () => {
             <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("employees.form.photo.subtitle") }}</p>
           </div>
         </header>
-      <div class="flex flex-row xl:flex-col items-center gap-5 xl:gap-4 xl:text-center">
+      <div v-file-drop class="flex flex-row xl:flex-col items-center gap-5 xl:gap-4 xl:text-center">
         <!-- Photo / placeholder -->
         <div class="relative w-24 h-24 shrink-0">
           <div

@@ -56,8 +56,8 @@ export default defineConfig({
       includeManifestIcons: false,
       manifest: {
         id: '/',
-        name: 'HRIS+ · Jendela Cakra Digital',
-        short_name: 'HRIS+',
+        name: 'TEMPO · Jendela Cakra Digital',
+        short_name: 'TEMPO',
         description: 'Back office PT Jendela Cakra Digital: absensi, tugas, proyek, keuangan, dan SDM.',
         lang: 'id',
         start_url: '/',

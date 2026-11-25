@@ -138,7 +138,7 @@ const formatPeriod = (date) => {
             </div>
             <div class="flex-1 min-w-0">
               <div class="flex flex-wrap items-center gap-2">
-                <p class="text-ui-h3 text-ui-ink">{{ payslip.company_name || "JCD-HRIS+" }}</p>
+                <p class="text-ui-h3 text-ui-ink">{{ payslip.company_name || "PT Jendela Cakra Digital" }}</p>
                 <UiBadge tone="ok" dot>{{ $t("payslips.paid") }}</UiBadge>
                 <UiBadge v-if="payslip.type === 'thr'" tone="accent">THR</UiBadge>
               </div>

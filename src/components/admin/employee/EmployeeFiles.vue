@@ -122,7 +122,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0">
+  <section v-file-drop class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0">
     <header class="flex flex-col sm:flex-row sm:items-center gap-3 px-5 pt-[18px] sm:px-6 pb-4 border-b border-ui-line">
       <div class="flex-1 min-w-0">
         <h3 class="text-ui-h2 text-ui-ink">{{ $t("employees.files.title") }}</h3>
