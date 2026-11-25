@@ -1,6 +1,8 @@
 <script setup>
 import { useI18n } from "vue-i18n";
 import { APP_VERSION_SHORT } from "@/utils/appVersion";
+import OpusMark from "@/components/common/OpusMark.vue";
+import { APP_EXPANSION } from "@/utils/brand";
 import { computed, ref, watch } from "vue";
 import {
   LayoutDashboard,
@@ -150,12 +152,10 @@ const labelClass = computed(() => ["nav-label truncate", collapsed.value ? "lg:h
   >
     <!-- Brand -->
     <div class="flex items-center gap-2.5 px-3.5 pt-3.5 pb-3" :class="collapsed ? 'lg:flex-col lg:px-2 lg:gap-2' : ''">
-      <div class="w-8 h-8 shrink-0 rounded-[9px] bg-ui-surface border border-ui-line flex items-center justify-center">
-        <img src="/images/jcd-only-color.png" alt="Jendela Cakra Digital" class="w-6 h-6 object-contain" />
-      </div>
+      <OpusMark label="OPUS" :title="`OPUS · ${APP_EXPANSION}`" class="w-8 h-8 shrink-0" />
       <div class="min-w-0 flex-1" :class="collapsed ? 'lg:hidden' : ''">
         <div class="flex items-center gap-1.5">
-          <span class="text-ui-h3 text-ui-ink">TEMPO</span>
+          <span class="text-ui-h3 text-ui-ink" :title="APP_EXPANSION">OPUS</span>
           <span class="text-[10.5px] leading-[15px] px-1.5 rounded border border-ui-line text-ui-muted tabular-nums">v{{ APP_VERSION_SHORT }}</span>
         </div>
         <p class="text-ui-cap text-ui-muted truncate">Jendela Cakra Digital</p>
