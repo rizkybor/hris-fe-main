@@ -155,7 +155,7 @@ const labelClass = computed(() => ["nav-label truncate", collapsed.value ? "lg:h
       </div>
       <div class="min-w-0 flex-1" :class="collapsed ? 'lg:hidden' : ''">
         <div class="flex items-center gap-1.5">
-          <span class="text-ui-h3 text-ui-ink">HRIS+</span>
+          <span class="text-ui-h3 text-ui-ink">TEMPO</span>
           <span class="text-[10.5px] leading-[15px] px-1.5 rounded border border-ui-line text-ui-muted tabular-nums">v{{ APP_VERSION_SHORT }}</span>
         </div>
         <p class="text-ui-cap text-ui-muted truncate">Jendela Cakra Digital</p>

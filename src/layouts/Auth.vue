@@ -34,7 +34,7 @@ const moveShine = (e) => {
         </div>
         <div class="leading-tight">
           <div class="flex items-center gap-1.5">
-            <span class="text-ui-h3 text-ui-ink">HRIS+</span>
+            <span class="text-ui-h3 text-ui-ink">TEMPO</span>
             <span class="text-[10.5px] leading-[15px] px-1.5 rounded border border-ui-line text-ui-muted tabular-nums">v{{ APP_VERSION_SHORT }}</span>
           </div>
           <p class="text-ui-cap text-ui-muted">PT Jendela Cakra Digital</p>
@@ -47,7 +47,7 @@ const moveShine = (e) => {
         </div>
       </div>
 
-      <p class="text-ui-cap text-ui-faint">© {{ year }} PT Jendela Cakra Digital · HRIS+ v{{ APP_VERSION_SHORT }}</p>
+      <p class="text-ui-cap text-ui-faint">© {{ year }} PT Jendela Cakra Digital · TEMPO v{{ APP_VERSION_SHORT }}</p>
     </div>
 
     <!-- Brand side (desktop) -->

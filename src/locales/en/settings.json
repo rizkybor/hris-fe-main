@@ -134,7 +134,7 @@
     "title": "Document Settings",
     "subtitle": "How generated PDF documents are printed",
     "signatoryName": "Signatory Name",
-    "signatoryHint": "Applies to every signature block: Letters, BAST, Official Memo, Purchase Order, Payment Receipt, Proposal, Certificate and Staff Raport. Names of HRIS users follow each person's own degree choice in My Profile; this setting covers other names (e.g. clients or outside parties).",
+    "signatoryHint": "Applies to every signature block: Letters, BAST, Official Memo, Purchase Order, Payment Receipt, Proposal, Certificate and Staff Raport. Names of TEMPO users follow each person's own degree choice in My Profile; this setting covers other names (e.g. clients or outside parties).",
     "withDegree": {
       "title": "Name with degree",
       "description": "Prints the signatory name exactly as typed on the document."
