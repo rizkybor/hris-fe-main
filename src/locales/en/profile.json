@@ -156,7 +156,7 @@
       "emailHint": "Email cannot be changed. Contact HR if this needs to be updated.",
       "nameHint": "Full name, with titles and degrees if you have them (e.g. Budi Santoso, S.Kom.).",
       "showDegree": "Show my titles and degrees",
-      "showDegreeHint": "Everywhere your name appears in TEMPO and on documents you sign.",
+      "showDegreeHint": "Everywhere your name appears in OPUS and on documents you sign.",
       "shownAs": "Shown as:"
     },
     "personal": {

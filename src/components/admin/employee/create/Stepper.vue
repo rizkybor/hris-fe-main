@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { APP_VERSION_SHORT } from "@/utils/appVersion";
+import OpusMark from "@/components/common/OpusMark.vue";
 import { Check } from "lucide-vue-next";
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
@@ -36,14 +37,10 @@ const stateOf = (index: number) => {
   <aside class="hidden lg:flex w-64 shrink-0 bg-ui-surface border-r border-ui-line flex-col">
     <!-- Brand -->
     <div class="h-[73px] px-5 flex items-center gap-3 border-b border-ui-line">
-      <img
-        src="/images/jcd-only-color.png"
-        :alt="$t('employees.wizard.companyLogo')"
-        class="w-8 h-8 object-contain shrink-0"
-      />
+      <OpusMark label="OPUS" class="w-8 h-8 shrink-0" />
       <div class="min-w-0">
         <p class="flex items-center gap-1.5 text-ui-h3 text-ui-ink">
-          TEMPO
+          OPUS
           <span class="text-ui-cap font-normal px-1.5 rounded border border-ui-line text-ui-muted tabular-nums">v{{ APP_VERSION_SHORT }}</span>
         </p>
         <p class="text-ui-cap text-ui-muted truncate">Jendela Cakra Digital</p>

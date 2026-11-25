@@ -64,7 +64,7 @@
   },
   "form": {
     "name": "VPS Name",
-    "namePlaceholder": "e.g. TEMPO Production VPS",
+    "namePlaceholder": "e.g. OPUS Production VPS",
     "ip": "IP Address",
     "ipPlaceholder": "e.g. 103.10.20.30",
     "description": "Description",

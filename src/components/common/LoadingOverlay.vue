@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import OpusMark from "@/components/common/OpusMark.vue";
 withDefaults(defineProps<{ show: boolean; text?: string }>(), {
   text: "", // default: common.states.pleaseWait
 });
@@ -17,9 +18,7 @@ withDefaults(defineProps<{ show: boolean; text?: string }>(), {
             <circle cx="32" cy="32" r="29" stroke="rgb(var(--ui-line))" stroke-width="2" />
             <path d="M61 32A29 29 0 0 0 32 3" stroke="rgb(var(--ui-accent))" stroke-width="2" stroke-linecap="round" />
           </svg>
-          <div class="w-11 h-11 rounded-[12px] bg-ui-surface border border-ui-line flex items-center justify-center">
-            <img src="/images/jcd-only-color.png" alt="" class="w-8 h-8 object-contain" />
-          </div>
+          <OpusMark class="w-11 h-11" />
         </div>
         <div class="text-center">
           <p class="text-ui-small font-medium text-ui-ink">{{ text || $t("common.states.pleaseWait") }}</p>
