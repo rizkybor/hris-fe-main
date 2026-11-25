@@ -134,7 +134,7 @@
     "title": "Pengaturan Dokumen",
     "subtitle": "Cara dokumen PDF dicetak",
     "signatoryName": "Nama Penanda Tangan",
-    "signatoryHint": "Berlaku untuk setiap blok tanda tangan: Surat, BAST, Memo resmi, Purchase Order, Kwitansi, Proposal, Sertifikat, dan Raport Staf. Nama pengguna TEMPO mengikuti pilihan gelar di Profil Saya masing-masing; pengaturan ini untuk nama lain (mis. klien atau pihak luar).",
+    "signatoryHint": "Berlaku untuk setiap blok tanda tangan: Surat, BAST, Memo resmi, Purchase Order, Kwitansi, Proposal, Sertifikat, dan Raport Staf. Nama pengguna OPUS mengikuti pilihan gelar di Profil Saya masing-masing; pengaturan ini untuk nama lain (mis. klien atau pihak luar).",
     "withDegree": {
       "title": "Nama dengan gelar",
       "description": "Mencetak nama penanda tangan persis seperti yang diketik di dokumen."

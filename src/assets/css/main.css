@@ -4460,6 +4460,10 @@ button:disabled,
   font-size: 10px;
 }
 
+.text-\[11px\] {
+  font-size: 11px;
+}
+
 .text-\[17px\] {
   font-size: 17px;
 }
@@ -4628,6 +4632,10 @@ button:disabled,
 
 .tracking-\[0\.08em\] {
   letter-spacing: 0.08em;
+}
+
+.tracking-\[0\.2em\] {
+  letter-spacing: 0.2em;
 }
 
 .tracking-normal {
@@ -4883,6 +4891,10 @@ button:disabled,
 .text-rose-700 {
   --tw-text-opacity: 1;
   color: rgb(190 18 60 / var(--tw-text-opacity, 1));
+}
+
+.text-sky-200\/60 {
+  color: rgb(186 230 253 / 0.6);
 }
 
 .text-sky-700 {

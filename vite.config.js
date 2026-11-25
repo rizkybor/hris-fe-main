@@ -56,9 +56,9 @@ export default defineConfig({
       includeManifestIcons: false,
       manifest: {
         id: '/',
-        name: 'TEMPO · Jendela Cakra Digital',
-        short_name: 'TEMPO',
-        description: 'Back office PT Jendela Cakra Digital: absensi, tugas, proyek, keuangan, dan SDM.',
+        name: 'OPUS · Jendela Cakra Digital',
+        short_name: 'OPUS',
+        description: 'OPUS (Operations, People, Units & Services): Backoffice PT Jendela Cakra Digital untuk absensi, tugas, proyek, keuangan, dan SDM.',
         lang: 'id',
         start_url: '/',
         scope: '/',

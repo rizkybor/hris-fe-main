@@ -5,6 +5,8 @@ import ThemeFloatingSwitch from "@/components/admin/ThemeFloatingSwitch.vue";
 import AuthBackdrop from "@/components/auth/AuthBackdrop.vue";
 import AuthLogo3D from "@/components/auth/AuthLogo3D.vue";
 import { APP_VERSION_SHORT } from "@/utils/appVersion";
+import { APP_EXPANSION, APP_EXPANSION_SHORT } from "@/utils/brand";
+import OpusMark from "@/components/common/OpusMark.vue";
 
 import { onMounted, reactive, ref } from "vue";
 
@@ -29,12 +31,10 @@ const moveShine = (e) => {
     <!-- Form side -->
     <div class="flex-1 lg:flex-none lg:w-[min(560px,46vw)] flex flex-col px-6 sm:px-12 lg:px-16 pt-8 pb-6 min-h-screen">
       <div class="flex items-center gap-2.5">
-        <div class="w-9 h-9 rounded-[10px] bg-ui-surface border border-ui-line flex items-center justify-center">
-          <img src="/images/jcd-only-color.png" alt="Jendela Cakra Digital" class="w-7 h-7 object-contain" />
-        </div>
+        <OpusMark label="OPUS" :title="`OPUS · ${APP_EXPANSION}`" class="w-9 h-9 shrink-0" />
         <div class="leading-tight">
           <div class="flex items-center gap-1.5">
-            <span class="text-ui-h3 text-ui-ink">TEMPO</span>
+            <span class="text-ui-h3 text-ui-ink">OPUS</span>
             <span class="text-[10.5px] leading-[15px] px-1.5 rounded border border-ui-line text-ui-muted tabular-nums">v{{ APP_VERSION_SHORT }}</span>
           </div>
           <p class="text-ui-cap text-ui-muted">PT Jendela Cakra Digital</p>
@@ -47,7 +47,7 @@ const moveShine = (e) => {
         </div>
       </div>
 
-      <p class="text-ui-cap text-ui-faint">© {{ year }} PT Jendela Cakra Digital · TEMPO v{{ APP_VERSION_SHORT }}</p>
+      <p class="text-ui-cap text-ui-faint">© {{ year }} PT Jendela Cakra Digital · OPUS v{{ APP_VERSION_SHORT }}</p>
     </div>
 
     <!-- Brand side (desktop) -->
@@ -59,7 +59,10 @@ const moveShine = (e) => {
           @ready="logoReady = true"
         />
         <div class="auth-copy" :class="{ 'is-in': logoReady }">
-          <p class="text-ui-over uppercase tracking-[0.08em] text-white/55">{{ $t("auth.layout.eyebrow") }}</p>
+          <div>
+            <p class="text-ui-over uppercase tracking-[0.08em] text-white/55">{{ $t("auth.layout.eyebrow") }}</p>
+            <p class="mt-1.5 text-[11px] uppercase tracking-[0.2em] text-sky-200/60" :title="APP_EXPANSION">{{ APP_EXPANSION_SHORT }}</p>
+          </div>
           <h2
             class="auth-headline mt-4 text-[32px] leading-[42px] font-medium tracking-[-0.02em] text-white [text-wrap:balance]"
             :class="{ 'is-lit': shine.on }"
