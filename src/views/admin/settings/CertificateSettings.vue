@@ -165,7 +165,7 @@ const handleDeleteTemplate = async (template) => {
         </div>
 
         <div class="space-y-4 min-w-0">
-          <div class="border border-dashed border-ui-line-strong rounded-ui-card p-4 space-y-3">
+          <div v-file-drop class="border border-dashed border-ui-line-strong rounded-ui-card p-4 space-y-3">
             <UiInput v-model="newTemplate.name" :label="$t('settings.certificate.templateName')" :placeholder="$t('settings.certificate.templateNamePlaceholder')" />
             <div>
               <label for="template-file-input" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("settings.certificate.backgroundImage") }}</label>

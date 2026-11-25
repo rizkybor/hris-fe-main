@@ -283,7 +283,7 @@ onMounted(async () => {
               <!-- Team Icon -->
               <div class="md:col-span-2">
                 <p class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("teams.form.icon.label") }}</p>
-                <div class="flex items-center gap-4">
+                <div v-file-drop class="flex items-center gap-4">
                   <div class="relative w-16 h-16 sm:w-20 sm:h-20 shrink-0">
                     <!-- Icon Display (uploaded or default) -->
                     <div

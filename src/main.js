@@ -1,4 +1,5 @@
 import countUp from '@/directives/countUp'
+import fileDrop, { blockStrayFileDrops } from '@/directives/fileDrop'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 
@@ -18,6 +19,9 @@ window.addEventListener('unhandledrejection', (event) => {
 const app = createApp(App)
 // Stat numbers count up when they appear (see directives/countUp.js).
 app.directive('count-up', countUp)
+// Upload areas accept dragged files (see directives/fileDrop.js).
+app.directive('file-drop', fileDrop)
+blockStrayFileDrops()
 app.use(i18n)
 
 app.use(createPinia())

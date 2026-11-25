@@ -212,7 +212,7 @@ onMounted(() => {
         <UiInput v-model="form.document_name" :label="$t('projects.documents.name')" required :placeholder="$t('projects.documents.namePlaceholder')" />
         <UiInput v-model="form.description" :label="$t('common.labels.description')" :rows="3" :placeholder="$t('projects.documents.descriptionPlaceholder')" />
 
-        <div>
+        <div v-file-drop>
           <label for="project-document-file" class="block text-ui-small font-medium text-ui-ink mb-1.5">
             {{ $t("projects.documents.file") }}<span class="text-ui-bad"> *</span>
           </label>

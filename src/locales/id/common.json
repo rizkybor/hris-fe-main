@@ -194,5 +194,12 @@
   "pwa": {
     "offline": "Tidak ada koneksi internet",
     "backOnline": "Kembali online"
+  },
+  "fileDrop": {
+    "dropHere": "Lepaskan file di sini",
+    "notAccepted": "Jenis file tidak didukung",
+    "allowed": "Yang diterima: {types}",
+    "someSkipped": "{n} file dilewati karena jenisnya tidak didukung.",
+    "oneOnly": "Hanya satu file yang dipakai: {name}"
   }
 }

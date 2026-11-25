@@ -205,7 +205,7 @@ const languageOptions = computed(() => [
       <!-- Documents Section -->
       <EmployeeFiles v-if="isEditing && employeeId" :employee-id="employeeId" />
 
-      <section v-else class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6">
+      <section v-else v-file-drop class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6">
         <header class="flex items-start gap-3 pb-4 mb-5 border-b border-ui-line">
           <span class="w-8 h-8 shrink-0 rounded-ui-control border border-ui-line bg-ui-surface text-ui-text flex items-center justify-center">
             <FileText class="w-4 h-4" />

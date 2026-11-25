@@ -322,6 +322,7 @@ const fileExt = (name, mime) => {
           <div>
             <p class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("files.edit.replaceFile") }}</p>
             <label
+              v-file-drop
               class="flex flex-col items-center justify-center gap-2 w-full py-8 px-4 border border-dashed border-ui-line-strong bg-ui-subtle/50 rounded-ui-card cursor-pointer text-center transition-colors hover:border-ui-accent hover:bg-ui-accent-soft/40 focus-within:shadow-ui-focus"
             >
               <div class="w-11 h-11 rounded-ui-control bg-ui-surface border border-ui-line text-ui-muted flex items-center justify-center">

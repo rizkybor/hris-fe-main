@@ -386,7 +386,7 @@ const handleSubmit = async () => {
 
       <div class="space-y-5 lg:sticky lg:top-0">
         <UiCard :title="$t('profile.edit.photo.title')">
-          <div class="flex flex-row lg:flex-col items-center gap-5 lg:gap-4 lg:text-center">
+          <div v-file-drop class="flex flex-row lg:flex-col items-center gap-5 lg:gap-4 lg:text-center">
             <input type="file" accept="image/*" class="hidden" ref="photoInput" @change="handlePhotoSelect" />
             <button
               type="button"
