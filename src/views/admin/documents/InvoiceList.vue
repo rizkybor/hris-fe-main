@@ -1,4 +1,5 @@
 <script setup>
+import DocumentPeriodRecap from "@/components/admin/documents/DocumentPeriodRecap.vue";
 import { computed, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
@@ -21,6 +22,21 @@ const store = useInvoiceStore();
 const alertModal = useAlertModalStore();
 const toast = useToastStore();
 const { invoices, meta } = storeToRefs(store);
+
+// Recap above the table: totals for a period (cancelled left out).
+const recapKey = ref(0);
+// Reload after the list changes (paid, cancelled, deleted), not on its first load.
+let recapPrimed = false;
+watch(invoices, () => {
+  if (recapPrimed) recapKey.value++;
+  recapPrimed = true;
+});
+const recapStats = (d) => [
+  { label: t("documents.recap.invoice.billed"), value: formatRupiah(d.billed), hint: t("documents.recap.count", { n: d.billed_count }, d.billed_count) },
+  { label: t("documents.recap.invoice.paid"), value: formatRupiah(d.paid), hint: t("documents.recap.count", { n: d.paid_count }, d.paid_count), tone: "ok" },
+  { label: t("documents.recap.invoice.unpaid"), value: formatRupiah(d.unpaid), hint: t("documents.recap.count", { n: d.unpaid_count }, d.unpaid_count), tone: d.unpaid > 0 ? "warn" : "" },
+  { label: t("documents.recap.invoice.collected"), value: d.billed > 0 ? `${Math.round((d.paid / d.billed) * 100)}%` : "—", hint: t("documents.recap.cancelled", { n: d.cancelled_count }, d.cancelled_count) },
+];
 
 const list = useListState("invoices", { q: "", status: "", page: 1 });
 const search = ref(list.q);
@@ -172,6 +188,8 @@ const quietDelete = "!text-ui-faint hover:!text-ui-bad hover:!bg-ui-bad-soft";
         <UiButton v-if="can('invoice-create')" :to="{ name: 'admin.invoices.create' }" :icon="Plus" class="w-full sm:w-auto">{{ $t("documents.invoice.list.create") }}</UiButton>
       </template>
     </UiPageHeader>
+
+    <DocumentPeriodRecap endpoint="/invoices/summary" storage-key="invoices-recap" :stats="recapStats" :refresh-key="recapKey" />
 
     <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
       <!-- Toolbar: search · status chips, one line on desktop -->

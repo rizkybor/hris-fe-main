@@ -775,5 +775,40 @@
     "loadFailed": "Data arsip gagal dimuat. Coba lagi.",
     "failed": "Arsip gagal dibuat. Coba lagi.",
     "done": "Arsip tahunan diunduh"
+  },
+  "recap": {
+    "title": "Rekap",
+    "periodLabel": "Periode rekap",
+    "allTime": "Semua waktu",
+    "failed": "Rekap gagal dimuat.",
+    "documents": "Jumlah dokumen",
+    "count": "Tidak ada dokumen | {n} dokumen | {n} dokumen",
+    "cancelled": "Tidak ada yang dibatalkan | {n} dibatalkan | {n} dibatalkan",
+    "period": {
+      "this_month": "Bulan ini",
+      "last_month": "Bulan lalu",
+      "this_quarter": "Kuartal ini",
+      "this_year": "Tahun ini",
+      "last_year": "Tahun lalu",
+      "all": "Semua waktu"
+    },
+    "invoice": {
+      "billed": "Total ditagihkan",
+      "paid": "Sudah dibayar",
+      "unpaid": "Belum dibayar",
+      "collected": "Tingkat pelunasan"
+    },
+    "receipt": {
+      "received": "Total diterima",
+      "pph23": "PPh 23 dipotong",
+      "pph23Hint": "Dipotong oleh klien",
+      "gross": "Nilai bruto",
+      "grossHint": "Diterima + PPh 23"
+    },
+    "po": {
+      "total": "Total nilai PO",
+      "external": "PO eksternal",
+      "internal": "PO internal"
+    }
   }
 }
