@@ -40,7 +40,11 @@
     "notStarted": "Belum dimulai",
     "notStartedMessage": "Jadwal mulai sudah lewat {n} hari, tetapi proyek masih dalam Perencanaan. Ubah status ke Aktif saat pengerjaan dimulai.",
     "notStartedPastEndMessage": "Jadwal mulai sudah lewat {n} hari dan tenggat lewat {end} hari, tetapi proyek masih dalam Perencanaan. Perbarui jadwal atau statusnya.",
-    "startsIn": "Mulai {n} hari lagi"
+    "startsIn": "Mulai {n} hari lagi",
+    "retention": "Masa Retensi",
+    "retentionMessage": "Development sudah selesai dan proyek dalam masa retensi. Retensi berakhir {n} hari lagi.",
+    "retentionEnded": "Retensi selesai",
+    "retentionEndedMessage": "Development dan masa retensi sudah selesai (retensi berakhir {n} hari lalu). Proyek siap ditandai Selesai."
   },
   "list": {
     "title": "Semua Proyek",
@@ -122,7 +126,8 @@
       "documents": "Dokumen",
       "billing": "Tagihan",
       "maintenance": "Maintenance",
-      "access": "Akses"
+      "access": "Akses",
+      "uat": "UAT"
     },
     "info": {
       "title": "Informasi Proyek",
@@ -461,6 +466,106 @@
     "selectLeader": "Pilih Pemimpin Proyek",
     "selectLeaderDescription": "Pilih karyawan untuk memimpin proyek ini",
     "noEmployeesHint": "Coba ubah kata kunci pencarian",
-    "inspectSubtitle": "Opsional — hanya terlihat oleh Anda sebagai Pemimpin Proyek di formulir ini"
+    "inspectSubtitle": "Opsional — hanya terlihat oleh Anda sebagai Pemimpin Proyek di formulir ini",
+    "devStart": "Development Mulai",
+    "devEndOptional": "Development Selesai (opsional)",
+    "retentionStartOptional": "Retensi Mulai (opsional)",
+    "retentionEndOptional": "Retensi Selesai (opsional)",
+    "retentionStartHint": "Biasanya sehari setelah development selesai.",
+    "totalHint": "Dari mulai development sampai akhir retensi."
+  },
+  "uat": {
+    "title": "UAT (User Acceptance Test)",
+    "subtitle": "Pengujian bersama klien sebelum serah terima. Jumlah UAT mengikuti kesepakatan.",
+    "add": "Catat UAT ke-{n}",
+    "notYet": "Belum dilaksanakan",
+    "roundTitle": "UAT ke-{n}",
+    "noDate": "Tanggal belum diisi",
+    "findings": "Temuan",
+    "findingsCount": "{n} temuan",
+    "overPlanBadge": "Di luar kesepakatan",
+    "passedBanner": "UAT dinyatakan lulus pada UAT ke-{n}. Proyek siap serah terima (BAST).",
+    "overPlanBanner": "Jumlah UAT sudah melebihi kesepakatan ({n}x). UAT tambahan bisa dibicarakan sebagai biaya tambahan.",
+    "emptyTitle": "Belum ada UAT",
+    "emptyMessage": "Catat setiap sesi UAT dengan klien: tanggal, hasil, temuan, dan BA UAT yang sudah ditandatangani.",
+    "loadFailed": "Data UAT gagal dimuat. Muat ulang halaman.",
+    "deleted": "UAT dihapus",
+    "deleteFailed": "UAT gagal dihapus",
+    "deleteTitle": "Hapus UAT ke-{n}?",
+    "deleteMessage": "Catatan, temuan, dan lampirannya ikut terhapus. Nomor UAT setelahnya akan bergeser.",
+    "status": {
+      "scheduled": "Terjadwal",
+      "in_progress": "Berjalan",
+      "passed": "Lulus",
+      "revision": "Perlu Revisi"
+    },
+    "summary": {
+      "ofPlan": "{done} dari {planned} UAT terlaksana",
+      "overPlan": "{done} UAT terlaksana · kesepakatan {planned}x",
+      "noPlan": "Belum ada UAT terlaksana | {done} UAT terlaksana | {done} UAT terlaksana",
+      "remaining": "Tidak ada sisa | Sisa {n} UAT | Sisa {n} UAT",
+      "setPlanHint": "Atur jumlah UAT sesuai kesepakatan dengan klien."
+    },
+    "plan": {
+      "label": "Kesepakatan",
+      "value": "{n}x UAT",
+      "none": "Belum diatur",
+      "edit": "Ubah jumlah UAT",
+      "placeholder": "3",
+      "hint": "1–20. Kosongkan jika tidak ada kesepakatan.",
+      "invalid": "Isi angka 1–20, atau kosongkan.",
+      "saved": "Jumlah UAT disimpan"
+    },
+    "form": {
+      "addTitle": "Catat UAT ke-{n}",
+      "editTitle": "Ubah UAT ke-{n}",
+      "date": "Tanggal",
+      "status": "Status",
+      "notes": "Catatan",
+      "notesPlaceholder": "Hasil UAT, peserta dari klien, kesimpulan…",
+      "findingsHint": "Satu temuan per baris.",
+      "findingsPlaceholder": "Tombol simpan tidak aktif di halaman Order\nLaporan bulanan belum menampilkan total",
+      "attachment": "Lampiran BA UAT",
+      "attachmentHint": "Opsional. PDF, Word, Excel, atau gambar, maksimal 10 MB.",
+      "removeAttachment": "Hapus",
+      "overPlanWarning": "UAT ini melebihi kesepakatan ({n}x) dan akan ditandai sebagai di luar kesepakatan.",
+      "created": "UAT dicatat",
+      "updated": "UAT diperbarui"
+    }
+  },
+  "completion": {
+    "markCompleted": "Tandai Selesai",
+    "reactivate": "Aktifkan Kembali",
+    "completeTitle": "Tandai “{name}” selesai?",
+    "reactivateTitle": "Aktifkan kembali “{name}”?",
+    "completeMessage": "Tandai Selesai jika development dan masa retensi sudah tuntas. Status menjadi Selesai dan peringatan tenggat tidak ditampilkan lagi. Anda tetap bisa mengaktifkannya kembali kapan saja.",
+    "reactivateMessage": "Status proyek kembali menjadi Aktif dan tanggal selesai dihapus. Pemantauan tenggat berjalan lagi.",
+    "openTasks": "Masih ada {n} tugas yang belum selesai.",
+    "uatPending": "UAT baru terlaksana {done} dari {planned} sesuai kesepakatan.",
+    "completed": "Proyek ditandai selesai",
+    "reactivated": "Proyek aktif kembali",
+    "failed": "Status proyek gagal diubah",
+    "completedOn": "Selesai {date}",
+    "retentionRunning": "Masa retensi baru berakhir {date}.",
+    "developmentRunning": "Development baru berakhir {date}."
+  },
+  "timeline": {
+    "title": "Linimasa Proyek",
+    "subtitle": "Tahap development, masa retensi, dan total waktunya",
+    "development": "Development",
+    "retention": "Masa Retensi",
+    "total": "Total Waktu Proyek",
+    "today": "Hari ini",
+    "noEnd": "belum ditentukan",
+    "totalUnknown": "Lengkapi tanggal untuk menghitung total",
+    "notSet": {
+      "development": "Tanggal development belum lengkap",
+      "retention": "Belum diatur — isi di Edit Proyek"
+    },
+    "state": {
+      "upcoming": "Belum mulai",
+      "running": "Berjalan",
+      "done": "Selesai"
+    }
   }
 }

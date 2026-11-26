@@ -33,6 +33,7 @@ import {
   Trash2,
 } from "lucide-vue-next";
 import { computed, onMounted, ref, watch } from "vue";
+import { calculateDuration } from "@/utils/dateUtils";
 import { useProjectStore } from "@/stores/project";
 import { useTeamStore } from "@/stores/team";
 import { useLookupStore } from "@/stores/lookups";
@@ -96,7 +97,8 @@ const form = ref({
   photo_url: "",
   budget: "",
   warranty_period_months: "",
-  retention_period_months: "",
+  retention_start_date: "",
+  retention_end_date: "",
   project_leader_id: "",
   team_assignment_mode: "employee",
   team_id: "",
@@ -168,6 +170,12 @@ const formatRupiahInput = (value) => {
 
 const formattingBudget = ref(false);
 
+// Development start -> retention end (or development end), shown live.
+const formTotalDuration = computed(() => {
+  const end = form.value.retention_end_date || form.value.end_date;
+  return form.value.start_date && end ? calculateDuration(form.value.start_date, end) : "";
+});
+
 const handleSubmit = async () => {
   const payload = { ...form.value };
   payload.budget =
@@ -176,10 +184,10 @@ const handleSubmit = async () => {
     form.value.warranty_period_months === "" || form.value.warranty_period_months === null
       ? null
       : parseInt(form.value.warranty_period_months);
-  payload.retention_period_months =
-    form.value.retention_period_months === "" || form.value.retention_period_months === null
-      ? null
-      : parseInt(form.value.retention_period_months);
+  // Retention phase: both dates or neither (the API derives the months).
+  payload.retention_start_date = form.value.retention_start_date || null;
+  payload.retention_end_date = form.value.retention_end_date || null;
+  delete payload.retention_period_months;
   payload.additional_access = form.value.additional_access.filter((item) => item.name && item.url);
   projectStore.clearMessages();
   const created = await createProject(payload);
@@ -403,7 +411,7 @@ watch(
                 name="start_date"
                 type="date"
                 v-model="form.start_date"
-                :label="$t('projects.fields.startDate')"
+                :label="$t('projects.form.devStart')"
                 required :error="error?.start_date?.join(', ')"
               />
 
@@ -413,8 +421,36 @@ watch(
                 name="end_date"
                 type="date"
                 v-model="form.end_date"
-                :label="$t('projects.form.endDateOptional')" :error="error?.end_date?.join(', ')"
+                :label="$t('projects.form.devEndOptional')" :error="error?.end_date?.join(', ')"
               />
+            </div>
+
+            <!-- Retention phase (after development) + total duration -->
+            <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
+              <UiInput
+                id="retention_start_date"
+                name="retention_start_date"
+                type="date"
+                v-model="form.retention_start_date"
+                :label="$t('projects.form.retentionStartOptional')"
+                :hint="!form.retention_start_date && form.end_date ? $t('projects.form.retentionStartHint') : ''"
+                :error="error?.retention_start_date?.join(', ')"
+              />
+              <UiInput
+                id="retention_end_date"
+                name="retention_end_date"
+                type="date"
+                v-model="form.retention_end_date"
+                :label="$t('projects.form.retentionEndOptional')"
+                :error="error?.retention_end_date?.join(', ')"
+              />
+              <div class="min-w-0">
+                <p class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("projects.timeline.total") }}</p>
+                <div class="h-10 px-3 rounded-ui-control bg-ui-subtle flex items-center text-ui-small text-ui-ink tabular-nums">
+                  {{ formTotalDuration || "—" }}
+                </div>
+                <p class="text-ui-cap text-ui-muted mt-1.5">{{ $t("projects.form.totalHint") }}</p>
+              </div>
             </div>
 
             <!-- Project Description -->
@@ -733,19 +769,6 @@ watch(
                   :class="[FIELD, 'tabular-nums', error?.warranty_period_months ? 'border-ui-bad/50' : '']"
                 />
                 <p v-if="error?.warranty_period_months" class="text-ui-cap text-ui-bad mt-1.5">{{ error?.warranty_period_months?.join(", ") }}</p>
-              </div>
-              <div class="min-w-0">
-                <label for="retention_period_months" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("projects.form.retentionOptional") }}</label>
-                <input
-                  id="retention_period_months"
-                  name="retention_period_months"
-                  type="number"
-                  min="0"
-                  v-model="form.retention_period_months"
-                  :placeholder="$t('projects.form.examplePlaceholder', { n: 6 })"
-                  :class="[FIELD, 'tabular-nums', error?.retention_period_months ? 'border-ui-bad/50' : '']"
-                />
-                <p v-if="error?.retention_period_months" class="text-ui-cap text-ui-bad mt-1.5">{{ error?.retention_period_months?.join(", ") }}</p>
               </div>
 
             <!-- Initial Project Status (Full Width) -->

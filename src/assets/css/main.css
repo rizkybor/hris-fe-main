@@ -731,6 +731,10 @@ button:disabled,
   bottom: -0.125rem;
 }
 
+.-bottom-1 {
+  bottom: -0.25rem;
+}
+
 .-bottom-4 {
   bottom: -1rem;
 }
@@ -1820,6 +1824,10 @@ button:disabled,
 
 .\!w-auto {
   width: auto !important;
+}
+
+.w-0\.5 {
+  width: 0.125rem;
 }
 
 .w-1 {
@@ -3672,6 +3680,11 @@ button:disabled,
   background-color: rgb(244 63 94 / var(--tw-bg-opacity, 1));
 }
 
+.bg-sky-100 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(224 242 254 / var(--tw-bg-opacity, 1));
+}
+
 .bg-sky-50 {
   --tw-bg-opacity: 1;
   background-color: rgb(240 249 255 / var(--tw-bg-opacity, 1));
@@ -4482,6 +4495,10 @@ button:disabled,
 
 .text-\[72px\] {
   font-size: 72px;
+}
+
+.text-\[9px\] {
+  font-size: 9px;
 }
 
 .text-ui-body {
@@ -6195,6 +6212,14 @@ html {
   pointer-events: none;
 }
 
+.marker\:text-ui-faint *::marker {
+  color: rgb(var(--ui-faint) );
+}
+
+.marker\:text-ui-faint::marker {
+  color: rgb(var(--ui-faint) );
+}
+
 .file\:mr-3::file-selector-button {
   margin-right: 0.75rem;
 }
@@ -7290,6 +7315,10 @@ html {
     grid-template-columns: auto 1fr;
   }
 
+  .sm\:grid-cols-\[minmax\(0\2c 220px\)_1fr\] {
+    grid-template-columns: minmax(0,220px) 1fr;
+  }
+
   .sm\:flex-row {
     flex-direction: row;
   }
@@ -7607,6 +7636,10 @@ html {
 
   .sm\:pl-7 {
     padding-left: 1.75rem;
+  }
+
+  .sm\:pl-\[52px\] {
+    padding-left: 52px;
   }
 
   .sm\:pr-0 {

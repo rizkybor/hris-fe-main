@@ -138,6 +138,14 @@ export const useProjectStore = defineStore("project", {
             }
         },
 
+        // Mark as completed / reactivate from Project Detail: only the status
+        // is sent (the API keeps every other field). Throws on failure.
+        async setProjectStatus(id, status) {
+            const response = await axiosInstance.put(`projects/${id}`, { status });
+            this.statisticsFetchedAt = 0;
+            return response.data.data;
+        },
+
         async updateInspectNote(id, note) {
             this.error = null;
 
