@@ -40,7 +40,11 @@
     "notStarted": "Not started",
     "notStartedMessage": "The start date passed {n} days ago, but the project is still in Planning. Set it to Active once work begins.",
     "notStartedPastEndMessage": "The start date passed {n} days ago and the deadline {end} days ago, but the project is still in Planning. Update its schedule or status.",
-    "startsIn": "Starts in {n} days"
+    "startsIn": "Starts in {n} days",
+    "retention": "Retention",
+    "retentionMessage": "Development is done and the project is in its retention period, which ends in {n} day. | Development is done and the project is in its retention period, which ends in {n} days.",
+    "retentionEnded": "Retention over",
+    "retentionEndedMessage": "Development and retention are both over (retention ended {n} day ago). The project is ready to be marked completed. | Development and retention are both over (retention ended {n} days ago). The project is ready to be marked completed."
   },
   "list": {
     "title": "All Projects",
@@ -122,7 +126,8 @@
       "documents": "Documents",
       "billing": "Billing",
       "maintenance": "Maintenance",
-      "access": "Access"
+      "access": "Access",
+      "uat": "UAT"
     },
     "info": {
       "title": "Project Information",
@@ -225,7 +230,17 @@
     "uploadFailed": "Failed to upload document.",
     "deleteTitle": "Delete Document?",
     "deleteMessage": "Are you sure you want to delete \"{name}\"? This action cannot be undone.",
-    "deleteConfirm": "Yes, Delete"
+    "deleteConfirm": "Yes, Delete",
+    "sort": {
+      "label": "Sort",
+      "newest": "Newest",
+      "oldest": "Oldest",
+      "name_asc": "Name A–Z",
+      "name_desc": "Name Z–A",
+      "size_desc": "Largest",
+      "size_asc": "Smallest",
+      "type": "File type"
+    }
   },
   "billing": {
     "title": "Billing & Payments",
@@ -461,6 +476,145 @@
     "selectLeader": "Select Project Leader",
     "selectLeaderDescription": "Choose an employee to lead this project",
     "noEmployeesHint": "Try adjusting your search terms",
-    "inspectSubtitle": "Optional — visible only to you as the Project Leader on this form"
+    "inspectSubtitle": "Optional — visible only to you as the Project Leader on this form",
+    "devStart": "Development start",
+    "devEndOptional": "Development end (optional)",
+    "retentionStartOptional": "Retention start (optional)",
+    "retentionEndOptional": "Retention end (optional)",
+    "retentionStartHint": "Usually the day after development ends.",
+    "totalHint": "From the start of development to the end of retention."
+  },
+  "uat": {
+    "title": "UAT (User Acceptance Test)",
+    "subtitle": "Testing with the client before handover. The number of UAT rounds follows the agreement.",
+    "add": "Record UAT {n}",
+    "notYet": "Not held yet",
+    "roundTitle": "UAT {n}",
+    "noDate": "No date yet",
+    "findings": "Findings",
+    "findingsCount": "{n} finding | {n} findings",
+    "overPlanBadge": "Outside the agreement",
+    "passedBanner": "UAT passed in round {n}. The project is ready for handover (BAST).",
+    "overPlanBanner": "UAT rounds now exceed the agreement ({n}x). Extra rounds can be discussed as an additional cost.",
+    "emptyTitle": "No UAT yet",
+    "emptyMessage": "Record each UAT session with the client: date, result, findings and the signed UAT record.",
+    "loadFailed": "UAT data could not be loaded. Reload the page.",
+    "deleted": "UAT deleted",
+    "deleteFailed": "UAT could not be deleted",
+    "deleteTitle": "Delete UAT {n}?",
+    "deleteMessage": "Its notes, findings and attachment are deleted too. Later rounds are renumbered.",
+    "status": {
+      "scheduled": "Scheduled",
+      "in_progress": "In progress",
+      "passed": "Passed",
+      "revision": "Needs revision"
+    },
+    "summary": {
+      "ofPlan": "{done} of {planned} UAT rounds held",
+      "overPlan": "{done} UAT rounds held · agreed {planned}x",
+      "noPlan": "No UAT held yet | {done} UAT round held | {done} UAT rounds held",
+      "remaining": "None left | {n} round left | {n} rounds left",
+      "setPlanHint": "Set the number of UAT rounds agreed with the client."
+    },
+    "plan": {
+      "label": "Agreement",
+      "value": "{n}x UAT",
+      "none": "Not set",
+      "edit": "Change number of UAT rounds",
+      "placeholder": "3",
+      "hint": "1–20. Leave empty if there is no agreement.",
+      "invalid": "Enter a number from 1 to 20, or leave it empty.",
+      "saved": "Number of UAT rounds saved"
+    },
+    "form": {
+      "addTitle": "Record UAT {n}",
+      "editTitle": "Edit UAT {n}",
+      "date": "Date",
+      "status": "Status",
+      "notes": "Notes",
+      "notesPlaceholder": "UAT result, client attendees, conclusion…",
+      "findingsHint": "One finding per line.",
+      "findingsPlaceholder": "Save button is disabled on the Order page\nMonthly report does not show the total",
+      "attachment": "Signed UAT record",
+      "attachmentHint": "Optional. PDF, Word, Excel or image, up to 10 MB.",
+      "removeAttachment": "Remove",
+      "overPlanWarning": "This round exceeds the agreement ({n}x) and will be marked as outside the agreement.",
+      "created": "UAT recorded",
+      "updated": "UAT updated"
+    }
+  },
+  "completion": {
+    "markCompleted": "Mark as completed",
+    "reactivate": "Reactivate",
+    "completeTitle": "Mark “{name}” as completed?",
+    "reactivateTitle": "Reactivate “{name}”?",
+    "completeMessage": "Mark as completed once development and the retention period are done. The status becomes Completed and deadline warnings are no longer shown. You can reactivate it at any time.",
+    "reactivateMessage": "The project status goes back to Active and the completion date is cleared. Deadline tracking resumes.",
+    "openTasks": "{n} task is still open. | {n} tasks are still open.",
+    "uatPending": "Only {done} of the {planned} agreed UAT rounds have been held.",
+    "completed": "Project marked as completed",
+    "reactivated": "Project reactivated",
+    "failed": "Project status could not be changed",
+    "completedOn": "Completed {date}",
+    "retentionRunning": "The retention period only ends on {date}.",
+    "developmentRunning": "Development only ends on {date}."
+  },
+  "timeline": {
+    "title": "Project Timeline",
+    "subtitle": "Development phase, retention period and the total time",
+    "development": "Development",
+    "retention": "Retention",
+    "total": "Total project time",
+    "today": "Today",
+    "noEnd": "not set",
+    "totalUnknown": "Fill in the dates to compute the total",
+    "notSet": {
+      "development": "Development dates are incomplete",
+      "retention": "Not set — fill it in Edit Project"
+    },
+    "state": {
+      "upcoming": "Not started",
+      "running": "Running",
+      "done": "Done"
+    }
+  },
+  "export": {
+    "title": "Export Progress",
+    "description": "Download the project progress report, optionally with a cover letter in the same PDF.",
+    "report": "Project Progress Report",
+    "reportHint": "Timeline, UAT and the status of every task",
+    "withCover": "Include a cover letter",
+    "withCoverHint": "A numbered letter on your letterhead, as the first page of the PDF.",
+    "noLetterAccess": "You don't have access to Letters, so a cover letter can't be added.",
+    "mode": {
+      "new": "New letter",
+      "existing": "Use an earlier letter"
+    },
+    "existingLetter": "Cover letter",
+    "existingHint": "A letter made for this project before; no new number is used.",
+    "letterDate": "Letter date",
+    "recipient": "To",
+    "recipientHint": "Client PIC and company, one per line.",
+    "subject": "Subject",
+    "body": "Letter body",
+    "signatoryName": "Signatory name",
+    "signatoryTitle": "Signatory title",
+    "newHint": "The letter gets an official number (code SPG – Surat Pengantar) and is listed under Business Documents › Letters.",
+    "submit": "Download PDF",
+    "submitWithCover": "Download PDF + cover letter",
+    "pickLetter": "Pick a cover letter.",
+    "fillRequired": "Fill in the division code, subject and letter body.",
+    "loadFailed": "Export data could not be loaded. Try again.",
+    "failed": "The PDF could not be created. Try again.",
+    "done": "Progress report downloaded",
+    "letterCreated": "Cover letter created",
+    "signature": {
+      "label": "Signature",
+      "without": "No signature",
+      "with": "Signed + stamp",
+      "who": "Signed by",
+      "stampHint": "The digital signature includes the PT. Jendela Cakra Digital stamp.",
+      "pick": "Pick who signs the letter."
+    }
   }
 }

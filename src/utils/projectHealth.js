@@ -17,6 +17,7 @@ const DAY_IN_MS = 1000 * 60 * 60 * 24;
 // - planning: work hasn't started, so no pace judgement; it only notes when
 //   the start date has already passed ("not-started") or is still ahead;
 // - on_hold: the clock is paused, no pace judgement ("paused");
+// - active in its retention phase: "retention" / "retention-ended";
 // - draft, completed, cancelled: nothing to show.
 export const getProjectHealth = (project) => {
   const { start_date, end_date, status } = project || {};
@@ -57,6 +58,31 @@ export const getProjectHealth = (project) => {
         { n: Math.abs(daysToStart), end: Math.abs(daysRemaining) },
         Math.abs(daysToStart)
       ),
+    };
+  }
+
+  // Retention phase: once it has started, development is over, so the pace
+  // is no longer judged. "retention" while it runs, "retention-ended" when
+  // it is over and the project only waits to be marked completed.
+  const retentionStart = project.retention_start_date ? new Date(project.retention_start_date) : null;
+  const retentionEnd = project.retention_end_date ? new Date(`${project.retention_end_date}T23:59:59`) : null;
+  if (retentionStart && retentionEnd && today >= retentionStart) {
+    const daysRemaining = Math.ceil((retentionEnd.getTime() - today.getTime()) / DAY_IN_MS);
+    const actualProgress = Math.round(project.progress ?? 0);
+    const base = { daysRemaining, expectedProgress: null, actualProgress };
+    if (daysRemaining >= 0) {
+      return {
+        ...base,
+        level: "retention",
+        label: translate("projects.health.retention"),
+        message: translate("projects.health.retentionMessage", { n: daysRemaining }, daysRemaining),
+      };
+    }
+    return {
+      ...base,
+      level: "retention-ended",
+      label: translate("projects.health.retentionEnded"),
+      message: translate("projects.health.retentionEndedMessage", { n: Math.abs(daysRemaining) }, Math.abs(daysRemaining)),
     };
   }
 
@@ -154,6 +180,8 @@ export const PROJECT_HEALTH_BADGE_CLASS = {
   "not-started": "bg-yellow-100 text-yellow-700",
   planning: "bg-gray-100 text-gray-700",
   paused: "bg-gray-100 text-gray-700",
+  retention: "bg-sky-100 text-sky-700",
+  "retention-ended": "bg-green-100 text-green-700",
   overdue: "bg-red-100 text-red-700",
   critical: "bg-red-100 text-red-700",
   "at-risk": "bg-orange-100 text-orange-700",

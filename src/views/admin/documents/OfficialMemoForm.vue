@@ -1,4 +1,5 @@
 <script setup>
+import { todayLocal } from "@/utils/dateUtils";
 import { computed, onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { useRoute, useRouter } from "vue-router";
@@ -24,7 +25,7 @@ const saving = ref(false);
 const form = ref({
   document_number: "",
   subject: "",
-  document_date: new Date().toISOString().slice(0, 10),
+  document_date: todayLocal(),
   body: "",
   use_signature: false,
 });

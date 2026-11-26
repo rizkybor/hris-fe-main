@@ -36,6 +36,8 @@ import {
   Flag,
   CalendarClock,
   PauseCircle,
+  ClipboardCheck,
+  RotateCcw,
 } from "lucide-vue-next";
 import { useRoute } from "vue-router";
 import router from "@/router";
@@ -56,13 +58,17 @@ import ProjectInvoices from "@/components/admin/project/detail/ProjectInvoices.v
 import ProjectInspect from "@/components/admin/project/detail/ProjectInspect.vue";
 import ProjectAccess from "@/components/admin/project/detail/ProjectAccess.vue";
 import ProjectBilling from "@/components/admin/project/detail/ProjectBilling.vue";
+import ProjectUat from "@/components/admin/project/detail/ProjectUat.vue";
+import ProjectExportModal from "@/components/admin/project/detail/ProjectExportModal.vue";
 import { useListState } from "@/composables/useListState";
 import { useVisitedTabs } from "@/composables/useVisitedTabs";
 // Owned by the Maintenance page; loaded only when its tab is first opened.
 const MaintenancePanel = defineAsyncComponent(() => import("@/components/admin/maintenance/MaintenancePanel.vue"));
 import Avatar from "@/components/common/Avatar.vue";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
-import { UiBadge, UiButton, UiCard, UiEmpty } from "@/components/ui";
+import { UiBadge, UiButton, UiCard, UiConfirmDialog, UiEmpty } from "@/components/ui";
+import { useToastStore } from "@/stores/toast";
+import { errorMessage } from "@/helpers/errorHelper";
 import { useScrollFade } from "@/composables/useScrollFade";
 import { useI18n } from "vue-i18n";
 
@@ -72,7 +78,7 @@ const route = useRoute();
 const id = route.params.id;
 
 const projectStore = useProjectStore();
-const { fetchProject, downloadProgressReport } = projectStore;
+const { fetchProject } = projectStore;
 
 const authStore = useAuthStore();
 const isProjectLeader = computed(() => {
@@ -83,16 +89,10 @@ const handleInspectNoteUpdated = (note) => {
   project.value.inspect_note = note;
 };
 
-const exporting = ref(false);
-const handleExportProgress = async () => {
-  exporting.value = true;
-  try {
-    await downloadProgressReport(id, project.value.name);
-  } catch (error) {
-    console.error("Error exporting project progress:", error);
-  } finally {
-    exporting.value = false;
-  }
+// Export Progress opens a dialog: the report alone, or with a cover letter.
+const exportOpen = ref(false);
+const handleExportProgress = () => {
+  exportOpen.value = true;
 };
 
 const taskStore = useTaskStore();
@@ -138,12 +138,102 @@ const projectProgress = computed(() => {
   return Math.round((completed / tasks.length) * 100);
 });
 
+// ---- Timeline: Development, then Retention, and the total ----
+const dayOf = (value) => (value ? new Date(`${String(value).slice(0, 10)}T00:00:00`) : null);
+const startOfToday = () => {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+const phaseState = (start, end) => {
+  if (project.value.status === "completed") return "done";
+  const today = startOfToday();
+  if (start && today < start) return "upcoming";
+  if (end && today > end) return "done";
+  return start ? "running" : "upcoming";
+};
+const timeline = computed(() => {
+  const p = project.value;
+  const phases = [
+    { key: "development", start: p.start_date, end: p.end_date, bar: "bg-ui-ink" },
+    { key: "retention", start: p.retention_start_date, end: p.retention_end_date, bar: "bg-ui-accent" },
+  ].map((phase) => ({
+    ...phase,
+    set: Boolean(phase.start && phase.end),
+    state: phaseState(dayOf(phase.start), dayOf(phase.end)),
+    duration: phase.start && phase.end ? calculateDuration(phase.start, phase.end) : null,
+  }));
+  const totalEnd = p.retention_end_date || p.end_date;
+  const from = dayOf(p.start_date);
+  const to = dayOf(totalEnd);
+  const span = from && to ? Math.max(1, to - from) : 0;
+  // Bar segments as % of the whole timeline, plus where today falls.
+  const segments = span
+    ? phases.filter((phase) => phase.set).map((phase) => ({
+        key: phase.key,
+        bar: phase.bar,
+        left: Math.max(0, ((dayOf(phase.start) - from) / span) * 100),
+        width: Math.max(1.5, ((dayOf(phase.end) - dayOf(phase.start)) / span) * 100),
+      }))
+    : [];
+  const today = startOfToday();
+  const todayPct = span && today >= from && today <= to ? ((today - from) / span) * 100 : null;
+  return {
+    phases,
+    segments,
+    todayPct,
+    totalStart: p.start_date,
+    totalEnd,
+    total: p.start_date && totalEnd ? calculateDuration(p.start_date, totalEnd) : null,
+  };
+});
+const PHASE_STATE_TONES = { upcoming: "neutral", running: "accent", done: "ok" };
+
+// ---- Mark as completed / reactivate ----
+// Active (or paused) projects can be closed; a completed one can be reopened.
+const canMarkCompleted = computed(() => can("project-edit") && ["active", "on_hold"].includes(project.value.status));
+const canReactivate = computed(() => can("project-edit") && project.value.status === "completed");
+const statusDialog = ref({ open: false, target: null });
+const statusSaving = ref(false);
+const openTaskCount = computed(() => currentProjectTasks.value.filter((task) => !["done", "cancelled"].includes(task.status)).length);
+const statusDialogMessage = computed(() => {
+  if (statusDialog.value.target !== "completed") return t("projects.completion.reactivateMessage");
+  const lines = [t("projects.completion.completeMessage")];
+  const finalEndRaw = project.value.retention_end_date || project.value.end_date;
+  if (finalEndRaw && startOfToday() <= dayOf(finalEndRaw)) {
+    lines.push("• " + t(project.value.retention_end_date ? "projects.completion.retentionRunning" : "projects.completion.developmentRunning", { date: formatDate(finalEndRaw) }));
+  }
+  if (openTaskCount.value) lines.push("• " + t("projects.completion.openTasks", { n: openTaskCount.value }, openTaskCount.value));
+  const { uat_rounds_planned: planned, uat_rounds_done: done } = project.value;
+  if (planned && (done ?? 0) < planned) lines.push("• " + t("projects.completion.uatPending", { done: done ?? 0, planned }));
+  return lines.join("\n");
+});
+const askStatusChange = (target) => {
+  statusDialog.value = { open: true, target };
+};
+const confirmStatusChange = async () => {
+  const target = statusDialog.value.target;
+  statusSaving.value = true;
+  try {
+    const updated = await projectStore.setProjectStatus(id, target);
+    project.value = { ...project.value, status: updated.status, completed_at: updated.completed_at };
+    statusDialog.value.open = false;
+    useToastStore().success(target === "completed" ? t("projects.completion.completed") : t("projects.completion.reactivated"));
+  } catch (error) {
+    useToastStore().error(t("projects.completion.failed"), errorMessage(error));
+  } finally {
+    statusSaving.value = false;
+  }
+};
+
 const projectHealth = computed(() =>
   getProjectHealth({
     start_date: project.value.start_date,
     end_date: project.value.end_date,
     status: project.value.status,
     progress: projectProgress.value,
+    retention_start_date: project.value.retention_start_date,
+    retention_end_date: project.value.retention_end_date,
   })
 );
 
@@ -151,6 +241,8 @@ const healthBannerStyles = {
   "not-started": { icon: CalendarClock },
   planning: { icon: CalendarClock },
   paused: { icon: PauseCircle },
+  retention: { icon: ShieldCheck },
+  "retention-ended": { icon: CheckCircle2 },
   overdue: {
     icon: AlertOctagon,
     wrapper: "bg-red-50 border-red-200",
@@ -196,6 +288,8 @@ const HEALTH_TONES = {
   "not-started": { box: "bg-ui-warn-soft border-ui-warn/20", ink: "text-ui-warn" },
   planning: { box: "bg-ui-subtle border-ui-line", ink: "text-ui-ink" },
   paused: { box: "bg-ui-subtle border-ui-line", ink: "text-ui-ink" },
+  retention: { box: "bg-ui-accent-soft border-ui-accent/20", ink: "text-ui-accent" },
+  "retention-ended": { box: "bg-ui-ok-soft border-ui-ok/20", ink: "text-ui-ok" },
   overdue: { box: "bg-ui-bad-soft border-ui-bad/20", ink: "text-ui-bad" },
   critical: { box: "bg-ui-bad-soft border-ui-bad/20", ink: "text-ui-bad" },
   "at-risk": { box: "bg-ui-warn-soft border-ui-warn/20", ink: "text-ui-warn" },
@@ -254,6 +348,7 @@ const tabs = computed(() => {
   const list = [
     { id: "overview", label: t("projects.detail.tabs.overview"), icon: LayoutGrid },
     { id: "board", label: t("projects.detail.tabs.board"), icon: KanbanSquare },
+    { id: "uat", label: t("projects.detail.tabs.uat"), icon: ClipboardCheck },
     { id: "documents", label: t("projects.detail.tabs.documents"), icon: FileText },
   ];
   if (can("project-expense-list")) list.push({ id: "billing", label: t("projects.detail.tabs.billing"), icon: ReceiptText });
@@ -261,6 +356,16 @@ const tabs = computed(() => {
   if (hasAccessLinks.value) list.push({ id: "access", label: t("projects.detail.tabs.access"), icon: Link2 });
   return list;
 });
+
+// "2/3" on the UAT tab: rounds held of the rounds agreed.
+const uatBadge = computed(() => {
+  const { uat_rounds_planned: planned, uat_rounds_done: done } = project.value;
+  if (planned) return `${done ?? 0}/${planned}`;
+  return done ? String(done) : "";
+});
+const handleUatChanged = (uat) => {
+  project.value = { ...project.value, uat_rounds_planned: uat.planned, uat_rounds_done: uat.done };
+};
 
 // An unknown or no-longer-available tab (e.g. no permission) falls back.
 watch(
@@ -332,11 +437,12 @@ onMounted(async () => {
                 <span v-if="project.client">{{ project.client.name }} ·</span>
                 <span v-if="project.leader">{{ $t("projects.detail.leadBy", { name: project.leader?.user?.name }) }} ·</span>
                 <span class="tabular-nums">{{ formatDate(project.start_date) || $t("common.duration.na") }} – {{ formatDate(project.end_date) || $t("common.duration.na") }}</span>
+                <span v-if="project.status === 'completed' && project.completed_at" class="text-ui-ok">· {{ $t("projects.completion.completedOn", { date: formatDate(project.completed_at) }) }}</span>
               </p>
             </div>
           </div>
 
-          <div class="flex items-center gap-4 shrink-0">
+          <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 shrink-0">
             <!-- Progress (desktop; phones get the Progress card) -->
             <div class="hidden md:block w-48">
               <div class="flex items-center justify-between text-ui-cap">
@@ -350,15 +456,20 @@ onMounted(async () => {
                 {{ projectHealth?.expectedProgress != null ? $t("projects.detail.expectedByNow", { n: projectHealth.expectedProgress }) : $t("projects.detail.projectCompletion") }}
               </p>
             </div>
+            <UiButton v-if="canMarkCompleted" :icon="CheckCircle2" class="w-full md:w-auto" @click="askStatusChange('completed')">
+              {{ $t("projects.completion.markCompleted") }}
+            </UiButton>
+            <UiButton v-else-if="canReactivate" variant="secondary" :icon="RotateCcw" class="w-full md:w-auto" @click="askStatusChange('active')">
+              {{ $t("projects.completion.reactivate") }}
+            </UiButton>
             <UiButton
               v-if="can('project-export')"
               variant="secondary"
               :icon="Download"
-              :loading="exporting"
               class="w-full md:w-auto"
               @click="handleExportProgress"
             >
-              {{ exporting ? $t("projects.detail.exporting") : $t("projects.detail.exportProgress") }}
+              {{ $t("projects.detail.exportProgress") }}
             </UiButton>
           </div>
         </div>
@@ -375,7 +486,7 @@ onMounted(async () => {
         <div class="flex-1 min-w-0">
           <div class="flex flex-wrap items-center gap-2">
             <h4 class="text-ui-small font-semibold" :class="HEALTH_TONES[projectHealth.level].ink">{{ projectHealth.label }}</h4>
-            <span class="px-1.5 rounded-md bg-ui-surface/70 text-ui-cap font-medium tabular-nums" :class="HEALTH_TONES[projectHealth.level].ink">
+            <span v-if="projectHealth.level !== 'retention-ended'" class="px-1.5 rounded-md bg-ui-surface/70 text-ui-cap font-medium tabular-nums" :class="HEALTH_TONES[projectHealth.level].ink">
               {{
                 projectHealth.level === "planning"
                   ? $t("projects.health.startsIn", { n: projectHealth.daysToStart }, projectHealth.daysToStart)
@@ -390,6 +501,9 @@ onMounted(async () => {
           </div>
           <p class="text-ui-small text-ui-text mt-1">{{ projectHealth.message }}</p>
         </div>
+        <UiButton v-if="projectHealth.level === 'retention-ended' && canMarkCompleted" size="sm" :icon="CheckCircle2" class="shrink-0 self-center" @click="askStatusChange('completed')">
+          {{ $t("projects.completion.markCompleted") }}
+        </UiButton>
       </div>
 
       <!-- Tab Bar: underline on desktop, scrolling chips on phones -->
@@ -417,6 +531,9 @@ onMounted(async () => {
               <span v-if="tab.id === 'board' && currentProjectTasks.length" class="tabular-nums text-ui-cap" :class="activeTab === tab.id ? 'text-white/70 sm:text-ui-muted' : 'text-ui-faint'">
                 {{ currentProjectTasks.length }}
               </span>
+              <span v-else-if="tab.id === 'uat' && uatBadge" class="tabular-nums text-ui-cap" :class="activeTab === tab.id ? 'text-white/70 sm:text-ui-muted' : 'text-ui-faint'">
+                {{ uatBadge }}
+              </span>
             </button>
           </div>
         </div>
@@ -442,7 +559,7 @@ onMounted(async () => {
               <div class="ui-bar-fill h-full rounded-full bg-ui-ink transition-all duration-300" :style="{ width: `${projectProgress}%` }"></div>
             </div>
             <p class="text-ui-cap text-ui-muted mt-1.5">
-              {{ projectHealth ? $t("projects.detail.expectedByNow", { n: projectHealth.expectedProgress }) : $t("projects.detail.projectCompletion") }}
+              {{ projectHealth?.expectedProgress != null ? $t("projects.detail.expectedByNow", { n: projectHealth.expectedProgress }) : $t("projects.detail.projectCompletion") }}
             </p>
           </div>
 
@@ -469,39 +586,11 @@ onMounted(async () => {
                   <span class="hidden sm:block text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.detail.info.budgetHint") }}</span>
                 </dd>
               </div>
-              <div class="flex justify-between gap-4 py-3 sm:block sm:py-0 min-w-0">
-                <dt class="text-ui-small text-ui-muted shrink-0">{{ $t("projects.fields.startDate") }}</dt>
-                <dd class="text-right sm:text-left sm:mt-1 min-w-0">
-                  <span class="block text-ui-body font-medium text-ui-ink tabular-nums">{{ formatDate(project.start_date) || $t("common.duration.na") }}</span>
-                  <span class="hidden sm:block text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.detail.info.startHint") }}</span>
-                </dd>
-              </div>
-              <div class="flex justify-between gap-4 py-3 sm:block sm:py-0 min-w-0">
-                <dt class="text-ui-small text-ui-muted shrink-0">{{ $t("projects.fields.endDate") }}</dt>
-                <dd class="text-right sm:text-left sm:mt-1 min-w-0">
-                  <span class="block text-ui-body font-medium text-ui-ink tabular-nums">{{ formatDate(project.end_date) || $t("common.duration.na") }}</span>
-                  <span class="hidden sm:block text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.detail.info.endHint") }}</span>
-                </dd>
-              </div>
-              <div class="flex justify-between gap-4 py-3 sm:block sm:py-0 min-w-0">
-                <dt class="text-ui-small text-ui-muted shrink-0">{{ $t("projects.detail.info.duration") }}</dt>
-                <dd class="text-right sm:text-left sm:mt-1 min-w-0">
-                  <span class="block text-ui-body font-medium text-ui-ink tabular-nums">{{ calculateDuration(project.start_date, project.end_date) }}</span>
-                  <span class="hidden sm:block text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.detail.info.durationHint") }}</span>
-                </dd>
-              </div>
               <div v-if="project.warranty_period_months" class="flex justify-between gap-4 py-3 sm:block sm:py-0 min-w-0">
                 <dt class="text-ui-small text-ui-muted shrink-0">{{ $t("projects.fields.warrantyPeriod") }}</dt>
                 <dd class="text-right sm:text-left sm:mt-1 min-w-0">
                   <span class="block text-ui-body font-medium text-ui-ink tabular-nums">{{ $t("projects.detail.info.months", { n: project.warranty_period_months }, project.warranty_period_months) }}</span>
                   <span class="hidden sm:block text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.detail.info.warrantyHint") }}</span>
-                </dd>
-              </div>
-              <div v-if="project.retention_period_months" class="flex justify-between gap-4 py-3 sm:block sm:py-0 min-w-0">
-                <dt class="text-ui-small text-ui-muted shrink-0">{{ $t("projects.fields.retentionPeriod") }}</dt>
-                <dd class="text-right sm:text-left sm:mt-1 min-w-0">
-                  <span class="block text-ui-body font-medium text-ui-ink tabular-nums">{{ $t("projects.detail.info.months", { n: project.retention_period_months }, project.retention_period_months) }}</span>
-                  <span class="hidden sm:block text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.detail.info.retentionHint") }}</span>
                 </dd>
               </div>
             </dl>
@@ -514,6 +603,47 @@ onMounted(async () => {
               </div>
               <p v-else class="text-ui-small text-ui-faint">-</p>
             </div>
+          </UiCard>
+
+          <!-- Timeline: Development -> Retention, and the total -->
+          <UiCard :title="$t('projects.timeline.title')" :subtitle="$t('projects.timeline.subtitle')">
+            <div v-if="timeline.segments.length" class="relative h-2.5 rounded-full bg-ui-subtle mb-5" aria-hidden="true">
+              <div
+                v-for="segment in timeline.segments"
+                :key="segment.key"
+                class="absolute inset-y-0 rounded-full"
+                :class="segment.bar"
+                :style="{ left: `${segment.left}%`, width: `${Math.min(segment.width, 100 - segment.left)}%` }"
+              ></div>
+              <div v-if="timeline.todayPct != null" class="absolute -top-1 -bottom-1 w-0.5 rounded bg-ui-bad" :style="{ left: `${timeline.todayPct}%` }" :title="$t('projects.timeline.today')"></div>
+            </div>
+            <ul class="divide-y divide-ui-line -my-3">
+              <li v-for="phase in timeline.phases" :key="phase.key" class="flex items-start gap-3 py-3">
+                <span class="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0" :class="phase.set ? phase.bar : 'border border-dashed border-ui-line-strong'"></span>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <p class="text-ui-body font-medium text-ui-ink">{{ $t(`projects.timeline.${phase.key}`) }}</p>
+                    <UiBadge v-if="phase.set" :tone="PHASE_STATE_TONES[phase.state]" dot>{{ $t(`projects.timeline.state.${phase.state}`) }}</UiBadge>
+                  </div>
+                  <p class="text-ui-small text-ui-muted tabular-nums mt-0.5">
+                    <template v-if="phase.set">{{ formatDate(phase.start) }} – {{ formatDate(phase.end) }}</template>
+                    <template v-else-if="phase.start">{{ formatDate(phase.start) }} – {{ $t("projects.timeline.noEnd") }}</template>
+                    <template v-else>{{ $t(`projects.timeline.notSet.${phase.key}`) }}</template>
+                  </p>
+                </div>
+                <span v-if="phase.duration" class="text-ui-small font-medium text-ui-ink tabular-nums shrink-0">{{ phase.duration }}</span>
+              </li>
+              <li class="flex items-start gap-3 py-3">
+                <Clock class="w-3.5 h-3.5 text-ui-muted mt-1 shrink-0" />
+                <div class="flex-1 min-w-0">
+                  <p class="text-ui-body font-semibold text-ui-ink">{{ $t("projects.timeline.total") }}</p>
+                  <p class="text-ui-small text-ui-muted tabular-nums mt-0.5">
+                    {{ timeline.total ? `${formatDate(timeline.totalStart)} – ${formatDate(timeline.totalEnd)}` : $t("projects.timeline.totalUnknown") }}
+                  </p>
+                </div>
+                <span v-if="timeline.total" class="text-ui-body font-semibold text-ui-ink tabular-nums shrink-0">{{ timeline.total }}</span>
+              </li>
+            </ul>
           </UiCard>
 
           <!-- Tasks summary -->
@@ -656,6 +786,11 @@ onMounted(async () => {
         <TaskBoard />
       </div>
 
+      <!-- UAT Tab: rounds agreed with the client and each round held -->
+      <div v-if="visitedTabs.has('uat')" v-show="activeTab === 'uat'">
+        <ProjectUat :project-id="id" @changed="handleUatChanged" />
+      </div>
+
       <!-- Documents Tab -->
       <div v-if="visitedTabs.has('documents')" v-show="activeTab === 'documents'">
         <ProjectDocuments :project-id="id" />
@@ -683,6 +818,18 @@ onMounted(async () => {
           :additional-access="project.additional_access || []"
         />
       </div>
+
+      <ProjectExportModal v-if="can('project-export')" v-model:open="exportOpen" :project-id="id" :project-name="project.name || ''" />
+
+      <UiConfirmDialog
+        v-model:open="statusDialog.open"
+        :type="statusDialog.target === 'completed' ? 'success' : 'warning'"
+        :title="statusDialog.target === 'completed' ? $t('projects.completion.completeTitle', { name: project.name }) : $t('projects.completion.reactivateTitle', { name: project.name })"
+        :message="statusDialogMessage"
+        :confirm-text="statusDialog.target === 'completed' ? $t('projects.completion.markCompleted') : $t('projects.completion.reactivate')"
+        :loading="statusSaving"
+        @confirm="confirmStatusChange"
+      />
     </template>
   </div>
 </template>

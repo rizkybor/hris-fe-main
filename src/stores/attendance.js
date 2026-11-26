@@ -1,3 +1,4 @@
+import { todayLocal } from "@/utils/dateUtils";
 import { defineStore } from "pinia";
 import { axiosInstance } from '@/plugins/axios';
 import { handleError } from "@/helpers/errorHelper";
@@ -217,7 +218,7 @@ export const useAttendanceStore = defineStore("attendance", {
             this.error = null;
 
             try {
-                const today = new Date().toISOString().split('T')[0];
+                const today = todayLocal();
                 const response = await axiosInstance.get('attendances', {
                     params: {
                         date: today,
