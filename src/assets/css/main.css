@@ -8765,6 +8765,14 @@ html {
     align-self: stretch;
   }
 
+  .xl\:border-l {
+    border-left-width: 1px;
+  }
+
+  .xl\:border-t-0 {
+    border-top-width: 0px;
+  }
+
   .xl\:px-24 {
     padding-left: 6rem;
     padding-right: 6rem;

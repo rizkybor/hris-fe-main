@@ -1,4 +1,5 @@
 <script setup>
+import DocumentPeriodRecap from "@/components/admin/documents/DocumentPeriodRecap.vue";
 import { computed, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
@@ -21,6 +22,22 @@ const store = usePaymentReceiptStore();
 const alertModal = useAlertModalStore();
 const toast = useToastStore();
 const { receipts, meta } = storeToRefs(store);
+
+// Recap above the table: totals for a period (cancelled left out).
+// amount is what was received (net of PPh 23).
+const recapKey = ref(0);
+// Reload after the list changes (paid, cancelled, deleted), not on its first load.
+let recapPrimed = false;
+watch(receipts, () => {
+  if (recapPrimed) recapKey.value++;
+  recapPrimed = true;
+});
+const recapStats = (d) => [
+  { label: t("documents.recap.receipt.received"), value: formatRupiah(d.received), hint: t("documents.recap.count", { n: d.count }, d.count), tone: "ok" },
+  { label: t("documents.recap.receipt.pph23"), value: formatRupiah(d.pph23), hint: t("documents.recap.receipt.pph23Hint") },
+  { label: t("documents.recap.receipt.gross"), value: formatRupiah(d.gross), hint: t("documents.recap.receipt.grossHint") },
+  { label: t("documents.recap.documents"), value: String(d.count), hint: t("documents.recap.cancelled", { n: d.cancelled_count }, d.cancelled_count) },
+];
 
 const list = useListState("payment-receipts", { q: "", status: "", page: 1 });
 const search = ref(list.q);
@@ -148,6 +165,8 @@ const quietDelete = "!text-ui-faint hover:!text-ui-bad hover:!bg-ui-bad-soft";
         <UiButton v-if="can('payment-receipt-create')" :to="{ name: 'admin.payment-receipts.create' }" :icon="Plus" class="w-full sm:w-auto">{{ $t("documents.receipt.list.create") }}</UiButton>
       </template>
     </UiPageHeader>
+
+    <DocumentPeriodRecap endpoint="/payment-receipts/summary" storage-key="payment-receipts-recap" :stats="recapStats" :refresh-key="recapKey" />
 
     <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
       <!-- Toolbar: search · status chips, one line on desktop -->
