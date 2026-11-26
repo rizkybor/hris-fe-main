@@ -1,4 +1,5 @@
 <script setup>
+import DocumentPeriodRecap from "@/components/admin/documents/DocumentPeriodRecap.vue";
 import { computed, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
@@ -21,6 +22,21 @@ const store = usePurchaseOrderStore();
 const alertModal = useAlertModalStore();
 const toast = useToastStore();
 const { orders, meta } = storeToRefs(store);
+
+// Recap above the table: totals for a period (cancelled left out).
+const recapKey = ref(0);
+// Reload after the list changes (paid, cancelled, deleted), not on its first load.
+let recapPrimed = false;
+watch(orders, () => {
+  if (recapPrimed) recapKey.value++;
+  recapPrimed = true;
+});
+const recapStats = (d) => [
+  { label: t("documents.recap.po.total"), value: formatRupiah(d.total), hint: t("documents.recap.count", { n: d.count }, d.count) },
+  { label: t("documents.recap.po.external"), value: formatRupiah(d.external), hint: t("documents.recap.count", { n: d.external_count }, d.external_count) },
+  { label: t("documents.recap.po.internal"), value: formatRupiah(d.internal), hint: t("documents.recap.count", { n: d.internal_count }, d.internal_count) },
+  { label: t("documents.recap.documents"), value: String(d.count), hint: t("documents.recap.cancelled", { n: d.cancelled_count }, d.cancelled_count) },
+];
 
 const list = useListState("purchase-orders", { q: "", status: "", page: 1 });
 const search = ref(list.q);
@@ -146,6 +162,8 @@ const quietDelete = "!text-ui-faint hover:!text-ui-bad hover:!bg-ui-bad-soft";
         <UiButton v-if="can('purchase-order-create')" :to="{ name: 'admin.purchase-orders.create' }" :icon="Plus" class="w-full sm:w-auto">{{ $t("documents.purchaseOrder.list.create") }}</UiButton>
       </template>
     </UiPageHeader>
+
+    <DocumentPeriodRecap endpoint="/purchase-orders/summary" storage-key="purchase-orders-recap" :stats="recapStats" :refresh-key="recapKey" />
 
     <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
       <!-- Toolbar: search · status chips, one line on desktop -->

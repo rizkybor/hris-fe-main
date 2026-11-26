@@ -775,5 +775,40 @@
     "loadFailed": "Archive data could not be loaded. Try again.",
     "failed": "The archive could not be created. Try again.",
     "done": "Annual archive downloaded"
+  },
+  "recap": {
+    "title": "Recap",
+    "periodLabel": "Recap period",
+    "allTime": "All time",
+    "failed": "The recap could not be loaded.",
+    "documents": "Documents",
+    "count": "No documents | {n} document | {n} documents",
+    "cancelled": "None cancelled | {n} cancelled | {n} cancelled",
+    "period": {
+      "this_month": "This month",
+      "last_month": "Last month",
+      "this_quarter": "This quarter",
+      "this_year": "This year",
+      "last_year": "Last year",
+      "all": "All time"
+    },
+    "invoice": {
+      "billed": "Total billed",
+      "paid": "Paid",
+      "unpaid": "Unpaid",
+      "collected": "Collection rate"
+    },
+    "receipt": {
+      "received": "Total received",
+      "pph23": "PPh 23 withheld",
+      "pph23Hint": "Withheld by the client",
+      "gross": "Gross value",
+      "grossHint": "Received + PPh 23"
+    },
+    "po": {
+      "total": "Total PO value",
+      "external": "External POs",
+      "internal": "Internal POs"
+    }
   }
 }
