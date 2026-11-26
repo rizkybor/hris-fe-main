@@ -59,6 +59,7 @@ import ProjectInspect from "@/components/admin/project/detail/ProjectInspect.vue
 import ProjectAccess from "@/components/admin/project/detail/ProjectAccess.vue";
 import ProjectBilling from "@/components/admin/project/detail/ProjectBilling.vue";
 import ProjectUat from "@/components/admin/project/detail/ProjectUat.vue";
+import ProjectExportModal from "@/components/admin/project/detail/ProjectExportModal.vue";
 import { useListState } from "@/composables/useListState";
 import { useVisitedTabs } from "@/composables/useVisitedTabs";
 // Owned by the Maintenance page; loaded only when its tab is first opened.
@@ -77,7 +78,7 @@ const route = useRoute();
 const id = route.params.id;
 
 const projectStore = useProjectStore();
-const { fetchProject, downloadProgressReport } = projectStore;
+const { fetchProject } = projectStore;
 
 const authStore = useAuthStore();
 const isProjectLeader = computed(() => {
@@ -88,16 +89,10 @@ const handleInspectNoteUpdated = (note) => {
   project.value.inspect_note = note;
 };
 
-const exporting = ref(false);
-const handleExportProgress = async () => {
-  exporting.value = true;
-  try {
-    await downloadProgressReport(id, project.value.name);
-  } catch (error) {
-    console.error("Error exporting project progress:", error);
-  } finally {
-    exporting.value = false;
-  }
+// Export Progress opens a dialog: the report alone, or with a cover letter.
+const exportOpen = ref(false);
+const handleExportProgress = () => {
+  exportOpen.value = true;
 };
 
 const taskStore = useTaskStore();
@@ -471,11 +466,10 @@ onMounted(async () => {
               v-if="can('project-export')"
               variant="secondary"
               :icon="Download"
-              :loading="exporting"
               class="w-full md:w-auto"
               @click="handleExportProgress"
             >
-              {{ exporting ? $t("projects.detail.exporting") : $t("projects.detail.exportProgress") }}
+              {{ $t("projects.detail.exportProgress") }}
             </UiButton>
           </div>
         </div>
@@ -824,6 +818,8 @@ onMounted(async () => {
           :additional-access="project.additional_access || []"
         />
       </div>
+
+      <ProjectExportModal v-if="can('project-export')" v-model:open="exportOpen" :project-id="id" :project-name="project.name || ''" />
 
       <UiConfirmDialog
         v-model:open="statusDialog.open"

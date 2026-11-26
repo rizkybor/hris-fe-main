@@ -567,5 +567,44 @@
       "running": "Running",
       "done": "Done"
     }
+  },
+  "export": {
+    "title": "Export Progress",
+    "description": "Download the project progress report, optionally with a cover letter in the same PDF.",
+    "report": "Project Progress Report",
+    "reportHint": "Timeline, UAT and the status of every task",
+    "withCover": "Include a cover letter",
+    "withCoverHint": "A numbered letter on your letterhead, as the first page of the PDF.",
+    "noLetterAccess": "You don't have access to Letters, so a cover letter can't be added.",
+    "mode": {
+      "new": "New letter",
+      "existing": "Use an earlier letter"
+    },
+    "existingLetter": "Cover letter",
+    "existingHint": "A letter made for this project before; no new number is used.",
+    "letterDate": "Letter date",
+    "recipient": "To",
+    "recipientHint": "Client PIC and company, one per line.",
+    "subject": "Subject",
+    "body": "Letter body",
+    "signatoryName": "Signatory name",
+    "signatoryTitle": "Signatory title",
+    "newHint": "The letter gets an official number (code SPG – Surat Pengantar) and is listed under Business Documents › Letters.",
+    "submit": "Download PDF",
+    "submitWithCover": "Download PDF + cover letter",
+    "pickLetter": "Pick a cover letter.",
+    "fillRequired": "Fill in the division code, subject and letter body.",
+    "loadFailed": "Export data could not be loaded. Try again.",
+    "failed": "The PDF could not be created. Try again.",
+    "done": "Progress report downloaded",
+    "letterCreated": "Cover letter created",
+    "signature": {
+      "label": "Signature",
+      "without": "No signature",
+      "with": "Signed + stamp",
+      "who": "Signed by",
+      "stampHint": "The digital signature includes the PT. Jendela Cakra Digital stamp.",
+      "pick": "Pick who signs the letter."
+    }
   }
 }

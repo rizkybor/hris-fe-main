@@ -1498,6 +1498,10 @@ button:disabled,
   height: 0.625rem;
 }
 
+.h-20 {
+  height: 5rem;
+}
+
 .h-24 {
   height: 6rem;
 }
@@ -7066,6 +7070,10 @@ html {
 
   .sm\:h-20 {
     height: 5rem;
+  }
+
+  .sm\:h-36 {
+    height: 9rem;
   }
 
   .sm\:h-8 {

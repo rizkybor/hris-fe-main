@@ -567,5 +567,44 @@
       "running": "Berjalan",
       "done": "Selesai"
     }
+  },
+  "export": {
+    "title": "Ekspor Progres",
+    "description": "Unduh laporan progres proyek, bisa sekaligus dengan surat pengantar dalam satu PDF.",
+    "report": "Laporan Progres Proyek",
+    "reportHint": "Linimasa, UAT, dan status setiap pekerjaan",
+    "withCover": "Sertakan Surat Pengantar",
+    "withCoverHint": "Surat bernomor dengan kop surat, diletakkan di halaman pertama PDF.",
+    "noLetterAccess": "Anda belum punya akses ke Surat, jadi surat pengantar tidak bisa dibuat.",
+    "mode": {
+      "new": "Buat surat baru",
+      "existing": "Pakai surat sebelumnya"
+    },
+    "existingLetter": "Surat pengantar",
+    "existingHint": "Surat yang pernah dibuat untuk proyek ini; nomornya tidak bertambah.",
+    "letterDate": "Tanggal surat",
+    "recipient": "Kepada Yth.",
+    "recipientHint": "Nama PIC dan perusahaan klien, satu per baris.",
+    "subject": "Perihal",
+    "body": "Isi surat",
+    "signatoryName": "Nama penandatangan",
+    "signatoryTitle": "Jabatan penandatangan",
+    "newHint": "Surat mendapat nomor resmi (kode SPG – Surat Pengantar) dan tercatat di Dokumen Bisnis › Surat.",
+    "submit": "Unduh PDF",
+    "submitWithCover": "Unduh PDF + Surat Pengantar",
+    "pickLetter": "Pilih surat pengantar.",
+    "fillRequired": "Lengkapi kode divisi, perihal, dan isi surat.",
+    "loadFailed": "Data ekspor gagal dimuat. Coba lagi.",
+    "failed": "PDF gagal dibuat. Coba lagi.",
+    "done": "Laporan progres diunduh",
+    "letterCreated": "Surat pengantar dibuat",
+    "signature": {
+      "label": "Tanda tangan",
+      "without": "Tanpa TTD",
+      "with": "Dengan TTD + stempel",
+      "who": "Ditandatangani oleh",
+      "stampHint": "Tanda tangan digital sudah termasuk stempel PT. Jendela Cakra Digital.",
+      "pick": "Pilih siapa yang menandatangani."
+    }
   }
 }
