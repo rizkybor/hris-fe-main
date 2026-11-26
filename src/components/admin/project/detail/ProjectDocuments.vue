@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
 import {
   FileText,
@@ -12,7 +12,8 @@ import {
 } from "lucide-vue-next";
 import { useProjectDocumentStore } from "@/stores/projectDocument";
 import { can } from "@/helpers/permissionHelper";
-import { UiButton, UiConfirmDialog, UiEmpty, UiInput, UiModal } from "@/components/ui";
+import { UiButton, UiConfirmDialog, UiEmpty, UiInput, UiModal, UiSelect } from "@/components/ui";
+import { useListState } from "@/composables/useListState";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { useI18n } from "vue-i18n";
 import { localeTag } from "@/i18n";
@@ -28,6 +29,33 @@ const props = defineProps({
 
 const documentStore = useProjectDocumentStore();
 const { documents, loading, uploading, error } = storeToRefs(documentStore);
+
+// Sort order, kept in the URL (?docSort=) and remembered on this device.
+const sortState = useListState("project-documents", { docSort: "newest" });
+const SORT_OPTIONS = computed(() =>
+  ["newest", "oldest", "name_asc", "name_desc", "size_desc", "size_asc", "type"].map((value) => ({
+    value,
+    label: t(`projects.documents.sort.${value}`),
+  }))
+);
+// "1.25 MB" -> bytes (the API sends a formatted size).
+const UNITS = { B: 1, KB: 1024, MB: 1024 ** 2, GB: 1024 ** 3 };
+const sizeOf = (doc) => {
+  const match = String(doc.size_file || "").match(/([\d.]+)\s*(B|KB|MB|GB)/i);
+  return match ? parseFloat(match[1]) * (UNITS[match[2].toUpperCase()] || 1) : 0;
+};
+const timeOf = (doc) => new Date(doc.created_at || 0).getTime();
+const byName = (a, b) => String(a.document_name || "").localeCompare(String(b.document_name || ""), undefined, { sensitivity: "base", numeric: true });
+const COMPARE = {
+  newest: (a, b) => timeOf(b) - timeOf(a),
+  oldest: (a, b) => timeOf(a) - timeOf(b),
+  name_asc: byName,
+  name_desc: (a, b) => byName(b, a),
+  size_desc: (a, b) => sizeOf(b) - sizeOf(a),
+  size_asc: (a, b) => sizeOf(a) - sizeOf(b),
+  type: (a, b) => String(a.type_file || "").localeCompare(String(b.type_file || "")) || byName(a, b),
+};
+const sortedDocuments = computed(() => [...documents.value].sort(COMPARE[sortState.docSort] || COMPARE.newest));
 
 const isUploadModalOpen = ref(false);
 const isDeleteModalOpen = ref(false);
@@ -131,9 +159,15 @@ onMounted(() => {
         <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.documents.subtitle") }}</p>
       </div>
 
-      <UiButton v-if="can('project-edit')" :icon="Upload" class="w-full sm:w-auto shrink-0" @click="openUploadModal">
-        {{ $t("projects.documents.upload") }}
-      </UiButton>
+      <div class="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto shrink-0">
+        <div v-if="documents.length > 1" class="flex items-center gap-2">
+          <label for="project-documents-sort" class="text-ui-cap text-ui-muted shrink-0">{{ $t("projects.documents.sort.label") }}</label>
+          <UiSelect id="project-documents-sort" v-model="sortState.docSort" :options="SORT_OPTIONS" class="flex-1 sm:w-48" />
+        </div>
+        <UiButton v-if="can('project-edit')" :icon="Upload" class="w-full sm:w-auto" @click="openUploadModal">
+          {{ $t("projects.documents.upload") }}
+        </UiButton>
+      </div>
     </div>
 
     <div v-if="loading" class="divide-y divide-ui-line" aria-busy="true">
@@ -156,7 +190,7 @@ onMounted(() => {
     />
 
     <ul v-else class="divide-y divide-ui-line -my-1 ui-stagger">
-      <li v-for="document in documents" :key="document.id" class="group flex items-center gap-3 py-3">
+      <li v-for="document in sortedDocuments" :key="document.id" class="group flex items-center gap-3 py-3">
         <span class="w-9 h-9 rounded-ui-control bg-ui-subtle text-ui-muted flex items-center justify-center shrink-0">
           <FileText class="w-4 h-4" />
         </span>

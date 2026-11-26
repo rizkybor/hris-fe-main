@@ -14,7 +14,7 @@ import {
 import { useProjectUatStore } from "@/stores/projectUat";
 import { useToastStore } from "@/stores/toast";
 import { can } from "@/helpers/permissionHelper";
-import { formatDate } from "@/utils/dateUtils";
+import { formatDate, todayLocal } from "@/utils/dateUtils";
 import { UiAlert, UiBadge, UiButton, UiConfirmDialog, UiEmpty, UiInput, UiModal, UiSelect } from "@/components/ui";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { useI18n } from "vue-i18n";
@@ -98,7 +98,7 @@ const editing = ref(null);
 const formError = ref("");
 const fileInputRef = ref(null);
 const form = ref({});
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => todayLocal();
 
 const openForm = (session = null) => {
   editing.value = session;

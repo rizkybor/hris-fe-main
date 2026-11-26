@@ -230,7 +230,17 @@
     "uploadFailed": "Gagal mengunggah dokumen.",
     "deleteTitle": "Hapus Dokumen?",
     "deleteMessage": "Yakin ingin menghapus \"{name}\"? Tindakan ini tidak dapat dibatalkan.",
-    "deleteConfirm": "Ya, Hapus"
+    "deleteConfirm": "Ya, Hapus",
+    "sort": {
+      "label": "Urutkan",
+      "newest": "Terbaru",
+      "oldest": "Terlama",
+      "name_asc": "Nama A–Z",
+      "name_desc": "Nama Z–A",
+      "size_desc": "Ukuran terbesar",
+      "size_asc": "Ukuran terkecil",
+      "type": "Jenis file"
+    }
   },
   "billing": {
     "title": "Tagihan & Pembayaran",

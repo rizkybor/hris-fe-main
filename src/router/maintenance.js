@@ -6,10 +6,12 @@ export default [
     path: 'maintenance',
     name: 'admin.maintenance.dashboard',
     component: MaintenanceDashboard,
+    meta: { permission: ['maintenance-menu', 'maintenance-list'] },
   },
   {
     path: 'maintenance/:id',
     name: 'admin.maintenance.detail',
     component: MaintenanceDetail,
+    meta: { permission: ['maintenance-menu', 'maintenance-list'] },
   },
 ];

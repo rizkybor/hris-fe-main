@@ -1,4 +1,5 @@
 <script setup>
+import { todayLocal } from "@/utils/dateUtils";
 import { computed, reactive, ref, watch } from "vue";
 import { UiModal, UiButton, UiSelect } from "@/components/ui";
 import { LEFTOVER_POLICY, CONTRACT_STATUS } from "@/utils/maintenance";
@@ -25,7 +26,9 @@ const POLICY_HINT = computed(() => ({
   expire: t("maintenance.contractForm.policyHint.expire"),
 }));
 
-const today = () => new Date().toISOString().slice(0, 10);
+// Local date (toISOString() is UTC: before 07:00 WIB on the 1st it gave
+// the previous month).
+const today = () => todayLocal();
 const emptyForm = () => ({
   client_id: props.presetClientId ? String(props.presetClientId) : "",
   project_id: props.presetProjectId ? String(props.presetProjectId) : "",

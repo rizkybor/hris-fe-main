@@ -18,7 +18,7 @@ import {
   formatHours, formatMonth, CONTRACT_STATUS, LEFTOVER_POLICY, FEATURE_STATUS, BANK_ENTRY_TYPE, categoryLabel, usageColor, leftoverResult,
 } from "@/utils/maintenance";
 import { copyText } from "@/utils/serverMetrics";
-import { UiPageHeader, UiButton, UiBadge, UiSelect, UiStat, UiTable, UiModal, UiInput, UiSpinner, UiSkeleton } from "@/components/ui";
+import { UiPageHeader, UiAlert, UiButton, UiBadge, UiSelect, UiStat, UiTable, UiModal, UiInput, UiSpinner, UiSkeleton } from "@/components/ui";
 import ContractFormModal from "@/components/admin/maintenance/ContractFormModal.vue";
 import LogFormModal from "@/components/admin/maintenance/LogFormModal.vue";
 import HoursAdjustModal from "@/components/admin/maintenance/HoursAdjustModal.vue";
@@ -49,14 +49,20 @@ const load = async ({ silent = false } = {}) => {
   if (selectedPeriodId.value) await store.fetchPeriod(selectedPeriodId.value, { silent });
 };
 
+// Not found / no access go back to the list; anything else shows an error
+// with a retry instead of a blank page.
+const loadError = ref(false);
 const open = async () => {
   store.contract = null;
   store.period = null;
   selectedPeriodId.value = null;
+  loadError.value = false;
   try {
     await load();
   } catch (e) {
-    if (e?.response?.status === 404) router.replace({ name: "admin.maintenance.dashboard" });
+    const status = e?.response?.status;
+    if (status === 404 || status === 403) router.replace({ name: "admin.maintenance.dashboard" });
+    else loadError.value = true;
   }
 };
 
@@ -656,9 +662,10 @@ const HISTORY_COLUMNS = computed(() => [
                   </div>
                 </div>
                 <div class="flex flex-wrap gap-1.5 shrink-0">
+                  <!-- Logging hours is its own permission (technicians may log without editing). -->
+                  <UiButton v-if="['approved', 'in_progress'].includes(f.status) && can('maintenance-log')" variant="secondary" size="sm" :icon="Plus" @click="openLog(null, f)">{{ $t("maintenance.detail.logHours") }}</UiButton>
                   <template v-if="can('maintenance-edit')">
                     <UiButton v-if="f.status === 'proposed'" size="sm" :icon="CheckCircle2" @click="featureAction(f, 'approve')">{{ $t("common.actions.approve") }}</UiButton>
-                    <UiButton v-if="['approved', 'in_progress'].includes(f.status) && can('maintenance-log')" variant="secondary" size="sm" :icon="Plus" @click="openLog(null, f)">{{ $t("maintenance.detail.logHours") }}</UiButton>
                     <UiButton v-if="['approved', 'in_progress'].includes(f.status)" size="sm" :icon="CheckCircle2" @click="featureAction(f, 'complete')">{{ $t("maintenance.detail.markDone") }}</UiButton>
                     <UiButton v-if="!['done', 'cancelled'].includes(f.status)" variant="secondary" size="sm" :icon="Pencil" :title="$t('common.actions.edit')" :aria-label="$t('maintenance.detail.editFeature')" @click="openFeature(f)" />
                     <UiButton v-if="!['done', 'cancelled'].includes(f.status)" variant="secondary" size="sm" :icon="Ban" :title="$t('maintenance.detail.cancelFeature')" :aria-label="$t('maintenance.detail.cancelFeature')" @click="featureAction(f, 'cancel')" />
@@ -894,5 +901,16 @@ const HISTORY_COLUMNS = computed(() => [
         @close="showAdjust = false"
       />
     </template>
+
+    <div v-else-if="loadError" class="space-y-4">
+      <router-link
+        :to="{ name: 'admin.maintenance.dashboard' }"
+        class="inline-flex items-center gap-1.5 text-ui-small text-ui-muted hover:text-ui-ink transition-colors"
+      >
+        <ArrowLeft class="w-3.5 h-3.5" /> {{ $t("maintenance.detail.back") }}
+      </router-link>
+      <UiAlert tone="bad" :title="$t('maintenance.detail.loadFailed')" :message="$t('maintenance.detail.loadFailedHint')" />
+      <UiButton variant="secondary" @click="open">{{ $t("maintenance.detail.retry") }}</UiButton>
+    </div>
   </div>
 </template>

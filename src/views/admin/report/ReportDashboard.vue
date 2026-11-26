@@ -34,7 +34,7 @@ import {
 import { useReportStore } from "@/stores/report";
 import { useOptionStore } from "@/stores/option";
 import { useAlertModalStore } from "@/stores/alertModal";
-import { can, hasAnyRole } from "@/helpers/permissionHelper";
+import { can, canOneOf, hasAnyRole } from "@/helpers/permissionHelper";
 import { useAuthStore } from "@/stores/auth";
 import { useScrollFade } from "@/composables/useScrollFade";
 import SkeletonStatCards from "@/components/common/skeleton/SkeletonStatCards.vue";
@@ -83,12 +83,13 @@ const tabs = computed(() => [
   { key: "ppn", label: "PPN", icon: PercentIcon },
   { key: "project", label: t("reports.tabs.project"), icon: FolderKanban },
   { key: "subscription", label: t("reports.tabs.subscription"), icon: RefreshCw },
-  { key: "maintenance", label: t("reports.tabs.maintenance"), icon: Wrench },
+  // Contracts' hours and balances: Maintenance access too, not only reports.
+  { key: "maintenance", label: t("reports.tabs.maintenance"), icon: Wrench, permission: ["maintenance-menu", "maintenance-list"] },
   { key: "documents", label: t("reports.tabs.documents"), icon: FileTextIcon },
   { key: "staff_raport", label: t("reports.tabs.staffRaport"), icon: Star, permission: "staff-raport-menu" },
 ]);
 
-const visibleTabs = computed(() => tabs.value.filter((tab) => !tab.permission || can(tab.permission)));
+const visibleTabs = computed(() => tabs.value.filter((tab) => !tab.permission || canOneOf([].concat(tab.permission))));
 
 const DELETABLE_REPORT_TYPES = ["attendance", "payroll", "employee", "ppn", "pph23", "project", "subscription"];
 const canDeleteReports = computed(() => hasAnyRole(["superadmin", "manager"]));
@@ -180,6 +181,15 @@ const list = useListState("reports", {
 if (!tabs.value.some((tab) => tab.key === list.tab)) list.tab = "attendance";
 const field = (key) => computed({ get: () => list[key], set: (value) => (list[key] = value) });
 const activeTab = field("tab");
+// A tab this user can't open (e.g. ?tab=maintenance without Maintenance
+// access) falls back to the first one.
+watch(
+  [activeTab, visibleTabs],
+  () => {
+    if (!visibleTabs.value.some((tab) => tab.key === activeTab.value)) activeTab.value = visibleTabs.value[0]?.key || "attendance";
+  },
+  { immediate: true }
+);
 const startDate = field("start");
 const endDate = field("end");
 const projectStatus = field("projectStatus");

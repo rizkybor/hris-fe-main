@@ -230,7 +230,17 @@
     "uploadFailed": "Failed to upload document.",
     "deleteTitle": "Delete Document?",
     "deleteMessage": "Are you sure you want to delete \"{name}\"? This action cannot be undone.",
-    "deleteConfirm": "Yes, Delete"
+    "deleteConfirm": "Yes, Delete",
+    "sort": {
+      "label": "Sort",
+      "newest": "Newest",
+      "oldest": "Oldest",
+      "name_asc": "Name A–Z",
+      "name_desc": "Name Z–A",
+      "size_desc": "Largest",
+      "size_asc": "Smallest",
+      "type": "File type"
+    }
   },
   "billing": {
     "title": "Billing & Payments",
