@@ -1,4 +1,5 @@
 <script setup>
+import { todayLocal } from "@/utils/dateUtils";
 import { ref, computed, watch, onMounted } from "vue";
 import { storeToRefs } from "pinia";
 import { Megaphone, Plus, Pin, Pencil, Trash2, Eye, CalendarClock } from "lucide-vue-next";
@@ -57,7 +58,7 @@ const audienceOptions = computed(() => [
 const audienceLabel = (value) =>
   audienceOptions.value.find((o) => o.value === value)?.label ?? value;
 
-const todayIso = new Date().toISOString().slice(0, 10);
+const todayIso = todayLocal();
 const isExpiredForPin = computed(
   () => !!form.value.expires_at && form.value.expires_at < todayIso
 );

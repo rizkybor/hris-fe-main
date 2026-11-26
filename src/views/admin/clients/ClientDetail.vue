@@ -1,4 +1,5 @@
 <script setup>
+import { todayLocal } from "@/utils/dateUtils";
 import { ref, computed, onMounted } from "vue";
 import { useListState } from "@/composables/useListState";
 import { invalidate } from "@/composables/useStaleFetch";
@@ -51,7 +52,7 @@ const submittingEvaluation = ref(false);
 const evaluationForm = ref({
   rating: 5,
   notes: "",
-  evaluated_at: new Date().toISOString().split("T")[0],
+  evaluated_at: todayLocal(),
 });
 
 const formatDate = (date) =>
@@ -119,7 +120,7 @@ const syncRating = async () => {
 };
 
 const openEvaluationModal = () => {
-  evaluationForm.value = { rating: 5, notes: "", evaluated_at: new Date().toISOString().split("T")[0] };
+  evaluationForm.value = { rating: 5, notes: "", evaluated_at: todayLocal() };
   showEvaluationModal.value = true;
 };
 
@@ -180,7 +181,7 @@ const clientInitials = (name) =>
   (name || "").replace(/^(PT|CV)\.?\s+/i, "").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "—";
 const projectStatusLabel = (status) =>
   te(`clients.detail.projectStatus.${status}`) ? t(`clients.detail.projectStatus.${status}`) : status;
-const todayISO = new Date().toISOString().split("T")[0];
+const todayISO = todayLocal();
 </script>
 
 <template>

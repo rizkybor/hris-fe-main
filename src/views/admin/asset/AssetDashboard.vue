@@ -1,4 +1,5 @@
 <script setup>
+import { todayLocal } from "@/utils/dateUtils";
 import { ref, computed, watch, onMounted } from "vue";
 import { storeToRefs } from "pinia";
 import { Laptop, Plus, UserPlus, Undo2, Pencil, Trash2, RotateCw, Eye, ShieldCheck, ShieldAlert, Wrench, Search, CheckCircle2, Users, Wallet } from "lucide-vue-next";
@@ -280,7 +281,7 @@ const closeDetailModal = () => {
 };
 
 const openMaintenanceForm = () => {
-  maintenanceForm.value = { performed_at: new Date().toISOString().split("T")[0], description: "", cost: "", next_due_date: "" };
+  maintenanceForm.value = { performed_at: todayLocal(), description: "", cost: "", next_due_date: "" };
   showMaintenanceForm.value = true;
 };
 

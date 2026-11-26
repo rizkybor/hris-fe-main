@@ -755,5 +755,25 @@
     "noPreview": "No preview yet — save it again in the Flowchart menu",
     "shapes": "{n} shape | {n} shapes",
     "loadError": "The flowchart list couldn't be loaded."
+  },
+  "annualArchive": {
+    "open": "Annual Archive",
+    "title": "Annual Document Archive",
+    "description": "Download every document of a year for the annual report. Each document type becomes one PDF with a cover and table of contents.",
+    "year": "Year",
+    "types": "Document types",
+    "selectAll": "Select all",
+    "selectNone": "Clear",
+    "count": "None | {n} document | {n} documents",
+    "pdfHint": "You get 1 PDF file.",
+    "zipHint": "You get 1 ZIP file with {n} PDFs (one per document type).",
+    "excluded": "Cancelled documents, drafts and unapproved memos are left out.",
+    "working": "Building {n} documents… This can take a few minutes, keep this window open.",
+    "downloadPdf": "Download PDF",
+    "downloadZip": "Download ZIP",
+    "pickOne": "Pick at least one document type.",
+    "loadFailed": "Archive data could not be loaded. Try again.",
+    "failed": "The archive could not be created. Try again.",
+    "done": "Annual archive downloaded"
   }
 }

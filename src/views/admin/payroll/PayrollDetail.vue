@@ -1,4 +1,5 @@
 <script setup>
+import { todayLocal } from "@/utils/dateUtils";
 import { ref, onMounted, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { usePayrollStore } from "@/stores/payroll";
@@ -67,7 +68,7 @@ const loading = ref(true);
 const loadingStatistics = ref(true);
 const loadingDetails = ref(false);
 const showMarkAsPaidModal = ref(false);
-const paymentDate = ref(new Date().toISOString().split("T")[0]);
+const paymentDate = ref(todayLocal());
 const markingAsPaid = ref(false);
 
 const showEditModal = ref(false);
@@ -318,7 +319,7 @@ const exportExcel = async () => {
 };
 
 const openMarkAsPaidModal = () => {
-  paymentDate.value = new Date().toISOString().split("T")[0];
+  paymentDate.value = todayLocal();
   showMarkAsPaidModal.value = true;
 };
 
