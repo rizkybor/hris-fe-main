@@ -138,6 +138,14 @@ export const useProjectStore = defineStore("project", {
             }
         },
 
+        // Mark as completed / reactivate from Project Detail: only the status
+        // is sent (the API keeps every other field). Throws on failure.
+        async setProjectStatus(id, status) {
+            const response = await axiosInstance.put(`projects/${id}`, { status });
+            this.statisticsFetchedAt = 0;
+            return response.data.data;
+        },
+
         async updateInspectNote(id, note) {
             this.error = null;
 
@@ -189,20 +197,6 @@ export const useProjectStore = defineStore("project", {
                 }
             })();
             return statisticsRequest;
-        },
-
-        async downloadProgressReport(id, name) {
-            const response = await axiosInstance.get(`/projects/${id}/export-progress`, {
-                responseType: "blob",
-            });
-            const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
-            const link = document.createElement("a");
-            link.href = url;
-            link.setAttribute("download", `${(name || "project").replace(/\//g, "-")}-progress-report.pdf`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            window.URL.revokeObjectURL(url);
         },
 
         clearMessages() {

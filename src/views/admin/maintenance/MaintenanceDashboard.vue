@@ -257,8 +257,7 @@ const openContract = (contract) => router.push({ name: "admin.maintenance.detail
             <UiButton variant="secondary" @click="(search = ''), list.reset()">{{ $t("maintenance.list.clearFilters") }}</UiButton>
           </UiEmpty>
           <UiEmpty
-            v-else
-            :icon="Inbox"
+            v-else-if="!error"
             :title="$t('maintenance.list.emptyTitle')"
             :message="$t('maintenance.list.emptyHint')"
             compact

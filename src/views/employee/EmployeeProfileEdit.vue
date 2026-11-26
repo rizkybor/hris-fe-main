@@ -1,4 +1,5 @@
 <script setup>
+import { todayLocal } from "@/utils/dateUtils";
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
@@ -74,7 +75,7 @@ const GENDER_OPTIONS = computed(() => [
   { value: "female", label: t("profile.enums.gender.female") },
 ]);
 const languageOptions = computed(() => [{ value: "", label: t("profile.edit.selectLanguage") }, ...(preferredLanguages.value || [])]);
-const today = new Date().toISOString().slice(0, 10);
+const today = todayLocal();
 
 const blankContact = () => ({ id: null, full_name: "", relationship: "", phone: "", email: "" });
 

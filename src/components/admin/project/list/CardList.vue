@@ -48,12 +48,13 @@ const progress = computed(() => Math.max(0, Math.min(100, props.data.progress ??
 
 // Overdue / critical / at-risk / behind only -- on-track projects get no chip.
 const health = computed(() => getProjectHealth(props.data));
-const HEALTH_TONE = { overdue: "bad", critical: "bad", "at-risk": "warn", behind: "warn", "not-started": "warn" };
+const HEALTH_TONE = { overdue: "bad", critical: "bad", "at-risk": "warn", behind: "warn", "not-started": "warn", retention: "info", "retention-ended": "ok" };
+const INFO_LEVELS = ["retention", "retention-ended"];
 // Planning (not due to start yet) and paused projects get no chip: their
 // status already says it. A planning project past its start date does.
 const healthText = computed(() => {
   if (!health.value || ["on-track", "planning", "paused"].includes(health.value.level)) return null;
-  if (health.value.level === "not-started") return health.value.label;
+  if (["not-started", "retention-ended"].includes(health.value.level)) return health.value.label;
   const d = health.value.daysRemaining;
   return d >= 0
     ? t("projects.card.healthLeft", { label: health.value.label, n: d })
@@ -256,7 +257,7 @@ const onDelete = () => {
           ></div>
         </div>
         <UiBadge v-if="healthText" :tone="HEALTH_TONE[health.level] || 'warn'" class="shrink-0">
-          <AlertTriangle class="w-3 h-3" aria-hidden="true" />{{ healthText }}
+          <AlertTriangle v-if="!INFO_LEVELS.includes(health.level)" class="w-3 h-3" aria-hidden="true" />{{ healthText }}
         </UiBadge>
         <span class="text-ui-small font-semibold text-ui-ink tabular-nums shrink-0 min-w-[2.25rem] text-right">{{ progress }}%</span>
       </div>

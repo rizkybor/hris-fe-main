@@ -280,6 +280,9 @@
       "delete": "Hapus \"{title}\"?",
       "actionFailed": "Tindakan gagal.",
       "markDone": "Tandai selesai"
-    }
+    },
+    "loadFailed": "Kontrak gagal dimuat",
+    "loadFailedHint": "Periksa koneksi lalu coba lagi.",
+    "retry": "Coba lagi"
   }
 }

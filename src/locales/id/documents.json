@@ -755,5 +755,25 @@
     "noPreview": "Belum ada pratinjau — simpan ulang di menu Flowchart",
     "shapes": "{n} bentuk",
     "loadError": "Daftar flowchart tidak bisa dimuat."
+  },
+  "annualArchive": {
+    "open": "Arsip Tahunan",
+    "title": "Arsip Dokumen Tahunan",
+    "description": "Unduh semua dokumen dalam satu tahun untuk laporan tahunan. Setiap jenis dokumen menjadi satu PDF lengkap dengan sampul dan daftar isi.",
+    "year": "Tahun",
+    "types": "Jenis dokumen",
+    "selectAll": "Pilih semua",
+    "selectNone": "Kosongkan",
+    "count": "Tidak ada | {n} dokumen | {n} dokumen",
+    "pdfHint": "Hasilnya 1 file PDF.",
+    "zipHint": "Hasilnya 1 file ZIP berisi {n} PDF (satu per jenis dokumen).",
+    "excluded": "Dokumen yang dibatalkan, draf, dan nota dinas yang belum disetujui tidak disertakan.",
+    "working": "Menyusun {n} dokumen… Ini bisa memakan waktu beberapa menit, jangan tutup jendela ini.",
+    "downloadPdf": "Unduh PDF",
+    "downloadZip": "Unduh ZIP",
+    "pickOne": "Pilih minimal satu jenis dokumen.",
+    "loadFailed": "Data arsip gagal dimuat. Coba lagi.",
+    "failed": "Arsip gagal dibuat. Coba lagi.",
+    "done": "Arsip tahunan diunduh"
   }
 }

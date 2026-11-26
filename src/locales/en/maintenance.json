@@ -280,6 +280,9 @@
       "delete": "Delete \"{title}\"?",
       "actionFailed": "Action failed.",
       "markDone": "Mark done"
-    }
+    },
+    "loadFailed": "The contract could not be loaded",
+    "loadFailedHint": "Check your connection and try again.",
+    "retry": "Try again"
   }
 }

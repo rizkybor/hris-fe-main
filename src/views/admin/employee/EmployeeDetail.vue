@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch, nextTick } from "vue";
 import { getStatusColor, getLevelColor } from "@/utils/styleHelpers.js";
-import { formatDateLong as formatDate } from "@/utils/dateUtils.js";
+import { formatDateLong as formatDate, todayLocal } from "@/utils/dateUtils.js";
 import {
   formatRupiah as formatCurrency,
   capitalize,
@@ -109,7 +109,7 @@ const showResignModal = ref(false);
 const resignForm = ref({
   type: "resign",
   reason: "",
-  resignation_date: new Date().toISOString().slice(0, 10),
+  resignation_date: todayLocal(),
   last_working_date: "",
 });
 const resignSubmitting = ref(false);
@@ -256,7 +256,7 @@ const openResignModal = () => {
   resignForm.value = {
     type: "resign",
     reason: "",
-    resignation_date: new Date().toISOString().slice(0, 10),
+    resignation_date: todayLocal(),
     last_working_date: "",
   };
   showResignModal.value = true;

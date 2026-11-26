@@ -1,11 +1,21 @@
 <script setup>
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ShoppingCart, Receipt, FileCheck2, Mail, Award, FileSignature, NotebookPen, ChevronRight, FileText, FolderOpen } from "lucide-vue-next";
-import { can } from "@/helpers/permissionHelper";
-import { UiEmpty, UiPageHeader } from "@/components/ui";
+import { ShoppingCart, Receipt, FileCheck2, Mail, Award, FileSignature, NotebookPen, ChevronRight, FileText, FolderOpen, Archive } from "lucide-vue-next";
+import { can, canOneOf } from "@/helpers/permissionHelper";
+import { UiButton, UiEmpty, UiPageHeader } from "@/components/ui";
+import AnnualArchiveModal from "@/components/admin/documents/AnnualArchiveModal.vue";
 
 const { t } = useI18n();
+
+// Annual archive: anyone who can read at least one document type.
+const ARCHIVE_PERMISSIONS = [
+  "letter-menu", "letter-list", "document-letter-menu", "document-letter-list", "meeting-note-menu", "meeting-note-list",
+  "invoice-menu", "invoice-list", "payment-receipt-menu", "payment-receipt-list", "purchase-order-menu", "purchase-order-list",
+  "proposal-menu", "certificate-menu", "certificate-list",
+];
+const canArchive = computed(() => canOneOf(ARCHIVE_PERMISSIONS));
+const archiveOpen = ref(false);
 
 const links = computed(() => [
   {
@@ -85,7 +95,12 @@ const hasAny = () => links.value.some((l) => can(l.permission));
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <UiPageHeader :title="$t('documents.hub.title')" :subtitle="$t('documents.hub.subtitle')" />
+    <UiPageHeader :title="$t('documents.hub.title')" :subtitle="$t('documents.hub.subtitle')">
+      <template v-if="canArchive" #actions>
+        <UiButton variant="secondary" :icon="Archive" @click="archiveOpen = true">{{ $t("documents.annualArchive.open") }}</UiButton>
+      </template>
+    </UiPageHeader>
+    <AnnualArchiveModal v-if="canArchive" v-model:open="archiveOpen" />
 
     <template v-for="group in groups" :key="group.key">
       <section v-if="visibleIn(group.key).length" class="space-y-2.5">

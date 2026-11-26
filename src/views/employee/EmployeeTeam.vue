@@ -105,7 +105,7 @@ const teamStatusLabel = (status) =>
 const PROJECT_STATUS_TONE = { draft: "neutral", planning: "info", active: "accent", on_hold: "warn", completed: "ok", cancelled: "outline" };
 const projectStatusLabel = (status) =>
   te(`myTeam.projectStatus.${status}`) ? t(`myTeam.projectStatus.${status}`) : status || "-";
-const HEALTH_TONE = { overdue: "bad", critical: "bad", "at-risk": "warn", behind: "warn" };
+const HEALTH_TONE = { overdue: "bad", critical: "bad", "at-risk": "warn", behind: "warn", retention: "info", "retention-ended": "ok" };
 const isClosed = (p) => p.status === "completed" || p.status === "cancelled";
 const projectRows = computed(() =>
   [...projects.value]
