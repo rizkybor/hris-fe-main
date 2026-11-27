@@ -14,11 +14,15 @@ import {
   StickyNote,
   CheckCircle2,
   Circle,
-  Camera,
   MapPin,
   Users,
   FileDown,
+  Upload,
+  FileText,
+  FileSignature,
+  ExternalLink,
 } from "lucide-vue-next";
+import { axiosInstance } from "@/plugins/axios";
 import ProjectExportModal from "@/components/admin/project/detail/ProjectExportModal.vue";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { compressImage, cloudinaryThumb } from "@/utils/fileUtils";
@@ -91,6 +95,9 @@ const openItem = (session, place, type = "finding", item = null) => {
   itemSession.value = session;
   itemError.value = "";
   itemForm.value = {
+    file: null,
+    removeAttachment: false,
+    attachment: item?.attachment || null,
     id: item?.id || null,
     locationId: place.id,
     type: item?.type || type,
@@ -107,10 +114,17 @@ const saveItem = async () => {
     itemError.value = t("projects.uat.items.descriptionRequired");
     return;
   }
-  const body = { type: f.type, feature: f.feature.trim(), menu: f.menu.trim(), description: f.description.trim() };
+  const body = new FormData();
+  body.append("type", f.type);
+  body.append("feature", f.feature.trim());
+  body.append("menu", f.menu.trim());
+  body.append("description", f.description.trim());
+  if (f.file) body.append("attachment", f.file);
+  else if (f.removeAttachment) body.append("remove_attachment", "1");
   try {
     if (f.id) {
-      await store.updateItem(props.projectId, f.id, { ...body, location_id: Number(f.locationId) });
+      body.append("location_id", Number(f.locationId));
+      await store.updateItem(props.projectId, f.id, body);
       notify(t("projects.uat.items.updated"));
     } else {
       await store.addItem(props.projectId, f.locationId, body);
@@ -121,6 +135,33 @@ const saveItem = async () => {
     itemError.value = error.message;
   }
 };
+// Files on an item (issue evidence, revision proof): images are shrunk in
+// the browser first; images or PDF, at most 2 MB.
+const FILE_TYPES = "image/jpeg,image/png,image/webp,application/pdf";
+const prepareFile = async (picked) => {
+  const file = picked.type === "application/pdf" ? picked : await compressImage(picked);
+  if (file.size > PHOTO_MAX_BYTES) throw new Error(t("projects.uat.items.fileTooLarge"));
+  return file;
+};
+const onItemFile = async (event) => {
+  const picked = event.target.files?.[0];
+  event.target.value = "";
+  if (!picked) return;
+  try {
+    itemForm.value.file = await prepareFile(picked);
+    itemForm.value.removeAttachment = false;
+    itemError.value = "";
+  } catch (error) {
+    itemError.value = error.message;
+  }
+};
+
+const filesOf = (item) =>
+  [
+    item.attachment && { key: "attachment", file: item.attachment, label: t("projects.uat.items.attachment") },
+    item.photo && { key: "proof", file: item.photo, label: t("projects.uat.items.revisionProof") },
+  ].filter(Boolean);
+
 const deleteItem = async (item) => {
   if (!(await alertModal.confirm(t("projects.uat.items.deleteConfirm"), { type: "danger", confirmText: t("common.actions.delete") }))) return;
   try {
@@ -128,6 +169,61 @@ const deleteItem = async (item) => {
     notify(t("projects.uat.items.deleted"));
   } catch (error) {
     toast.error(t("projects.uat.items.saveFailed"), error.message);
+  }
+};
+
+// ---- Berita Acara (a numbered BA letter per UAT) ----
+const baOpen = ref(false);
+const baLoading = ref(false);
+const baError = ref("");
+const baOptions = ref(null);
+const baForm = ref({});
+const baSession = ref(null);
+const BA_TEMPLATES = computed(() => [
+  { value: "secondary", label: t("documents.letter.form.templateSecondary"), preview: "/images/template-letter-secondary.png" },
+  { value: "primary", label: t("documents.letter.form.templatePrimary"), preview: "/images/template-letter-primary.png" },
+]);
+const openBeritaAcara = async (session) => {
+  baSession.value = session;
+  baError.value = "";
+  baOptions.value = null;
+  baOpen.value = true;
+  baLoading.value = true;
+  try {
+    const { data } = await axiosInstance.get(`/projects/${props.projectId}/uat/sessions/${session.id}/berita-acara/options`);
+    baOptions.value = data.data;
+    baForm.value = { ...data.data.draft, division_code_id: data.data.draft.division_code_id || data.data.divisions?.[0]?.id || "" };
+  } catch {
+    baError.value = t("projects.uat.ba.loadFailed");
+  } finally {
+    baLoading.value = false;
+  }
+};
+const baDivisionOptions = computed(() => (baOptions.value?.divisions || []).map((d) => ({ value: d.id, label: `${d.code} - ${d.name}` })));
+// Opens the Berita Acara PDF in a new tab (opened inside the click, filled when ready).
+const viewBeritaAcara = async (session, tab = window.open("", "_blank")) => {
+  try {
+    const response = await axiosInstance.get(`/projects/${props.projectId}/uat/sessions/${session.id}/berita-acara`, { responseType: "blob" });
+    const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
+    if (tab) tab.location.href = url;
+    else window.location.href = url;
+  } catch {
+    tab?.close();
+    toast.error(t("projects.uat.ba.viewFailed"));
+  }
+};
+const saveBeritaAcara = async () => {
+  baError.value = "";
+  if (!baForm.value.second_party_name?.trim()) return (baError.value = t("projects.uat.ba.clientRequired"));
+  const tab = window.open("", "_blank");
+  try {
+    const letter = await store.generateBeritaAcara(props.projectId, baSession.value.id, baForm.value);
+    baOpen.value = false;
+    toast.success(t("projects.uat.ba.generated"), letter.letter_number);
+    viewBeritaAcara(baSession.value, tab);
+  } catch (error) {
+    tab?.close();
+    baError.value = error.message;
   }
 };
 
@@ -172,11 +268,7 @@ const onPhoto = async (item, event) => {
   if (!picked) return;
   busyItem.value = item.id;
   try {
-    const file = await compressImage(picked);
-    if (file.size > PHOTO_MAX_BYTES) {
-      toast.error(t("projects.uat.items.photoTooLarge"));
-      return;
-    }
+    const file = await prepareFile(picked);
     await store.uploadItemPhoto(props.projectId, item.id, file);
     toast.success(t("projects.uat.items.photoUploaded"));
   } catch (error) {
@@ -276,10 +368,6 @@ const formTitle = computed(() =>
 );
 const formOverPlan = computed(() => !editing.value && uat.value.planned != null && nextRound.value > uat.value.planned);
 
-const onFile = (event) => {
-  form.value.file = event.target.files[0] ?? null;
-  if (form.value.file) form.value.removeAttachment = false;
-};
 
 const submit = async () => {
   formError.value = "";
@@ -513,14 +601,22 @@ onMounted(async () => {
                 <p v-if="item.is_resolved" class="text-ui-cap text-ui-ok mt-1">
                   {{ resolvedLabel(item) }}<template v-if="item.resolved_by"> · {{ item.resolved_by }}</template><template v-if="item.resolved_at"> · {{ formatDate(item.resolved_at) }}</template>
                 </p>
-                <!-- Optional proof photo -->
-                <div v-if="item.photo" class="mt-2 flex items-center gap-2">
-                  <a :href="item.photo.url" target="_blank" rel="noopener" class="block w-16 h-16 rounded-ui-control overflow-hidden border border-ui-line shrink-0" :title="$t('projects.uat.items.openPhoto')">
-                    <img :src="cloudinaryThumb(item.photo.url, { width: 128, height: 128 })" :alt="item.photo.name || $t('projects.uat.items.photo')" class="w-full h-full object-cover" loading="lazy" />
-                  </a>
-                  <button v-if="canEdit" type="button" class="inline-flex items-center gap-1 text-ui-cap text-ui-muted hover:text-ui-bad disabled:opacity-50" :disabled="busyItem === item.id" @click="removePhoto(item)">
-                    <X class="w-3.5 h-3.5" />{{ $t("projects.uat.items.removePhoto") }}
-                  </button>
+                <!-- Files: what was found (attachment) and the revision proof -->
+                <div v-if="item.attachment || item.photo" class="mt-2 flex flex-wrap gap-4">
+                  <figure v-for="entry in filesOf(item)" :key="entry.key" class="min-w-0">
+                    <figcaption class="text-ui-cap text-ui-muted mb-1">{{ entry.label }}</figcaption>
+                    <div class="flex items-center gap-2">
+                      <a v-if="entry.file.is_image" :href="entry.file.url" target="_blank" rel="noopener" class="block w-16 h-16 rounded-ui-control overflow-hidden border border-ui-line shrink-0" :title="$t('projects.uat.items.openFile')">
+                        <img :src="cloudinaryThumb(entry.file.url, { width: 128, height: 128 })" :alt="entry.file.name || entry.label" class="w-full h-full object-cover" loading="lazy" />
+                      </a>
+                      <a v-else :href="entry.file.url" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 h-8 max-w-[220px] px-2.5 rounded-ui-control border border-ui-line text-ui-cap text-ui-ink hover:bg-ui-subtle" :title="$t('projects.uat.items.openFile')">
+                        <FileText class="w-3.5 h-3.5 text-ui-muted shrink-0" /><span class="truncate">{{ entry.file.name }}</span>
+                      </a>
+                      <button v-if="canEdit && entry.key === 'proof'" type="button" class="inline-flex items-center gap-1 text-ui-cap text-ui-muted hover:text-ui-bad disabled:opacity-50" :disabled="busyItem === item.id" @click="removePhoto(item)">
+                        <X class="w-3.5 h-3.5" />{{ $t("projects.uat.items.removePhoto") }}
+                      </button>
+                    </div>
+                  </figure>
                 </div>
               </div>
               <div v-if="canEdit" class="flex flex-col sm:flex-row items-end sm:items-center gap-1 shrink-0">
@@ -542,15 +638,6 @@ onMounted(async () => {
                 >
                   <Trash2 class="w-4 h-4" />
                 </button>
-                <label
-                  class="w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink cursor-pointer"
-                  :class="busyItem === item.id ? 'opacity-50 pointer-events-none' : ''"
-                  :title="item.photo ? $t('projects.uat.items.replacePhoto') : $t('projects.uat.items.addPhoto')"
-                >
-                  <Camera class="w-4 h-4" />
-                  <span class="sr-only">{{ item.photo ? $t("projects.uat.items.replacePhoto") : $t("projects.uat.items.addPhoto") }}</span>
-                  <input type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" @change="onPhoto(item, $event)" />
-                </label>
                 <button
                   type="button"
                   role="checkbox"
@@ -562,6 +649,15 @@ onMounted(async () => {
                 >
                   <component :is="item.is_resolved ? CheckCircle2 : Circle" class="w-3.5 h-3.5" />{{ resolvedLabel(item) }}
                 </button>
+                <!-- Revision result, next to the check-off (optional) -->
+                <label
+                  class="h-8 px-2.5 inline-flex items-center gap-1.5 rounded-ui-control border border-ui-line text-ui-cap font-medium text-ui-muted hover:text-ui-ink hover:bg-ui-subtle cursor-pointer whitespace-nowrap"
+                  :class="busyItem === item.id ? 'opacity-50 pointer-events-none' : ''"
+                  :title="$t('projects.uat.items.uploadRevisionHint')"
+                >
+                  <Upload class="w-3.5 h-3.5" />{{ item.photo ? $t("projects.uat.items.replaceRevision") : $t("projects.uat.items.uploadRevision") }}
+                  <input type="file" :accept="FILE_TYPES" class="sr-only" @change="onPhoto(item, $event)" />
+                </label>
               </div>
               <span v-else-if="item.is_resolved" class="shrink-0 text-ui-ok" :title="resolvedLabel(item)"><CheckCircle2 class="w-4 h-4" /></span>
             </li>
@@ -573,10 +669,16 @@ onMounted(async () => {
             </div>
           </section>
 
-          <!-- Documents for the client -->
-          <div v-if="canExport" class="flex flex-wrap items-center gap-2">
-            <UiButton variant="secondary" size="sm" :icon="FileDown" @click="openExport(session, 'result')">{{ $t("projects.uat.export.result.button") }}</UiButton>
-            <UiButton variant="secondary" size="sm" :icon="FileDown" :disabled="!session.items_count" @click="openExport(session, 'revision')">{{ $t("projects.uat.export.revision.button") }}</UiButton>
+          <!-- Berita Acara and documents for the client -->
+          <p v-if="session.berita_acara" class="text-ui-cap text-ui-muted">{{ $t("projects.uat.ba.number", { number: session.berita_acara.letter_number }) }}</p>
+          <div v-if="canExport || canEdit || session.berita_acara" class="flex flex-wrap items-center gap-2">
+            <template v-if="session.berita_acara">
+              <UiButton variant="secondary" size="sm" :icon="ExternalLink" @click="viewBeritaAcara(session)">{{ $t("projects.uat.ba.view") }}</UiButton>
+              <UiButton v-if="canEdit" variant="ghost" size="sm" :icon="FileSignature" @click="openBeritaAcara(session)">{{ $t("projects.uat.ba.refresh") }}</UiButton>
+            </template>
+            <UiButton v-else-if="canEdit" variant="secondary" size="sm" :icon="FileSignature" @click="openBeritaAcara(session)">{{ $t("projects.uat.ba.generate") }}</UiButton>
+            <UiButton v-if="canExport" variant="secondary" size="sm" :icon="FileDown" @click="openExport(session, 'result')">{{ $t("projects.uat.export.result.button") }}</UiButton>
+            <UiButton v-if="canExport" variant="secondary" size="sm" :icon="FileDown" :disabled="!session.items_count" @click="openExport(session, 'revision')">{{ $t("projects.uat.export.revision.button") }}</UiButton>
           </div>
           <a
             v-if="session.attachment"
@@ -640,26 +742,6 @@ onMounted(async () => {
           <UiButton variant="secondary" size="sm" :icon="MapPin" class="mt-2.5" :disabled="form.locations.length >= 10" @click="addPlace">{{ $t("projects.uat.locations.add") }}</UiButton>
         </div>
 
-        <div v-file-drop>
-          <label for="project-uat-file" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("projects.uat.form.attachment") }}</label>
-          <div v-if="editing?.attachment && !form.removeAttachment && !form.file" class="flex items-center gap-2 mb-2 min-w-0">
-            <Paperclip class="w-3.5 h-3.5 text-ui-muted shrink-0" />
-            <a :href="editing.attachment.url" target="_blank" rel="noopener" class="text-ui-small text-ui-accent hover:underline truncate">{{ editing.attachment.name }}</a>
-            <button type="button" class="ml-auto inline-flex items-center gap-1 text-ui-cap text-ui-muted hover:text-ui-bad shrink-0" @click="form.removeAttachment = true">
-              <X class="w-3.5 h-3.5" />{{ $t("projects.uat.form.removeAttachment") }}
-            </button>
-          </div>
-          <input
-            id="project-uat-file"
-            ref="fileInputRef"
-            type="file"
-            accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            class="block w-full text-ui-small text-ui-text cursor-pointer file:mr-3 file:h-9 file:px-3.5 file:rounded-ui-control file:border file:border-solid file:border-ui-line-strong file:bg-ui-surface file:text-ui-small file:font-medium file:text-ui-ink hover:file:bg-ui-subtle"
-            @change="onFile"
-          />
-          <p class="text-ui-cap text-ui-muted mt-1.5">{{ $t("projects.uat.form.attachmentHint") }}</p>
-        </div>
-
         <p v-if="formError" class="text-ui-cap text-ui-bad">{{ formError }}</p>
       </form>
       <template #footer>
@@ -691,11 +773,99 @@ onMounted(async () => {
           <UiInput v-model="itemForm.menu" :label="$t('projects.uat.items.menu')" :placeholder="$t('projects.uat.items.menuPlaceholder')" />
         </div>
         <UiInput v-model="itemForm.description" :rows="3" :label="$t('projects.uat.items.description')" :placeholder="$t(`projects.uat.items.descriptionPlaceholder.${itemForm.type || 'finding'}`)" />
+        <div v-file-drop>
+          <label for="project-uat-item-file" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("projects.uat.items.attachmentLabel") }}</label>
+          <div v-if="(itemForm.attachment && !itemForm.removeAttachment) || itemForm.file" class="flex items-center gap-2 mb-2 min-w-0">
+            <FileText class="w-3.5 h-3.5 text-ui-muted shrink-0" />
+            <a v-if="!itemForm.file" :href="itemForm.attachment.url" target="_blank" rel="noopener" class="text-ui-small text-ui-accent hover:underline truncate">{{ itemForm.attachment.name }}</a>
+            <span v-else class="text-ui-small text-ui-ink truncate">{{ itemForm.file.name }}</span>
+            <button type="button" class="ml-auto inline-flex items-center gap-1 text-ui-cap text-ui-muted hover:text-ui-bad shrink-0" @click="itemForm.file ? (itemForm.file = null) : (itemForm.removeAttachment = true)">
+              <X class="w-3.5 h-3.5" />{{ $t("projects.uat.items.removeFile") }}
+            </button>
+          </div>
+          <input
+            id="project-uat-item-file"
+            type="file"
+            :accept="FILE_TYPES"
+            class="block w-full text-ui-small text-ui-text cursor-pointer file:mr-3 file:h-9 file:px-3.5 file:rounded-ui-control file:border file:border-solid file:border-ui-line-strong file:bg-ui-surface file:text-ui-small file:font-medium file:text-ui-ink hover:file:bg-ui-subtle"
+            @change="onItemFile"
+          />
+          <p class="text-ui-cap text-ui-muted mt-1.5">{{ $t("projects.uat.items.fileHint") }}</p>
+        </div>
         <p v-if="itemError" class="text-ui-cap text-ui-bad">{{ itemError }}</p>
       </form>
       <template #footer>
         <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="itemOpen = false">{{ $t("common.actions.cancel") }}</UiButton>
         <UiButton type="submit" form="project-uat-item-form" :loading="saving" class="flex-1 sm:flex-none">{{ $t("common.actions.save") }}</UiButton>
+      </template>
+    </UiModal>
+
+    <!-- Berita Acara: numbered BA letter, signed by both parties -->
+    <UiModal :open="baOpen" :title="$t('projects.uat.ba.title', { n: baSession?.round ?? '' })" :description="$t('projects.uat.ba.description')" size="lg" @update:open="(value) => !value && (baOpen = false)">
+      <div v-if="baLoading" class="space-y-3" aria-busy="true">
+        <Skeleton height="40px" />
+        <Skeleton height="120px" />
+      </div>
+      <UiAlert v-else-if="baOptions && !baOptions.can_create" tone="warn">{{ $t("projects.uat.ba.noLetterAccess") }}</UiAlert>
+      <form v-else-if="baOptions" id="project-uat-ba-form" class="space-y-4" @submit.prevent="saveBeritaAcara">
+        <UiAlert v-if="baOptions.existing" tone="info">{{ $t("projects.uat.ba.refreshHint", { number: baOptions.existing.letter_number }) }}</UiAlert>
+        <div>
+          <p class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("documents.letter.form.letterhead") }}</p>
+          <div class="grid grid-cols-2 gap-3">
+            <label
+              v-for="opt in BA_TEMPLATES"
+              :key="opt.value"
+              class="ui-press cursor-pointer rounded-ui-control border overflow-hidden transition-colors"
+              :class="baForm.template === opt.value ? 'border-ui-accent shadow-ui-focus' : 'border-ui-line hover:border-ui-line-strong'"
+            >
+              <input v-model="baForm.template" type="radio" :value="opt.value" class="sr-only" />
+              <div class="h-24 w-full overflow-hidden bg-white border-b border-ui-line">
+                <img :src="opt.preview" alt="" class="w-full h-full object-cover object-top" />
+              </div>
+              <div class="px-3 py-2 flex items-center justify-between bg-ui-subtle">
+                <span class="text-ui-small font-medium text-ui-ink">{{ opt.label }}</span>
+                <CheckCircle2 v-if="baForm.template === opt.value" class="w-4 h-4 text-ui-accent" />
+              </div>
+            </label>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <UiSelect v-model="baForm.division_code_id" :options="baDivisionOptions" :label="$t('documents.letter.fields.divisionCode')" required :disabled="!!baOptions.existing" />
+          <UiInput v-model="baForm.date" type="date" :label="$t('projects.uat.ba.date')" required />
+        </div>
+
+        <fieldset class="rounded-ui-control border border-ui-line p-3 space-y-3">
+          <legend class="px-1 text-ui-small font-medium text-ui-ink">{{ $t("projects.uat.ba.firstParty") }}</legend>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <UiSelect
+              v-if="baForm.use_signature"
+              v-model="baForm.signatory_name"
+              :options="(baOptions.signatories || []).map((p) => ({ value: p.name, label: p.name }))"
+              :label="$t('projects.uat.ba.signatory')"
+              @update:model-value="(name) => (baForm.signatory_title = (baOptions.signatories || []).find((p) => p.name === name)?.title || baForm.signatory_title)"
+            />
+            <UiInput v-else v-model="baForm.signatory_name" :label="$t('projects.uat.ba.signatoryName')" />
+            <UiInput v-model="baForm.signatory_title" :label="$t('projects.uat.ba.signatoryTitle')" />
+          </div>
+          <label class="inline-flex items-center gap-2 text-ui-small text-ui-ink cursor-pointer">
+            <input v-model="baForm.use_signature" type="checkbox" class="w-4 h-4 rounded border-ui-line-strong accent-[rgb(var(--ui-ink))]" :disabled="!(baOptions.signatories || []).length" />
+            {{ $t("projects.uat.ba.useSignature") }}
+          </label>
+        </fieldset>
+
+        <fieldset class="rounded-ui-control border border-ui-line p-3 space-y-3">
+          <legend class="px-1 text-ui-small font-medium text-ui-ink">{{ $t("projects.uat.ba.secondParty") }}</legend>
+          <UiInput v-model="baForm.second_party_name" :label="$t('projects.uat.ba.clientName')" required />
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <UiInput v-model="baForm.second_party_signatory_name" :label="$t('projects.uat.ba.clientSignatory')" />
+            <UiInput v-model="baForm.second_party_signatory_title" :label="$t('projects.uat.ba.clientTitle')" />
+          </div>
+        </fieldset>
+      </form>
+      <p v-if="baError" class="text-ui-cap text-ui-bad mt-3">{{ baError }}</p>
+      <template #footer>
+        <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="baOpen = false">{{ $t("common.actions.cancel") }}</UiButton>
+        <UiButton v-if="baOptions?.can_create" type="submit" form="project-uat-ba-form" :icon="FileSignature" :loading="saving" class="flex-1 sm:flex-none">{{ $t("projects.uat.ba.save") }}</UiButton>
       </template>
     </UiModal>
 
