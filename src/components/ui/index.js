@@ -7,6 +7,7 @@ export { default as UiDrawer } from "./UiDrawer.vue";
 export { default as UiChips } from "./UiChips.vue";
 export { default as UiConfirmDialog } from "./UiConfirmDialog.vue";
 export { default as UiEmpty } from "./UiEmpty.vue";
+export { default as UiImageViewer } from "./UiImageViewer.vue";
 export { default as UiInput } from "./UiInput.vue";
 export { default as UiModal } from "./UiModal.vue";
 export { default as UiPageHeader } from "./UiPageHeader.vue";

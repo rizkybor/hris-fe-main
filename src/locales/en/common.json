@@ -201,5 +201,18 @@
     "allowed": "Accepted: {types}",
     "someSkipped": "{n} file(s) skipped: type not supported.",
     "oneOnly": "Only one file is used: {name}"
+  },
+  "imageViewer": {
+    "title": "Image preview",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "reset": "Reset size",
+    "fullscreen": "Full screen",
+    "exitFullscreen": "Exit full screen",
+    "original": "Open original image",
+    "previous": "Previous",
+    "next": "Next",
+    "failed": "The image could not be loaded",
+    "hint": "Scroll or double-click to zoom · drag to move · Esc to close"
   }
 }
