@@ -673,6 +673,12 @@
       "loadFailed": "Data Berita Acara gagal dimuat.",
       "viewFailed": "Berita Acara gagal dibuka.",
       "noLetterAccess": "Anda belum punya akses membuat Surat, jadi Berita Acara tidak bisa dibuat."
+    },
+    "fold": {
+      "show": "Tampilkan sesi",
+      "hide": "Sembunyikan sesi",
+      "showAll": "Buka semua sesi",
+      "hideAll": "Tutup semua sesi"
     }
   },
   "completion": {

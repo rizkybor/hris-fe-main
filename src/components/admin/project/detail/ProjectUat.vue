@@ -21,6 +21,8 @@ import {
   FileText,
   FileSignature,
   ExternalLink,
+  ChevronDown,
+  ChevronsUpDown,
 } from "lucide-vue-next";
 import { axiosInstance } from "@/plugins/axios";
 import ProjectExportModal from "@/components/admin/project/detail/ProjectExportModal.vue";
@@ -154,6 +156,40 @@ const onItemFile = async (event) => {
   } catch (error) {
     itemError.value = error.message;
   }
+};
+
+// ---- Session blocks fold open/closed (remembered per project in this browser) ----
+const foldKey = computed(() => `opus.uat.folded.${props.projectId}`);
+const readFolded = () => {
+  try {
+    return JSON.parse(localStorage.getItem(foldKey.value) || "{}") || {};
+  } catch {
+    return {};
+  }
+};
+const folded = ref(readFolded());
+watch(foldKey, () => (folded.value = readFolded()));
+const saveFolded = () => {
+  try {
+    localStorage.setItem(foldKey.value, JSON.stringify(folded.value));
+  } catch {
+    // storage unavailable: folding still works for this visit
+  }
+};
+const isFolded = (place) => !!folded.value[place.id];
+const toggleFold = (place) => {
+  const next = { ...folded.value };
+  if (next[place.id]) delete next[place.id];
+  else next[place.id] = true;
+  folded.value = next;
+  saveFolded();
+};
+const allFolded = (session) => (session.locations || []).every((place) => isFolded(place));
+const setFoldAll = (session, fold) => {
+  const next = { ...folded.value };
+  (session.locations || []).forEach((place) => (fold ? (next[place.id] = true) : delete next[place.id]));
+  folded.value = next;
+  saveFolded();
 };
 
 const filesOf = (item) =>
@@ -635,15 +671,35 @@ onMounted(async () => {
         <div class="mt-3 sm:pl-[52px] space-y-3">
           <p v-if="session.notes" class="text-ui-small text-ui-text whitespace-pre-line break-words">{{ session.notes }}</p>
 
-          <!-- One block per session, each with its own findings & notes -->
+          <!-- Several sessions: open or close them all at once -->
+          <div v-if="(session.locations || []).length > 1" class="flex justify-end -mb-1">
+            <button
+              type="button"
+              class="inline-flex items-center gap-1 h-7 px-2 rounded-ui-control text-ui-cap font-medium text-ui-muted hover:text-ui-ink hover:bg-ui-subtle"
+              @click="setFoldAll(session, !allFolded(session))"
+            >
+              <ChevronsUpDown class="w-3.5 h-3.5" />{{ allFolded(session) ? $t("projects.uat.fold.showAll") : $t("projects.uat.fold.hideAll") }}
+            </button>
+          </div>
+
+          <!-- One block per session, each with its own findings & notes; folds open/closed -->
           <section
             v-for="(place, placeIndex) in session.locations"
             :key="place.id"
             class="border border-ui-line rounded-ui-control overflow-hidden"
             :aria-label="placeTitle(place, placeIndex)"
           >
-            <header class="px-3 py-2.5 bg-ui-subtle flex flex-wrap items-center gap-x-3 gap-y-1">
+            <header class="bg-ui-subtle">
+              <button
+                type="button"
+                class="w-full px-3 py-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-left hover:bg-ui-hover focus:outline-none focus-visible:shadow-ui-focus"
+                :aria-expanded="!isFolded(place)"
+                :aria-controls="`uat-place-${place.id}`"
+                :title="isFolded(place) ? $t('projects.uat.fold.show') : $t('projects.uat.fold.hide')"
+                @click="toggleFold(place)"
+              >
               <p class="inline-flex items-center gap-1.5 text-ui-small font-medium text-ui-ink min-w-0">
+                <ChevronDown class="w-4 h-4 text-ui-muted shrink-0 transition-transform duration-200" :class="isFolded(place) ? '-rotate-90' : ''" />
                 <MapPin class="w-3.5 h-3.5 text-ui-muted shrink-0" /><span class="truncate">{{ placeTitle(place, placeIndex) }}</span>
               </p>
               <span v-if="placeLine(place)" class="text-ui-cap text-ui-muted tabular-nums">{{ placeLine(place) }}</span>
@@ -651,7 +707,9 @@ onMounted(async () => {
               <span class="sm:ml-auto text-ui-cap text-ui-muted tabular-nums">
                 {{ $t("projects.uat.findingsCount", { n: place.findings_count }, place.findings_count) }} · {{ $t("projects.uat.notesCount", { n: place.notes_count }, place.notes_count) }}<template v-if="place.items.length"> · <span :class="place.resolved_count === (place.items_total ?? place.items.length) ? 'text-ui-ok' : ''">{{ $t("projects.uat.items.resolvedCount", { done: place.resolved_count, total: place.items_total ?? place.items.length }) }}</span></template>
               </span>
+              </button>
             </header>
+            <div v-show="!isFolded(place)" :id="`uat-place-${place.id}`">
             <div
               v-if="place.items.length"
               class="border-t border-ui-line"
@@ -744,6 +802,7 @@ onMounted(async () => {
             <div v-if="canEdit" class="px-2 py-1.5 border-t border-ui-line flex flex-wrap gap-1">
               <UiButton variant="ghost" size="sm" :icon="AlertCircle" @click="openItem(session, place, 'finding')">{{ $t("projects.uat.items.addFinding") }}</UiButton>
               <UiButton variant="ghost" size="sm" :icon="StickyNote" @click="openItem(session, place, 'note')">{{ $t("projects.uat.items.addNote") }}</UiButton>
+            </div>
             </div>
           </section>
 
