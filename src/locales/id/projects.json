@@ -576,26 +576,52 @@
       "openPhoto": "Buka foto ukuran penuh",
       "photoUploaded": "Foto bukti dilampirkan",
       "photoFailed": "Foto gagal diunggah",
-      "photoTooLarge": "Foto terlalu besar. Maksimal 2 MB."
+      "photoTooLarge": "Foto terlalu besar. Maksimal 2 MB.",
+      "emptySession": "Belum ada temuan atau catatan di sesi ini.",
+      "editTitle": "Ubah temuan/catatan",
+      "session": "Sesi",
+      "updated": "Temuan/catatan diperbarui",
+      "findingAdded": "Temuan ditambahkan",
+      "noteAdded": "Catatan ditambahkan",
+      "deleted": "Temuan/catatan dihapus",
+      "deleteConfirm": "Hapus temuan/catatan ini? Foto buktinya ikut terhapus."
     },
     "locations": {
-      "title": "Sesi & Lokasi",
-      "hint": "Opsional. Isi bila UAT ini dilakukan di beberapa tempat sekaligus (misalnya kantor pusat dan cabang).",
+      "title": "Sesi",
+      "hint": "Satu UAT bisa berlangsung di beberapa tempat sekaligus. Setiap sesi punya temuan & catatannya sendiri.",
       "count": "Belum ada | {n} lokasi | {n} lokasi",
-      "unnamed": "Lokasi {n}",
-      "location": "Nama lokasi",
+      "unnamed": "Sesi {n}",
+      "location": "Nama lokasi (opsional)",
       "locationPlaceholder": "Contoh: Kantor Klien – Jakarta",
       "date": "Tanggal",
       "time": "Jam mulai (opsional)",
       "participants": "Peserta (opsional)",
       "participantsPlaceholder": "Contoh: Andi (Operasional), Budi (Keuangan)",
-      "add": "Tambah lokasi",
-      "remove": "Hapus lokasi",
+      "add": "Tambah sesi",
+      "remove": "Hapus sesi",
       "none": "Tanpa lokasi",
       "itemLocation": "Lokasi (opsional)",
       "nameRequired": "Setiap lokasi harus punya nama.",
       "all": "Semua",
-      "filter": "Saring temuan per lokasi"
+      "filter": "Saring temuan per lokasi",
+      "titled": "Sesi {n} — {name}",
+      "removeConfirm": "Sesi ini memiliki {n} temuan/catatan yang akan ikut terhapus. Lanjutkan?"
+    },
+    "export": {
+      "result": {
+        "button": "Export Hasil UAT",
+        "title": "Export Hasil UAT ke-{n}",
+        "description": "Laporan temuan & catatan UAT untuk diberikan ke klien, bisa sekaligus dengan surat pengantar.",
+        "report": "Laporan Hasil UAT ke-{n}",
+        "reportHint": "Sesi & lokasi, temuan dan catatan per sesi, kolom pengesahan"
+      },
+      "revision": {
+        "button": "Export Hasil Revisi",
+        "title": "Export Hasil Revisi UAT ke-{n}",
+        "description": "Laporan hasil revisi atas temuan & catatan UAT, untuk diperiksa kembali oleh klien.",
+        "report": "Laporan Hasil Revisi UAT ke-{n}",
+        "reportHint": "Status revisi setiap temuan & catatan beserta foto bukti"
+      }
     }
   },
   "completion": {

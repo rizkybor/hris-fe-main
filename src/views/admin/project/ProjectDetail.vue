@@ -788,7 +788,7 @@ onMounted(async () => {
 
       <!-- UAT Tab: rounds agreed with the client and each round held -->
       <div v-if="visitedTabs.has('uat')" v-show="activeTab === 'uat'">
-        <ProjectUat :project-id="id" @changed="handleUatChanged" />
+        <ProjectUat :project-id="id" :project-name="project.name || ''" @changed="handleUatChanged" />
       </div>
 
       <!-- Documents Tab -->

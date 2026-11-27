@@ -13,11 +13,23 @@ import { useI18n } from "vue-i18n";
 // Export Progress: the report alone, or with a cover letter (Surat
 // Pengantar) in front as one PDF. The cover letter is a numbered letter
 // (code SPG) linked to the project: a new one, or one made for it before.
+// Also used for the UAT documents: pass their own endpoints, `extra`
+// (sent with both requests, e.g. { kind: "revision" }) and labels.
 const props = defineProps({
   open: { type: Boolean, default: false },
   projectId: { type: [String, Number], required: true },
   projectName: { type: String, default: "" },
+  optionsUrl: { type: String, default: "" },
+  exportUrl: { type: String, default: "" },
+  extra: { type: Object, default: () => ({}) },
+  title: { type: String, default: "" },
+  description: { type: String, default: "" },
+  reportLabel: { type: String, default: "" },
+  reportHint: { type: String, default: "" },
+  fileBase: { type: String, default: "" },
 });
+const optionsEndpoint = computed(() => props.optionsUrl || `/projects/${props.projectId}/cover-letter-options`);
+const exportEndpoint = computed(() => props.exportUrl || `/projects/${props.projectId}/export-progress`);
 const emit = defineEmits(["update:open"]);
 
 const { t } = useI18n();
@@ -67,7 +79,7 @@ const load = async () => {
   loadError.value = "";
   formError.value = "";
   try {
-    const { data } = await axiosInstance.get(`/projects/${props.projectId}/cover-letter-options`);
+    const { data } = await axiosInstance.get(optionsEndpoint.value, { params: props.extra });
     options.value = data.data;
     const draft = data.data.draft;
     form.value = {
@@ -147,10 +159,10 @@ const submit = async () => {
   }
   exporting.value = true;
   try {
-    const response = await axiosInstance.post(`/projects/${props.projectId}/export-progress`, payload, { responseType: "blob" });
+    const response = await axiosInstance.post(exportEndpoint.value, { ...payload, ...props.extra }, { responseType: "blob" });
     const number = response.headers["x-letter-number"];
-    const base = (props.projectName || "project").replace(/[\\/]/g, "-");
-    download(response.data, withCover.value ? `${base}-progress-report-surat-pengantar.pdf` : `${base}-progress-report.pdf`);
+    const base = (props.fileBase || `${props.projectName || "project"}-progress-report`).replace(/[\\/]/g, "-");
+    download(response.data, withCover.value ? `${base}-surat-pengantar.pdf` : `${base}.pdf`);
     if (number && payload.cover === "new") toast.success(t("projects.export.letterCreated"), number);
     else toast.success(t("projects.export.done"));
     close();
@@ -163,7 +175,7 @@ const submit = async () => {
 </script>
 
 <template>
-  <UiModal :open="open" :title="$t('projects.export.title')" :description="$t('projects.export.description')" size="lg" @update:open="(value) => !value && close()">
+  <UiModal :open="open" :title="title || $t('projects.export.title')" :description="description || $t('projects.export.description')" size="lg" @update:open="(value) => !value && close()">
     <div v-if="loading" class="space-y-3" aria-busy="true">
       <Skeleton height="56px" />
       <Skeleton height="120px" />
@@ -176,8 +188,8 @@ const submit = async () => {
         <div class="flex items-center gap-3 px-4 py-3">
           <span class="w-9 h-9 rounded-ui-control bg-ui-subtle text-ui-muted flex items-center justify-center shrink-0"><FileText class="w-4 h-4" /></span>
           <div class="flex-1 min-w-0">
-            <p class="text-ui-body font-medium text-ui-ink">{{ $t("projects.export.report") }}</p>
-            <p class="text-ui-cap text-ui-muted">{{ $t("projects.export.reportHint") }}</p>
+            <p class="text-ui-body font-medium text-ui-ink">{{ reportLabel || $t("projects.export.report") }}</p>
+            <p class="text-ui-cap text-ui-muted">{{ reportHint || $t("projects.export.reportHint") }}</p>
           </div>
           <CheckCircle2 class="w-4 h-4 text-ui-ok shrink-0" />
         </div>
