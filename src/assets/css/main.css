@@ -1706,6 +1706,10 @@ button:disabled,
   max-height: 320px;
 }
 
+.max-h-\[360px\] {
+  max-height: 360px;
+}
+
 .max-h-\[400px\] {
   max-height: 400px;
 }

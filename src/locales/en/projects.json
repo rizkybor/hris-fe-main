@@ -594,7 +594,13 @@
       "attachmentLabel": "Attachment (optional)",
       "fileHint": "Photo/screenshot or PDF, max 2 MB. Photos are shrunk automatically.",
       "removeFile": "Remove",
-      "fileTooLarge": "The file is too large. Maximum 2 MB."
+      "fileTooLarge": "The file is too large. Maximum 2 MB.",
+      "listLabel": "{n} findings & notes",
+      "loadingMore": "Loading more… {shown} of {total}",
+      "showing": "Showing {shown} of {total} · scroll inside the box for more",
+      "loadMoreFailed": "The next findings & notes could not be loaded",
+      "showMore": "Show more ({n} left)",
+      "showingAll": "All {n} findings & notes shown"
     },
     "locations": {
       "title": "Sessions",
