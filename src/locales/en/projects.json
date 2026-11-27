@@ -517,7 +517,7 @@
       "setPlanHint": "Set the number of UAT rounds agreed with the client."
     },
     "plan": {
-      "label": "Agreement",
+      "label": "Planned",
       "value": "{n}x UAT",
       "none": "Not set",
       "edit": "Change number of UAT rounds",
