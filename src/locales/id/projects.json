@@ -594,7 +594,13 @@
       "attachmentLabel": "Lampiran (opsional)",
       "fileHint": "Foto/screenshot atau PDF, maks. 2 MB. Foto diperkecil otomatis.",
       "removeFile": "Hapus",
-      "fileTooLarge": "File terlalu besar. Maksimal 2 MB."
+      "fileTooLarge": "File terlalu besar. Maksimal 2 MB.",
+      "listLabel": "{n} temuan & catatan",
+      "loadingMore": "Memuat lagi… {shown} dari {total}",
+      "showing": "Menampilkan {shown} dari {total} · gulir di dalam kotak untuk melihat lainnya",
+      "loadMoreFailed": "Temuan & catatan berikutnya gagal dimuat",
+      "showMore": "Tampilkan lainnya ({n} lagi)",
+      "showingAll": "Semua {n} temuan & catatan ditampilkan"
     },
     "locations": {
       "title": "Sesi",
