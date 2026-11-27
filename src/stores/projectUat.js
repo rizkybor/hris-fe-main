@@ -56,6 +56,19 @@ export const useProjectUatStore = defineStore("projectUat", {
       return this.write(() => axiosInstance.post(`/projects/${projectId}/uat/sessions/${sessionId}`, payload, { headers: { "Content-Type": "multipart/form-data" } }));
     },
 
+    // Findings / notes are added, edited and deleted straight from a session.
+    addItem(projectId, locationId, item) {
+      return this.write(() => axiosInstance.post(`/projects/${projectId}/uat/locations/${locationId}/items`, item));
+    },
+
+    updateItem(projectId, itemId, item) {
+      return this.write(() => axiosInstance.put(`/projects/${projectId}/uat/items/${itemId}`, item));
+    },
+
+    deleteItem(projectId, itemId) {
+      return this.write(() => axiosInstance.delete(`/projects/${projectId}/uat/items/${itemId}`));
+    },
+
     // Check a finding/note off as revised/updated (or undo).
     resolveItem(projectId, itemId, resolved) {
       return this.write(() => axiosInstance.patch(`/projects/${projectId}/uat/items/${itemId}/resolve`, { resolved }));

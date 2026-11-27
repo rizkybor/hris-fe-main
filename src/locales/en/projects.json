@@ -576,26 +576,52 @@
       "openPhoto": "Open the full-size photo",
       "photoUploaded": "Proof photo attached",
       "photoFailed": "The photo could not be uploaded",
-      "photoTooLarge": "The photo is too large. Maximum 2 MB."
+      "photoTooLarge": "The photo is too large. Maximum 2 MB.",
+      "emptySession": "No findings or notes in this session yet.",
+      "editTitle": "Edit finding/note",
+      "session": "Session",
+      "updated": "Finding/note updated",
+      "findingAdded": "Finding added",
+      "noteAdded": "Note added",
+      "deleted": "Finding/note deleted",
+      "deleteConfirm": "Delete this finding/note? Its proof photo is deleted too."
     },
     "locations": {
-      "title": "Sessions & Places",
-      "hint": "Optional. Use when this UAT is held in several places at once (e.g. head office and a branch).",
+      "title": "Sessions",
+      "hint": "One UAT can run in several places at once. Each session has its own findings & notes.",
       "count": "None | {n} place | {n} places",
-      "unnamed": "Place {n}",
-      "location": "Place name",
+      "unnamed": "Session {n}",
+      "location": "Place name (optional)",
       "locationPlaceholder": "e.g. Client office – Jakarta",
       "date": "Date",
       "time": "Start time (optional)",
       "participants": "Attendees (optional)",
       "participantsPlaceholder": "e.g. Andi (Operations), Budi (Finance)",
-      "add": "Add place",
-      "remove": "Remove place",
+      "add": "Add session",
+      "remove": "Remove session",
       "none": "No place",
       "itemLocation": "Place (optional)",
       "nameRequired": "Each place needs a name.",
       "all": "All",
-      "filter": "Filter findings by place"
+      "filter": "Filter findings by place",
+      "titled": "Session {n} — {name}",
+      "removeConfirm": "This session has {n} finding/note that will be deleted too. Continue? | This session has {n} findings/notes that will be deleted too. Continue?"
+    },
+    "export": {
+      "result": {
+        "button": "Export UAT result",
+        "title": "Export UAT {n} result",
+        "description": "The UAT findings & notes report for the client, optionally with a cover letter.",
+        "report": "UAT {n} result report",
+        "reportHint": "Sessions & places, findings and notes per session, sign-off"
+      },
+      "revision": {
+        "button": "Export revision result",
+        "title": "Export UAT {n} revision result",
+        "description": "How each UAT finding & note was revised, for the client to re-check.",
+        "report": "UAT {n} revision report",
+        "reportHint": "Revision status of every finding & note with proof photos"
+      }
     }
   },
   "completion": {

@@ -17,7 +17,10 @@ import {
   Camera,
   MapPin,
   Users,
+  FileDown,
 } from "lucide-vue-next";
+import ProjectExportModal from "@/components/admin/project/detail/ProjectExportModal.vue";
+import { useAlertModalStore } from "@/stores/alertModal";
 import { compressImage, cloudinaryThumb } from "@/utils/fileUtils";
 import { useProjectUatStore } from "@/stores/projectUat";
 import { useToastStore } from "@/stores/toast";
@@ -31,6 +34,7 @@ const { t } = useI18n();
 
 const props = defineProps({
   projectId: { type: [String, Number], required: true },
+  projectName: { type: String, default: "" },
 });
 const emit = defineEmits(["changed"]);
 
@@ -40,6 +44,8 @@ const { uat, loading, saving } = storeToRefs(store);
 
 const canEdit = computed(() => can("project-edit"));
 const canDelete = computed(() => can("project-delete"));
+const canExport = computed(() => can("project-export"));
+const alertModal = useAlertModalStore();
 
 const STATUS_TONES = { scheduled: "neutral", in_progress: "info", passed: "ok", revision: "warn" };
 const STATUS_DOTS = { scheduled: "bg-ui-line-strong", in_progress: "bg-ui-accent", passed: "bg-ui-ok", revision: "bg-ui-warn" };
@@ -48,21 +54,12 @@ const STATUS_OPTIONS = computed(() =>
 );
 const statusLabel = (status) => t(`projects.uat.status.${status}`);
 
-// Findings (temuan) and notes (catatan) of a round; feature and menu optional.
+// Findings (temuan) and notes (catatan) belong to a session; feature and menu optional.
 const ITEM_TONES = { finding: "warn", note: "neutral" };
-let itemKey = 0;
-const newItem = (type = "finding", item = {}) => ({
-  key: ++itemKey,
-  id: item.id || null,
-  locationKey: item.locationKey ?? null,
-  type: item.type || type,
-  feature: item.feature || "",
-  menu: item.menu || "",
-  description: item.description || "",
-});
 const where = (item) => [item.feature, item.menu].filter(Boolean).join(" › ");
 
-// Places one UAT round ran at, at the same time (e.g. head office + branch).
+// Sessions of a UAT: held at the same time in different places. Every UAT
+// has at least one; the place name is optional ("Sesi 1").
 let placeKey = 0;
 const newPlace = (place = {}, date = "") => ({
   key: ++placeKey,
@@ -71,24 +68,87 @@ const newPlace = (place = {}, date = "") => ({
   date: place.date || date || "",
   time: place.time || "",
   participants: place.participants || "",
+  itemsCount: (place.findings_count || 0) + (place.notes_count || 0),
 });
 const addPlace = () => form.value.locations.push(newPlace({}, form.value.date));
-const removePlace = (index) => {
-  const [removed] = form.value.locations.splice(index, 1);
-  form.value.items.forEach((item) => item.locationKey === removed.key && (item.locationKey = null));
+const removePlace = async (index) => {
+  const place = form.value.locations[index];
+  if (place.itemsCount && !(await alertModal.confirm(t("projects.uat.locations.removeConfirm", { n: place.itemsCount }, place.itemsCount), { type: "danger", confirmText: t("projects.uat.locations.remove") }))) return;
+  form.value.locations.splice(index, 1);
 };
-const placeOptions = computed(() => [
-  { value: "", label: t("projects.uat.locations.none") },
-  ...form.value.locations.map((place, i) => ({ value: place.key, label: place.location.trim() || t("projects.uat.locations.unnamed", { n: i + 1 }) })),
-]);
+const placeTitle = (place, index) => {
+  const n = place.number ?? index + 1;
+  return place.location ? t("projects.uat.locations.titled", { n, name: place.location }) : t("projects.uat.locations.unnamed", { n });
+};
 const placeLine = (place) => [place.date ? formatDate(place.date) : null, place.time].filter(Boolean).join(" · ");
 
-// Card filter: all items, or one place's items (when a round ran in several places).
-const placeFilter = ref({});
-const visibleItems = (session) => {
-  const id = placeFilter.value[session.id];
-  return id ? session.items.filter((item) => item.location_id === id) : session.items;
+// ---- Add / edit a finding or note right in its session ----
+const itemOpen = ref(false);
+const itemError = ref("");
+const itemForm = ref({});
+const itemSession = ref(null);
+const openItem = (session, place, type = "finding", item = null) => {
+  itemSession.value = session;
+  itemError.value = "";
+  itemForm.value = {
+    id: item?.id || null,
+    locationId: place.id,
+    type: item?.type || type,
+    feature: item?.feature || "",
+    menu: item?.menu || "",
+    description: item?.description || "",
+  };
+  itemOpen.value = true;
 };
+const itemPlaceOptions = computed(() => (itemSession.value?.locations || []).map((place, i) => ({ value: place.id, label: placeTitle(place, i) })));
+const saveItem = async () => {
+  const f = itemForm.value;
+  if (!f.description.trim()) {
+    itemError.value = t("projects.uat.items.descriptionRequired");
+    return;
+  }
+  const body = { type: f.type, feature: f.feature.trim(), menu: f.menu.trim(), description: f.description.trim() };
+  try {
+    if (f.id) {
+      await store.updateItem(props.projectId, f.id, { ...body, location_id: Number(f.locationId) });
+      notify(t("projects.uat.items.updated"));
+    } else {
+      await store.addItem(props.projectId, f.locationId, body);
+      notify(t(f.type === "finding" ? "projects.uat.items.findingAdded" : "projects.uat.items.noteAdded"));
+    }
+    itemOpen.value = false;
+  } catch (error) {
+    itemError.value = error.message;
+  }
+};
+const deleteItem = async (item) => {
+  if (!(await alertModal.confirm(t("projects.uat.items.deleteConfirm"), { type: "danger", confirmText: t("common.actions.delete") }))) return;
+  try {
+    await store.deleteItem(props.projectId, item.id);
+    notify(t("projects.uat.items.deleted"));
+  } catch (error) {
+    toast.error(t("projects.uat.items.saveFailed"), error.message);
+  }
+};
+
+// ---- Export a UAT document for the client: its result, or the revision result ----
+const exportState = ref({ open: false, session: null, kind: "result" });
+const openExport = (session, kind) => (exportState.value = { open: true, session, kind });
+const exportProps = computed(() => {
+  const { session, kind } = exportState.value;
+  if (!session) return {};
+  const n = session.round;
+  return {
+    optionsUrl: `/projects/${props.projectId}/uat/sessions/${session.id}/export-options`,
+    exportUrl: `/projects/${props.projectId}/uat/sessions/${session.id}/export`,
+    extra: { kind },
+    title: t(`projects.uat.export.${kind}.title`, { n }),
+    description: t(`projects.uat.export.${kind}.description`),
+    reportLabel: t(`projects.uat.export.${kind}.report`, { n }),
+    reportHint: t(`projects.uat.export.${kind}.reportHint`),
+    fileBase: `${kind === "revision" ? "Laporan-Revisi-UAT" : "Laporan-UAT"}-${n}-${props.projectName || "proyek"}`,
+  };
+});
 
 // ---- Check-off and proof photo, right from the round's card ----
 const busyItem = ref(null);
@@ -195,19 +255,17 @@ const openForm = (session = null) => {
   editing.value = session;
   formError.value = "";
   if (session) {
-    const locations = (session.locations || []).map((place) => newPlace(place));
-    const keyOf = Object.fromEntries(locations.map((place) => [place.id, place.key]));
     form.value = {
       date: session.date || "",
       status: session.status,
       notes: session.notes || "",
-      locations,
-      items: (session.items || []).map((item) => newItem(item.type, { ...item, locationKey: keyOf[item.location_id] ?? null })),
+      locations: (session.locations || []).map((place) => newPlace(place)),
       file: null,
       removeAttachment: false,
     };
   } else {
-    form.value = { date: today(), status: "scheduled", notes: "", locations: [], items: [], file: null, removeAttachment: false };
+    const date = today();
+    form.value = { date, status: "scheduled", notes: "", locations: [newPlace({}, date)], file: null, removeAttachment: false };
   }
   if (fileInputRef.value) fileInputRef.value.value = "";
   formOpen.value = true;
@@ -218,9 +276,6 @@ const formTitle = computed(() =>
 );
 const formOverPlan = computed(() => !editing.value && uat.value.planned != null && nextRound.value > uat.value.planned);
 
-const addItem = (type) => form.value.items.push(newItem(type));
-const removeItem = (index) => form.value.items.splice(index, 1);
-
 const onFile = (event) => {
   form.value.file = event.target.files[0] ?? null;
   if (form.value.file) form.value.removeAttachment = false;
@@ -228,19 +283,11 @@ const onFile = (event) => {
 
 const submit = async () => {
   formError.value = "";
-  // Fully empty rows are dropped; a row with a feature/menu needs a description.
-  const items = form.value.items.filter((item) => item.description.trim() || item.feature.trim() || item.menu.trim());
-  if (items.some((item) => !item.description.trim())) {
-    formError.value = t("projects.uat.items.descriptionRequired");
-    return;
-  }
   const places = form.value.locations;
-  if (places.some((place) => !place.location.trim())) {
-    formError.value = t("projects.uat.locations.nameRequired");
-    return;
-  }
   const payload = new FormData();
   payload.append("date", form.value.date || "");
+  payload.append("status", form.value.status);
+  payload.append("notes", form.value.notes || "");
   payload.append("locations_sent", "1");
   places.forEach((place, i) => {
     if (place.id) payload.append(`locations[${i}][id]`, place.id);
@@ -248,18 +295,6 @@ const submit = async () => {
     payload.append(`locations[${i}][date]`, place.date || "");
     payload.append(`locations[${i}][time]`, place.time || "");
     payload.append(`locations[${i}][participants]`, place.participants.trim());
-  });
-  payload.append("status", form.value.status);
-  payload.append("notes", form.value.notes || "");
-  payload.append("items_sent", "1");
-  items.forEach((item, i) => {
-    if (item.id) payload.append(`items[${i}][id]`, item.id);
-    payload.append(`items[${i}][type]`, item.type);
-    payload.append(`items[${i}][feature]`, item.feature.trim());
-    payload.append(`items[${i}][menu]`, item.menu.trim());
-    payload.append(`items[${i}][description]`, item.description.trim());
-    const placeIndex = places.findIndex((place) => place.key === item.locationKey);
-    if (placeIndex >= 0) payload.append(`items[${i}][location_index]`, placeIndex);
   });
   if (form.value.file) payload.append("attachment", form.value.file);
   if (form.value.removeAttachment) payload.append("remove_attachment", "1");
@@ -417,19 +452,10 @@ onMounted(async () => {
               <span class="inline-flex items-center gap-1 tabular-nums"><CalendarDays class="w-3.5 h-3.5" />{{ session.date ? formatDate(session.date) : $t("projects.uat.noDate") }}</span>
               <span v-if="session.findings_count" class="inline-flex items-center gap-1"><ListChecks class="w-3.5 h-3.5" />{{ $t("projects.uat.findingsCount", { n: session.findings_count }, session.findings_count) }}</span>
               <span v-if="session.notes_count" class="inline-flex items-center gap-1"><StickyNote class="w-3.5 h-3.5" />{{ $t("projects.uat.notesCount", { n: session.notes_count }, session.notes_count) }}</span>
-              <span v-if="session.items?.length" class="inline-flex items-center gap-1" :class="session.resolved_count === session.items.length ? 'text-ui-ok' : ''">
-                <CheckCircle2 class="w-3.5 h-3.5" />{{ $t("projects.uat.items.resolvedCount", { done: session.resolved_count, total: session.items.length }) }}
+              <span v-if="session.items_count" class="inline-flex items-center gap-1" :class="session.resolved_count === session.items_count ? 'text-ui-ok' : ''">
+                <CheckCircle2 class="w-3.5 h-3.5" />{{ $t("projects.uat.items.resolvedCount", { done: session.resolved_count, total: session.items_count }) }}
               </span>
             </div>
-            <!-- Places held at the same time -->
-            <ul v-if="session.locations?.length" class="mt-2 flex flex-wrap gap-1.5">
-              <li v-for="place in session.locations" :key="place.id" class="inline-flex items-center gap-1.5 max-w-full rounded-ui-control bg-ui-subtle px-2 py-1 text-ui-cap text-ui-text">
-                <MapPin class="w-3.5 h-3.5 text-ui-muted shrink-0" />
-                <span class="font-medium text-ui-ink truncate">{{ place.location }}</span>
-                <span v-if="placeLine(place)" class="text-ui-muted tabular-nums whitespace-nowrap">{{ placeLine(place) }}</span>
-                <span v-if="place.participants" class="inline-flex items-center gap-1 text-ui-muted truncate" :title="place.participants"><Users class="w-3 h-3 shrink-0" />{{ place.participants }}</span>
-              </li>
-            </ul>
           </div>
           <div v-if="canEdit || canDelete" class="flex items-center gap-0.5 shrink-0">
             <button
@@ -455,29 +481,33 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div v-if="session.notes || session.items?.length || session.attachment" class="mt-3 sm:pl-[52px] space-y-3">
+        <div class="mt-3 sm:pl-[52px] space-y-3">
           <p v-if="session.notes" class="text-ui-small text-ui-text whitespace-pre-line break-words">{{ session.notes }}</p>
-          <div v-if="session.items?.length && session.locations?.length > 1" class="flex flex-wrap gap-1.5" role="group" :aria-label="$t('projects.uat.locations.filter')">
-            <button
-              v-for="option in [{ id: null, location: $t('projects.uat.locations.all'), items_count: session.items.length }, ...session.locations]"
-              :key="option.id ?? 'all'"
-              type="button"
-              :aria-pressed="(placeFilter[session.id] ?? null) === option.id"
-              class="h-7 px-2.5 rounded-full border text-ui-cap font-medium"
-              :class="(placeFilter[session.id] ?? null) === option.id ? 'bg-ui-ink text-white border-ui-ink' : 'border-ui-line text-ui-muted hover:text-ui-ink'"
-              @click="placeFilter = { ...placeFilter, [session.id]: option.id }"
-            >
-              {{ option.location }} <span class="tabular-nums opacity-70">{{ option.items_count }}</span>
-            </button>
-          </div>
-          <ol v-if="session.items?.length" class="border border-ui-line rounded-ui-control divide-y divide-ui-line">
-            <li v-for="(item, index) in visibleItems(session)" :key="item.id" class="flex items-start gap-3 px-3 py-2.5" :class="item.is_resolved ? 'bg-ui-ok-soft/40' : ''">
+
+          <!-- One block per session, each with its own findings & notes -->
+          <section
+            v-for="(place, placeIndex) in session.locations"
+            :key="place.id"
+            class="border border-ui-line rounded-ui-control overflow-hidden"
+            :aria-label="placeTitle(place, placeIndex)"
+          >
+            <header class="px-3 py-2.5 bg-ui-subtle flex flex-wrap items-center gap-x-3 gap-y-1">
+              <p class="inline-flex items-center gap-1.5 text-ui-small font-medium text-ui-ink min-w-0">
+                <MapPin class="w-3.5 h-3.5 text-ui-muted shrink-0" /><span class="truncate">{{ placeTitle(place, placeIndex) }}</span>
+              </p>
+              <span v-if="placeLine(place)" class="text-ui-cap text-ui-muted tabular-nums">{{ placeLine(place) }}</span>
+              <span v-if="place.participants" class="inline-flex items-center gap-1 text-ui-cap text-ui-muted min-w-0" :title="place.participants"><Users class="w-3 h-3 shrink-0" /><span class="truncate">{{ place.participants }}</span></span>
+              <span class="sm:ml-auto text-ui-cap text-ui-muted tabular-nums">
+                {{ $t("projects.uat.findingsCount", { n: place.findings_count }, place.findings_count) }} · {{ $t("projects.uat.notesCount", { n: place.notes_count }, place.notes_count) }}<template v-if="place.items.length"> · <span :class="place.resolved_count === place.items.length ? 'text-ui-ok' : ''">{{ $t("projects.uat.items.resolvedCount", { done: place.resolved_count, total: place.items.length }) }}</span></template>
+              </span>
+            </header>
+            <ol v-if="place.items.length" class="divide-y divide-ui-line border-t border-ui-line">
+            <li v-for="(item, index) in place.items" :key="item.id" class="flex items-start gap-3 px-3 py-2.5" :class="item.is_resolved ? 'bg-ui-ok-soft/40' : ''">
               <span class="text-ui-cap text-ui-faint tabular-nums w-4 shrink-0 pt-0.5">{{ index + 1 }}</span>
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 flex-wrap">
                   <UiBadge :tone="ITEM_TONES[item.type]">{{ $t(`projects.uat.items.type.${item.type}`) }}</UiBadge>
                   <span v-if="where(item)" class="text-ui-cap font-medium text-ui-muted break-words">{{ where(item) }}</span>
-                  <span v-if="item.location && session.locations?.length > 1" class="inline-flex items-center gap-1 text-ui-cap text-ui-muted"><MapPin class="w-3 h-3" />{{ item.location }}</span>
                 </div>
                 <p class="text-ui-small mt-1 whitespace-pre-line break-words" :class="item.is_resolved ? 'text-ui-muted' : 'text-ui-text'">{{ item.description }}</p>
                 <p v-if="item.is_resolved" class="text-ui-cap text-ui-ok mt-1">
@@ -494,6 +524,24 @@ onMounted(async () => {
                 </div>
               </div>
               <div v-if="canEdit" class="flex flex-col sm:flex-row items-end sm:items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  class="w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink"
+                  :title="$t('common.actions.edit')"
+                  :aria-label="$t('common.actions.edit')"
+                  @click="openItem(session, place, item.type, item)"
+                >
+                  <Pencil class="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  class="w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad"
+                  :title="$t('common.actions.delete')"
+                  :aria-label="$t('common.actions.delete')"
+                  @click="deleteItem(item)"
+                >
+                  <Trash2 class="w-4 h-4" />
+                </button>
                 <label
                   class="w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink cursor-pointer"
                   :class="busyItem === item.id ? 'opacity-50 pointer-events-none' : ''"
@@ -517,7 +565,19 @@ onMounted(async () => {
               </div>
               <span v-else-if="item.is_resolved" class="shrink-0 text-ui-ok" :title="resolvedLabel(item)"><CheckCircle2 class="w-4 h-4" /></span>
             </li>
-          </ol>
+            </ol>
+            <p v-else class="px-3 py-2.5 border-t border-ui-line text-ui-cap text-ui-muted">{{ $t("projects.uat.items.emptySession") }}</p>
+            <div v-if="canEdit" class="px-2 py-1.5 border-t border-ui-line flex flex-wrap gap-1">
+              <UiButton variant="ghost" size="sm" :icon="AlertCircle" @click="openItem(session, place, 'finding')">{{ $t("projects.uat.items.addFinding") }}</UiButton>
+              <UiButton variant="ghost" size="sm" :icon="StickyNote" @click="openItem(session, place, 'note')">{{ $t("projects.uat.items.addNote") }}</UiButton>
+            </div>
+          </section>
+
+          <!-- Documents for the client -->
+          <div v-if="canExport" class="flex flex-wrap items-center gap-2">
+            <UiButton variant="secondary" size="sm" :icon="FileDown" @click="openExport(session, 'result')">{{ $t("projects.uat.export.result.button") }}</UiButton>
+            <UiButton variant="secondary" size="sm" :icon="FileDown" :disabled="!session.items_count" @click="openExport(session, 'revision')">{{ $t("projects.uat.export.revision.button") }}</UiButton>
+          </div>
           <a
             v-if="session.attachment"
             :href="session.attachment.url"
@@ -557,7 +617,9 @@ onMounted(async () => {
               <div class="flex items-center gap-2">
                 <MapPin class="w-4 h-4 text-ui-muted shrink-0" />
                 <span class="text-ui-small font-medium text-ui-ink">{{ $t("projects.uat.locations.unnamed", { n: index + 1 }) }}</span>
+                <span v-if="place.itemsCount" class="text-ui-cap text-ui-muted">{{ $t("projects.uat.items.count", { n: place.itemsCount }, place.itemsCount) }}</span>
                 <button
+                  v-if="form.locations.length > 1"
                   type="button"
                   class="ml-auto w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad"
                   :title="$t('projects.uat.locations.remove')"
@@ -576,61 +638,6 @@ onMounted(async () => {
             </li>
           </ol>
           <UiButton variant="secondary" size="sm" :icon="MapPin" class="mt-2.5" :disabled="form.locations.length >= 10" @click="addPlace">{{ $t("projects.uat.locations.add") }}</UiButton>
-        </div>
-
-        <!-- Findings / notes: one card per item -->
-        <div>
-          <div class="flex items-center justify-between gap-2 mb-1.5">
-            <p class="text-ui-small font-medium text-ui-ink">{{ $t("projects.uat.items.title") }}</p>
-            <span class="text-ui-cap text-ui-muted tabular-nums">{{ $t("projects.uat.items.count", { n: form.items.length }, form.items.length) }}</span>
-          </div>
-          <p v-if="!form.items.length" class="text-ui-cap text-ui-muted mb-2">{{ $t("projects.uat.items.empty") }}</p>
-          <ol class="space-y-2.5">
-            <li v-for="(item, index) in form.items" :key="item.key" class="rounded-ui-control border border-ui-line p-3 space-y-2.5">
-              <div class="flex items-center gap-2">
-                <span class="text-ui-cap text-ui-faint tabular-nums w-4 shrink-0">{{ index + 1 }}</span>
-                <div class="inline-flex rounded-ui-control border border-ui-line p-0.5" role="radiogroup" :aria-label="$t('projects.uat.items.typeLabel')">
-                  <button
-                    v-for="type in ['finding', 'note']"
-                    :key="type"
-                    type="button"
-                    role="radio"
-                    :aria-checked="item.type === type"
-                    class="h-7 px-2.5 rounded-[6px] text-ui-cap font-medium"
-                    :class="item.type === type ? (type === 'finding' ? 'bg-ui-warn-soft text-ui-warn' : 'bg-ui-subtle text-ui-ink') : 'text-ui-muted hover:text-ui-ink'"
-                    @click="item.type = type"
-                  >
-                    {{ $t(`projects.uat.items.type.${type}`) }}
-                  </button>
-                </div>
-                <button
-                  type="button"
-                  class="ml-auto w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad"
-                  :title="$t('projects.uat.items.remove')"
-                  :aria-label="$t('projects.uat.items.remove')"
-                  @click="removeItem(index)"
-                >
-                  <Trash2 class="w-4 h-4" />
-                </button>
-              </div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                <UiInput v-model="item.feature" :label="$t('projects.uat.items.feature')" :placeholder="$t('projects.uat.items.featurePlaceholder')" />
-                <UiInput v-model="item.menu" :label="$t('projects.uat.items.menu')" :placeholder="$t('projects.uat.items.menuPlaceholder')" />
-              </div>
-              <UiSelect
-                v-if="form.locations.length"
-                :model-value="item.locationKey ?? ''"
-                :options="placeOptions"
-                :label="$t('projects.uat.locations.itemLocation')"
-                @update:model-value="(value) => (item.locationKey = value === '' ? null : Number(value))"
-              />
-              <UiInput v-model="item.description" :rows="2" :label="$t('projects.uat.items.description')" :placeholder="$t(`projects.uat.items.descriptionPlaceholder.${item.type}`)" />
-            </li>
-          </ol>
-          <div class="flex flex-wrap gap-2 mt-2.5">
-            <UiButton variant="secondary" size="sm" :icon="AlertCircle" @click="addItem('finding')">{{ $t("projects.uat.items.addFinding") }}</UiButton>
-            <UiButton variant="secondary" size="sm" :icon="StickyNote" @click="addItem('note')">{{ $t("projects.uat.items.addNote") }}</UiButton>
-          </div>
         </div>
 
         <div v-file-drop>
@@ -660,6 +667,45 @@ onMounted(async () => {
         <UiButton type="submit" form="project-uat-form" :loading="saving" class="flex-1 sm:flex-none">{{ $t("common.actions.save") }}</UiButton>
       </template>
     </UiModal>
+
+    <!-- Finding / note form -->
+    <UiModal :open="itemOpen" :title="itemForm.id ? $t('projects.uat.items.editTitle') : $t(itemForm.type === 'finding' ? 'projects.uat.items.addFinding' : 'projects.uat.items.addNote')" size="md" @update:open="(value) => !value && (itemOpen = false)">
+      <form id="project-uat-item-form" class="space-y-3.5" @submit.prevent="saveItem">
+        <div class="inline-flex rounded-ui-control border border-ui-line p-0.5" role="radiogroup" :aria-label="$t('projects.uat.items.typeLabel')">
+          <button
+            v-for="type in ['finding', 'note']"
+            :key="type"
+            type="button"
+            role="radio"
+            :aria-checked="itemForm.type === type"
+            class="h-8 px-3 rounded-[6px] text-ui-small font-medium"
+            :class="itemForm.type === type ? (type === 'finding' ? 'bg-ui-warn-soft text-ui-warn' : 'bg-ui-subtle text-ui-ink') : 'text-ui-muted hover:text-ui-ink'"
+            @click="itemForm.type = type"
+          >
+            {{ $t(`projects.uat.items.type.${type}`) }}
+          </button>
+        </div>
+        <UiSelect v-if="itemForm.id && itemPlaceOptions.length > 1" v-model="itemForm.locationId" :options="itemPlaceOptions" :label="$t('projects.uat.items.session')" />
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <UiInput v-model="itemForm.feature" :label="$t('projects.uat.items.feature')" :placeholder="$t('projects.uat.items.featurePlaceholder')" />
+          <UiInput v-model="itemForm.menu" :label="$t('projects.uat.items.menu')" :placeholder="$t('projects.uat.items.menuPlaceholder')" />
+        </div>
+        <UiInput v-model="itemForm.description" :rows="3" :label="$t('projects.uat.items.description')" :placeholder="$t(`projects.uat.items.descriptionPlaceholder.${itemForm.type || 'finding'}`)" />
+        <p v-if="itemError" class="text-ui-cap text-ui-bad">{{ itemError }}</p>
+      </form>
+      <template #footer>
+        <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="itemOpen = false">{{ $t("common.actions.cancel") }}</UiButton>
+        <UiButton type="submit" form="project-uat-item-form" :loading="saving" class="flex-1 sm:flex-none">{{ $t("common.actions.save") }}</UiButton>
+      </template>
+    </UiModal>
+
+    <ProjectExportModal
+      v-if="canExport && exportState.session"
+      v-model:open="exportState.open"
+      :project-id="projectId"
+      :project-name="projectName"
+      v-bind="exportProps"
+    />
 
     <UiConfirmDialog
       v-model:open="deleteOpen"
