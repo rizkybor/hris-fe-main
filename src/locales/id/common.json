@@ -201,5 +201,18 @@
     "allowed": "Yang diterima: {types}",
     "someSkipped": "{n} file dilewati karena jenisnya tidak didukung.",
     "oneOnly": "Hanya satu file yang dipakai: {name}"
+  },
+  "imageViewer": {
+    "title": "Pratinjau gambar",
+    "zoomIn": "Perbesar",
+    "zoomOut": "Perkecil",
+    "reset": "Ukuran awal",
+    "fullscreen": "Layar penuh",
+    "exitFullscreen": "Keluar layar penuh",
+    "original": "Buka gambar asli",
+    "previous": "Sebelumnya",
+    "next": "Berikutnya",
+    "failed": "Gambar tidak dapat dimuat",
+    "hint": "Scroll atau klik dua kali untuk zoom · geser untuk memindahkan · Esc untuk menutup"
   }
 }

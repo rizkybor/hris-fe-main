@@ -30,7 +30,7 @@ import { useProjectUatStore } from "@/stores/projectUat";
 import { useToastStore } from "@/stores/toast";
 import { can } from "@/helpers/permissionHelper";
 import { formatDate, todayLocal } from "@/utils/dateUtils";
-import { UiAlert, UiBadge, UiButton, UiConfirmDialog, UiEmpty, UiInput, UiModal, UiSelect, UiSpinner } from "@/components/ui";
+import { UiAlert, UiBadge, UiButton, UiConfirmDialog, UiEmpty, UiImageViewer, UiInput, UiModal, UiSelect, UiSpinner } from "@/components/ui";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { useI18n } from "vue-i18n";
 
@@ -161,6 +161,17 @@ const filesOf = (item) =>
     item.attachment && { key: "attachment", file: item.attachment, label: t("projects.uat.items.attachment") },
     item.photo && { key: "proof", file: item.photo, label: t("projects.uat.items.revisionProof") },
   ].filter(Boolean);
+
+// Images open in a viewer (zoom, full screen) instead of a new tab; an
+// item's issue photo and revision proof are browsed together.
+const viewer = ref({ open: false, index: 0, images: [] });
+const viewImages = (item, key) => {
+  const images = filesOf(item)
+    .filter((entry) => entry.file.is_image)
+    .map((entry) => ({ key: entry.key, url: entry.file.url, name: entry.file.name, label: entry.label }));
+  viewer.value = { open: true, images, index: Math.max(0, images.findIndex((image) => image.key === key)) };
+};
+const viewFile = (file, label) => (viewer.value = { open: true, index: 0, images: [{ url: file.url, name: file.name, label }] });
 
 const deleteItem = async (item) => {
   if (!(await alertModal.confirm(t("projects.uat.items.deleteConfirm"), { type: "danger", confirmText: t("common.actions.delete") }))) return;
@@ -665,9 +676,9 @@ onMounted(async () => {
                   <figure v-for="entry in filesOf(item)" :key="entry.key" class="min-w-0">
                     <figcaption class="text-ui-cap text-ui-muted mb-1">{{ entry.label }}</figcaption>
                     <div class="flex items-center gap-2">
-                      <a v-if="entry.file.is_image" :href="entry.file.url" target="_blank" rel="noopener" class="block w-16 h-16 rounded-ui-control overflow-hidden border border-ui-line shrink-0" :title="$t('projects.uat.items.openFile')">
+                      <button v-if="entry.file.is_image" type="button" class="ui-press block w-16 h-16 rounded-ui-control overflow-hidden border border-ui-line shrink-0 cursor-zoom-in hover:border-ui-line-strong focus:outline-none focus-visible:shadow-ui-focus" :title="$t('projects.uat.items.openFile')" :aria-label="`${entry.label}: ${entry.file.name || ''}`" @click="viewImages(item, entry.key)">
                         <img :src="cloudinaryThumb(entry.file.url, { width: 128, height: 128 })" :alt="entry.file.name || entry.label" class="w-full h-full object-cover" loading="lazy" />
-                      </a>
+                      </button>
                       <a v-else :href="entry.file.url" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 h-8 max-w-[220px] px-2.5 rounded-ui-control border border-ui-line text-ui-cap text-ui-ink hover:bg-ui-subtle" :title="$t('projects.uat.items.openFile')">
                         <FileText class="w-3.5 h-3.5 text-ui-muted shrink-0" /><span class="truncate">{{ entry.file.name }}</span>
                       </a>
@@ -844,7 +855,8 @@ onMounted(async () => {
           <label for="project-uat-item-file" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("projects.uat.items.attachmentLabel") }}</label>
           <div v-if="(itemForm.attachment && !itemForm.removeAttachment) || itemForm.file" class="flex items-center gap-2 mb-2 min-w-0">
             <FileText class="w-3.5 h-3.5 text-ui-muted shrink-0" />
-            <a v-if="!itemForm.file" :href="itemForm.attachment.url" target="_blank" rel="noopener" class="text-ui-small text-ui-accent hover:underline truncate">{{ itemForm.attachment.name }}</a>
+            <button v-if="!itemForm.file && itemForm.attachment.is_image" type="button" class="text-ui-small text-ui-accent hover:underline truncate" @click="viewFile(itemForm.attachment, $t('projects.uat.items.attachment'))">{{ itemForm.attachment.name }}</button>
+            <a v-else-if="!itemForm.file" :href="itemForm.attachment.url" target="_blank" rel="noopener" class="text-ui-small text-ui-accent hover:underline truncate">{{ itemForm.attachment.name }}</a>
             <span v-else class="text-ui-small text-ui-ink truncate">{{ itemForm.file.name }}</span>
             <button type="button" class="ml-auto inline-flex items-center gap-1 text-ui-cap text-ui-muted hover:text-ui-bad shrink-0" @click="itemForm.file ? (itemForm.file = null) : (itemForm.removeAttachment = true)">
               <X class="w-3.5 h-3.5" />{{ $t("projects.uat.items.removeFile") }}
@@ -953,5 +965,7 @@ onMounted(async () => {
       :loading="saving"
       @confirm="confirmDelete"
     />
+
+    <UiImageViewer v-model:open="viewer.open" v-model:index="viewer.index" :images="viewer.images" />
   </section>
 </template>
