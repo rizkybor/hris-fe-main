@@ -673,6 +673,12 @@
       "loadFailed": "The minutes data could not be loaded.",
       "viewFailed": "The minutes could not be opened.",
       "noLetterAccess": "You don't have access to create letters, so minutes can't be created."
+    },
+    "fold": {
+      "show": "Show session",
+      "hide": "Hide session",
+      "showAll": "Expand all sessions",
+      "hideAll": "Collapse all sessions"
     }
   },
   "completion": {
