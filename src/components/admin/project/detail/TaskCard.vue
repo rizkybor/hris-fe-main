@@ -44,6 +44,7 @@ const priorityTone = computed(() => PRIORITY_TONES[props.task.priority?.toLowerC
 
     <!-- Labels/Tags Row -->
     <div class="flex items-center gap-1.5 mt-2.5 flex-wrap">
+      <UiBadge v-if="task.uat_item_id" tone="accent" :title="$t('projects.tasks.uat.fromUat')">{{ $t("projects.tasks.uat.badge") }}</UiBadge>
       <UiBadge :tone="priorityTone" class="capitalize">{{ PRIORITY_TONES[task.priority?.toLowerCase()] ? $t(`projects.priority.${task.priority.toLowerCase()}`) : task.priority }}</UiBadge>
       <span
         v-if="task.type"
