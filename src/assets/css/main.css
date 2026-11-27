@@ -3832,6 +3832,10 @@ button:disabled,
   background-color: rgb(var(--ui-ok-soft) / var(--tw-bg-opacity, 1));
 }
 
+.bg-ui-ok-soft\/40 {
+  background-color: rgb(var(--ui-ok-soft) / 0.4);
+}
+
 .bg-ui-ok\/40 {
   background-color: rgb(var(--ui-ok) / 0.4);
 }
@@ -6214,14 +6218,6 @@ html {
   font-weight: 600;
   text-align: center;
   pointer-events: none;
-}
-
-.marker\:text-ui-faint *::marker {
-  color: rgb(var(--ui-faint) );
-}
-
-.marker\:text-ui-faint::marker {
-  color: rgb(var(--ui-faint) );
 }
 
 .file\:mr-3::file-selector-button {
