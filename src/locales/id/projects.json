@@ -584,7 +584,17 @@
       "findingAdded": "Temuan ditambahkan",
       "noteAdded": "Catatan ditambahkan",
       "deleted": "Temuan/catatan dihapus",
-      "deleteConfirm": "Hapus temuan/catatan ini? Foto buktinya ikut terhapus."
+      "deleteConfirm": "Hapus temuan/catatan ini? Foto buktinya ikut terhapus.",
+      "attachment": "Lampiran",
+      "revisionProof": "Hasil revisi",
+      "openFile": "Buka file",
+      "uploadRevision": "Upload hasil revisi",
+      "replaceRevision": "Ganti hasil revisi",
+      "uploadRevisionHint": "Opsional: foto/screenshot atau PDF hasil revisi, maks. 2 MB",
+      "attachmentLabel": "Lampiran (opsional)",
+      "fileHint": "Foto/screenshot atau PDF, maks. 2 MB. Foto diperkecil otomatis.",
+      "removeFile": "Hapus",
+      "fileTooLarge": "File terlalu besar. Maksimal 2 MB."
     },
     "locations": {
       "title": "Sesi",
@@ -622,6 +632,31 @@
         "report": "Laporan Hasil Revisi UAT ke-{n}",
         "reportHint": "Status revisi setiap temuan & catatan beserta foto bukti"
       }
+    },
+    "ba": {
+      "generate": "Generate Berita Acara",
+      "refresh": "Perbarui Berita Acara",
+      "view": "Lihat Berita Acara",
+      "number": "Berita Acara No. {number}",
+      "title": "Berita Acara UAT ke-{n}",
+      "description": "Surat Berita Acara resmi (kode BA, bernomor) dengan tanda tangan kedua pihak. Isinya diambil dari data UAT saat ini.",
+      "refreshHint": "Berita Acara No. {number} akan diperbarui dengan data UAT terbaru (nomor tetap sama).",
+      "date": "Tanggal Berita Acara",
+      "firstParty": "Pihak Pertama — PT. Jendela Cakra Digital",
+      "secondParty": "Pihak Kedua — Klien",
+      "clientName": "Nama perusahaan klien",
+      "clientSignatory": "Nama penandatangan klien",
+      "clientTitle": "Jabatan penandatangan klien",
+      "signatoryName": "Nama penandatangan",
+      "signatoryTitle": "Jabatan",
+      "useSignature": "Bubuhkan TTD + stempel",
+      "signatory": "Penandatangan",
+      "save": "Generate & lihat",
+      "clientRequired": "Isi nama perusahaan klien.",
+      "generated": "Berita Acara dibuat",
+      "loadFailed": "Data Berita Acara gagal dimuat.",
+      "viewFailed": "Berita Acara gagal dibuka.",
+      "noLetterAccess": "Anda belum punya akses membuat Surat, jadi Berita Acara tidak bisa dibuat."
     }
   },
   "completion": {

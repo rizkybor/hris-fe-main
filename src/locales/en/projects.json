@@ -584,7 +584,17 @@
       "findingAdded": "Finding added",
       "noteAdded": "Note added",
       "deleted": "Finding/note deleted",
-      "deleteConfirm": "Delete this finding/note? Its proof photo is deleted too."
+      "deleteConfirm": "Delete this finding/note? Its proof photo is deleted too.",
+      "attachment": "Attachment",
+      "revisionProof": "Revision result",
+      "openFile": "Open file",
+      "uploadRevision": "Upload revision",
+      "replaceRevision": "Replace revision",
+      "uploadRevisionHint": "Optional: a photo/screenshot or PDF of the revision, max 2 MB",
+      "attachmentLabel": "Attachment (optional)",
+      "fileHint": "Photo/screenshot or PDF, max 2 MB. Photos are shrunk automatically.",
+      "removeFile": "Remove",
+      "fileTooLarge": "The file is too large. Maximum 2 MB."
     },
     "locations": {
       "title": "Sessions",
@@ -622,6 +632,31 @@
         "report": "UAT {n} revision report",
         "reportHint": "Revision status of every finding & note with proof photos"
       }
+    },
+    "ba": {
+      "generate": "Generate minutes (BA)",
+      "refresh": "Refresh minutes (BA)",
+      "view": "View minutes (BA)",
+      "number": "Minutes (BA) No. {number}",
+      "title": "UAT {n} minutes (Berita Acara)",
+      "description": "An official, numbered minutes letter (code BA) signed by both parties, built from the UAT's current data.",
+      "refreshHint": "Minutes No. {number} will be refreshed with the latest UAT data (same number).",
+      "date": "Date",
+      "firstParty": "First party — PT. Jendela Cakra Digital",
+      "secondParty": "Second party — Client",
+      "clientName": "Client company name",
+      "clientSignatory": "Client signatory",
+      "clientTitle": "Client signatory title",
+      "signatoryName": "Signatory name",
+      "signatoryTitle": "Title",
+      "useSignature": "Add signature + stamp",
+      "signatory": "Signatory",
+      "save": "Generate & view",
+      "clientRequired": "Enter the client company name.",
+      "generated": "Minutes created",
+      "loadFailed": "The minutes data could not be loaded.",
+      "viewFailed": "The minutes could not be opened.",
+      "noLetterAccess": "You don't have access to create letters, so minutes can't be created."
     }
   },
   "completion": {

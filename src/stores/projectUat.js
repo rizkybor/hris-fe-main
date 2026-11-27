@@ -57,12 +57,28 @@ export const useProjectUatStore = defineStore("projectUat", {
     },
 
     // Findings / notes are added, edited and deleted straight from a session.
-    addItem(projectId, locationId, item) {
-      return this.write(() => axiosInstance.post(`/projects/${projectId}/uat/locations/${locationId}/items`, item));
+    // payload: FormData (may carry an attachment file).
+    addItem(projectId, locationId, payload) {
+      return this.write(() => axiosInstance.post(`/projects/${projectId}/uat/locations/${locationId}/items`, payload, { headers: { "Content-Type": "multipart/form-data" } }));
     },
 
-    updateItem(projectId, itemId, item) {
-      return this.write(() => axiosInstance.put(`/projects/${projectId}/uat/items/${itemId}`, item));
+    updateItem(projectId, itemId, payload) {
+      payload.append("_method", "PUT");
+      return this.write(() => axiosInstance.post(`/projects/${projectId}/uat/items/${itemId}`, payload, { headers: { "Content-Type": "multipart/form-data" } }));
+    },
+
+    // Berita Acara: a numbered BA letter per UAT (generated / refreshed).
+    async generateBeritaAcara(projectId, sessionId, data) {
+      this.saving = true;
+      try {
+        const { data: response } = await axiosInstance.post(`/projects/${projectId}/uat/sessions/${sessionId}/berita-acara`, data);
+        this.uat = response.data.uat;
+        return response.data.letter;
+      } catch (error) {
+        throw new Error(errorMessage(error));
+      } finally {
+        this.saving = false;
+      }
     },
 
     deleteItem(projectId, itemId) {
