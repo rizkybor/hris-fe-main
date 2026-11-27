@@ -144,7 +144,8 @@
     },
     "tasks": {
       "title": "Tugas",
-      "openBoard": "Buka papan"
+      "openBoard": "Buka papan",
+      "uatSeparate": "Tidak termasuk {open} temuan/catatan UAT yang belum direvisi dan {done} yang sudah — dihitung terpisah."
     },
     "team": {
       "profile": "Profil",
@@ -157,7 +158,9 @@
       "memberCount": "{n} Anggota",
       "teamLeader": "Ketua Tim",
       "noTeamLeader": "Tanpa Ketua"
-    }
+    },
+    "uatRevision": "Revisi UAT: {done}/{total} selesai",
+    "uatRevisionHint": "Temuan & catatan UAT dihitung terpisah dari progres pengembangan"
   },
   "inspect": {
     "title": "Inspeksi Proyek",
@@ -379,6 +382,13 @@
       "sortPriority": "Prioritas",
       "task": "Tugas",
       "due": "Jatuh tempo"
+    },
+    "uat": {
+      "badge": "UAT",
+      "fromUat": "Task ini dibuat otomatis dari temuan/catatan UAT. Judul dan deskripsinya mengikuti UAT; statusnya hanya To Do atau Done (Done = sudah direvisi).",
+      "openInUat": "Buka di tab UAT",
+      "onlyTodoDone": "Task dari UAT hanya bisa dipindah ke To Do atau Done.",
+      "deleteInUat": "Hapus temuan/catatannya di tab UAT."
     }
   },
   "comments": {

@@ -1,6 +1,7 @@
 <script setup>
 import { useProjectStore } from "@/stores/project";
 import { useTaskStore } from "@/stores/task";
+import { useProjectUatStore } from "@/stores/projectUat";
 import { useAuthStore } from "@/stores/auth";
 import { storeToRefs } from "pinia";
 import {
@@ -97,6 +98,7 @@ const handleExportProgress = () => {
 
 const taskStore = useTaskStore();
 const { tasks: projectTasks } = storeToRefs(taskStore);
+const uatStore = useProjectUatStore();
 
 const project = ref({});
 
@@ -130,8 +132,17 @@ const currentProjectTasks = computed(() =>
   projectTasks.value.filter((task) => String(task.project_id) === String(id))
 );
 
+// Development tasks: what the progress counts. Tasks mirrored from UAT
+// findings/notes are tracked apart (revised vs. still open).
+const devTasks = computed(() => currentProjectTasks.value.filter((task) => !task.uat_item_id));
+const uatRevision = computed(() => {
+  const tasks = currentProjectTasks.value.filter((task) => task.uat_item_id);
+  const done = tasks.filter((task) => task.status === "done").length;
+  return { total: tasks.length, done, percent: tasks.length ? Math.round((done / tasks.length) * 100) : 0 };
+});
+
 const projectProgress = computed(() => {
-  const tasks = currentProjectTasks.value;
+  const tasks = devTasks.value;
   if (tasks.length === 0) return project.value.progress ?? 0;
 
   const completed = tasks.filter((task) => task.status === "done").length;
@@ -195,7 +206,7 @@ const canMarkCompleted = computed(() => can("project-edit") && ["active", "on_ho
 const canReactivate = computed(() => can("project-edit") && project.value.status === "completed");
 const statusDialog = ref({ open: false, target: null });
 const statusSaving = ref(false);
-const openTaskCount = computed(() => currentProjectTasks.value.filter((task) => !["done", "cancelled"].includes(task.status)).length);
+const openTaskCount = computed(() => devTasks.value.filter((task) => !["done", "cancelled"].includes(task.status)).length);
 const statusDialogMessage = computed(() => {
   if (statusDialog.value.target !== "completed") return t("projects.completion.reactivateMessage");
   const lines = [t("projects.completion.completeMessage")];
@@ -321,7 +332,7 @@ const priorityLabel = (priority) =>
   ["low", "medium", "high", "urgent"].includes(priority)
     ? t(`projects.priority.${priority}`)
     : capitalize(priority);
-const taskCount = (status) => currentProjectTasks.value.filter((task) => task.status === status).length;
+const taskCount = (status) => devTasks.value.filter((task) => task.status === status).length;
 
 const hasAccessLinks = computed(() => {
   const p = project.value;
@@ -341,6 +352,15 @@ const activeTab = computed({
   get: () => tabState.tab,
   set: (value) => (tabState.tab = value),
 });
+// UAT findings/notes become board tasks (and the board checks them off):
+// whichever side changed, the other one reloads when it's next looked at.
+watch(
+  () => tabState.tab,
+  (tab) => {
+    if (tab !== "uat" && taskStore.tasksStale) taskStore.fetchProjectTasks(id);
+    if (tab === "uat" && uatStore.stale) uatStore.fetch(id);
+  }
+);
 // Each tab mounts (and fetches) the first time it is opened, then stays.
 const visitedTabs = useVisitedTabs(() => tabState.tab);
 const { scrollRef: tabScrollRef, showRightFade: showTabRightFade, updateFade: updateTabFade } = useScrollFade();
@@ -455,6 +475,15 @@ onMounted(async () => {
               <p class="text-ui-cap text-ui-faint mt-1 truncate">
                 {{ projectHealth?.expectedProgress != null ? $t("projects.detail.expectedByNow", { n: projectHealth.expectedProgress }) : $t("projects.detail.projectCompletion") }}
               </p>
+              <button
+                v-if="uatRevision.total"
+                type="button"
+                class="block text-ui-cap text-ui-muted hover:text-ui-ink mt-0.5 truncate tabular-nums"
+                :title="$t('projects.detail.uatRevisionHint')"
+                @click="activeTab = 'uat'"
+              >
+                {{ $t("projects.detail.uatRevision", { done: uatRevision.done, total: uatRevision.total }) }}
+              </button>
             </div>
             <UiButton v-if="canMarkCompleted" :icon="CheckCircle2" class="w-full md:w-auto" @click="askStatusChange('completed')">
               {{ $t("projects.completion.markCompleted") }}
@@ -561,6 +590,9 @@ onMounted(async () => {
             <p class="text-ui-cap text-ui-muted mt-1.5">
               {{ projectHealth?.expectedProgress != null ? $t("projects.detail.expectedByNow", { n: projectHealth.expectedProgress }) : $t("projects.detail.projectCompletion") }}
             </p>
+            <button v-if="uatRevision.total" type="button" class="text-ui-cap text-ui-muted hover:text-ui-ink mt-0.5 tabular-nums" @click="activeTab = 'uat'">
+              {{ $t("projects.detail.uatRevision", { done: uatRevision.done, total: uatRevision.total }) }}
+            </button>
           </div>
 
           <!-- Project Information -->
@@ -663,6 +695,9 @@ onMounted(async () => {
                 <p class="text-ui-h2 text-ui-ink tabular-nums mt-0.5">{{ taskCount(tile.status) }}</p>
               </button>
             </div>
+            <p v-if="uatRevision.total" class="text-ui-cap text-ui-muted mt-3">
+              {{ $t("projects.detail.tasks.uatSeparate", { open: uatRevision.total - uatRevision.done, done: uatRevision.done }) }}
+            </p>
           </UiCard>
 
           <!-- Project Inspect (optional, Project Leader-only note) -->
@@ -783,7 +818,7 @@ onMounted(async () => {
 
       <!-- Board Tab (progress stays live from the task store either way) -->
       <div v-if="visitedTabs.has('board')" v-show="activeTab === 'board'">
-        <TaskBoard />
+        <TaskBoard @open-uat="activeTab = 'uat'" />
       </div>
 
       <!-- UAT Tab: rounds agreed with the client and each round held -->

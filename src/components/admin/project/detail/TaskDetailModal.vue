@@ -4,7 +4,7 @@
 // changed, the title/type/description when the field is left. The change
 // shows at once and is undone with a toast if the save fails.
 import { ref, computed, watch } from "vue";
-import { X, Calendar, Tag, AlignLeft, Trash2, Upload, Eye, Check, Loader2, Image as ImageIcon } from "lucide-vue-next";
+import { X, Calendar, Tag, AlignLeft, Trash2, Upload, Eye, Check, Loader2, ClipboardCheck, ArrowRight, Image as ImageIcon } from "lucide-vue-next";
 import TaskComments from "./TaskComments.vue";
 import AssigneePicker from "./AssigneePicker.vue";
 import TaskPanel from "./TaskPanel.vue";
@@ -26,7 +26,13 @@ const PRIORITY_OPTIONS = computed(() => ["low", "medium", "high", "urgent"].map(
 const TASK_STATUS_KEYS = { todo: "todo", in_progress: "inProgress", review: "review", done: "done", cancelled: "cancelled" };
 const taskStatusLabel = (status) =>
   TASK_STATUS_KEYS[status] ? t(`projects.taskStatus.${TASK_STATUS_KEYS[status]}`) : (status || "").replace("_", " ");
-const STATUS_OPTIONS = computed(() => Object.keys(TASK_STATUS_KEYS).map((value) => ({ value, label: taskStatusLabel(value), tone: STATUS_TONES[value] })));
+// A task from UAT only reads To Do / Done (Done = revised in UAT).
+const UAT_STATUSES = ["todo", "done"];
+const STATUS_OPTIONS = computed(() =>
+  Object.keys(TASK_STATUS_KEYS)
+    .filter((value) => !fromUat.value || UAT_STATUSES.includes(value))
+    .map((value) => ({ value, label: taskStatusLabel(value), tone: STATUS_TONES[value] }))
+);
 const priorityLabel = (priority) => (PRIORITY_TONES[priority] ? t(`projects.priority.${priority}`) : priority);
 const fieldClass =
   "w-full bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus";
@@ -39,11 +45,14 @@ const props = defineProps({
   // { type, color }[] -- every task type already used in this project.
   typeSuggestions: { type: Array, default: () => [] },
 });
-const emit = defineEmits(["close", "deleted", "updated"]);
+const emit = defineEmits(["close", "deleted", "updated", "open-uat"]);
 
 const taskStore = useTaskStore();
 const alertModal = useAlertModalStore();
 const editable = can("task-edit");
+// Mirrors a UAT finding/note: title, type and description follow UAT.
+const fromUat = computed(() => !!props.task?.uat_item_id);
+const textEditable = computed(() => editable && !fromUat.value);
 
 // Drafts for the typed fields, refreshed from the task unless being edited.
 const name = ref("");
@@ -178,7 +187,7 @@ const closePanel = () => emit("close");
     <template #header>
       <div v-if="task" class="flex-1 min-w-0">
         <input
-          v-if="editable"
+          v-if="textEditable"
           v-model="name"
           type="text"
           :aria-label="$t('projects.tasks.form.name')"
@@ -205,7 +214,7 @@ const closePanel = () => emit("close");
         </div>
       </div>
       <button
-        v-if="task && can('task-delete')"
+        v-if="task && can('task-delete') && !fromUat"
         type="button"
         class="w-9 h-9 shrink-0 inline-flex items-center justify-center rounded-ui-control text-ui-faint hover:text-ui-bad hover:bg-ui-bad-soft"
         :title="$t('projects.tasks.detail.delete')"
@@ -217,6 +226,16 @@ const closePanel = () => emit("close");
     </template>
 
     <div v-if="task" class="space-y-5">
+      <!-- From UAT: where it comes from and where it is edited -->
+      <div v-if="fromUat" class="flex gap-3 rounded-ui-control border border-ui-line bg-ui-subtle px-3.5 py-3">
+        <ClipboardCheck class="w-4 h-4 mt-0.5 shrink-0 text-ui-muted" />
+        <div class="min-w-0">
+          <p class="text-ui-small text-ui-text">{{ $t("projects.tasks.uat.fromUat") }}</p>
+          <button type="button" class="inline-flex items-center gap-1 mt-1.5 text-ui-small font-medium text-ui-accent hover:underline" @click="emit('open-uat')">
+            {{ $t("projects.tasks.uat.openInUat") }} <ArrowRight class="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
       <!-- Key facts, same order as the new-task form: type, due date, assignees, then status / priority -->
       <div class="space-y-5 pb-5 border-b border-ui-line">
         <!-- Type & colour -->
@@ -224,7 +243,7 @@ const closePanel = () => emit("close");
           <h3 class="flex items-center gap-1.5 text-ui-over uppercase text-ui-muted mb-2">
             <Tag class="w-3.5 h-3.5" /> {{ $t("projects.tasks.form.type") }}
           </h3>
-          <template v-if="editable">
+          <template v-if="textEditable">
             <input
               v-model="type"
               type="text"
@@ -344,7 +363,7 @@ const closePanel = () => emit("close");
         <h3 class="flex items-center gap-1.5 text-ui-over uppercase text-ui-muted mb-2">
           <AlignLeft class="w-3.5 h-3.5" /> {{ $t("common.labels.description") }}
         </h3>
-        <div v-if="editable" @focusin="focused = 'description'" @focusout="commitDescription">
+        <div v-if="textEditable" @focusin="focused = 'description'" @focusout="commitDescription">
           <UiInput v-model="description" :rows="4" :placeholder="$t('projects.tasks.detail.descriptionPlaceholder')" :aria-label="$t('common.labels.description')" />
         </div>
         <div v-else class="bg-ui-subtle rounded-ui-control px-3.5 py-3 text-ui-body text-ui-text leading-relaxed min-h-[72px] whitespace-pre-line break-words">

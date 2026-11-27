@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { axiosInstance } from "@/plugins/axios";
 import { errorMessage } from "@/helpers/errorHelper";
+import { useTaskStore } from "@/stores/task";
 
 // UAT of one project: the rounds agreed with the client and each round held.
 // Every write returns the whole UAT summary, which replaces `uat`.
@@ -12,6 +13,8 @@ export const useProjectUatStore = defineStore("projectUat", {
     projectId: null,
     loading: false,
     saving: false,
+    // A UAT task was moved on the board (its item was checked off there).
+    stale: false,
   }),
 
   actions: {
@@ -24,9 +27,14 @@ export const useProjectUatStore = defineStore("projectUat", {
       try {
         const { data } = await axiosInstance.get(`/projects/${projectId}/uat`);
         this.uat = data.data;
+        this.stale = false;
       } finally {
         this.loading = false;
       }
+    },
+
+    markStale(projectId) {
+      if (String(this.projectId) === String(projectId)) this.stale = true;
     },
 
     async write(request) {
@@ -34,6 +42,8 @@ export const useProjectUatStore = defineStore("projectUat", {
       try {
         const { data } = await request();
         this.uat = data.data;
+        // Findings/notes are mirrored as board tasks.
+        useTaskStore().markTasksStale(this.projectId);
         return data.data;
       } catch (error) {
         throw new Error(errorMessage(error));
