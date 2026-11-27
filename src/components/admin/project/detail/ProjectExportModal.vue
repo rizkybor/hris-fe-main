@@ -5,6 +5,7 @@ import { axiosInstance } from "@/plugins/axios";
 import { useToastStore } from "@/stores/toast";
 import { UiAlert, UiButton, UiInput, UiModal, UiSelect, UiSwitch } from "@/components/ui";
 import RichTextEditor from "@/components/common/RichTextEditor.vue";
+import SignatoryPicker from "./SignatoryPicker.vue";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { formatDate } from "@/utils/dateUtils";
 import { bareName } from "@/utils/personName";
@@ -54,16 +55,10 @@ const letters = computed(() => options.value?.letters || []);
 // People whose signature scan (with the company stamp) is on file.
 const signatories = computed(() => options.value?.signatories || []);
 const sameName = (a, b) => !!a && !!b && bareName(a).toLowerCase() === bareName(b).toLowerCase();
-const signatoryKey = ref("");
-const pickSignatory = (person) => {
-  signatoryKey.value = person.key;
-  form.value.signatory_name = person.name;
-  form.value.signatory_title = person.title || form.value.signatory_title;
-};
-const setSigned = (signed) => {
-  form.value.use_signature = signed;
-  if (signed && !signatoryKey.value && signatories.value.length) pickSignatory(signatories.value[0]);
-};
+const onFile = (people, name) => people.some((person) => sameName(person.name, name));
+// UAT documents: who signs "Disiapkan oleh" on the report itself.
+const reportSigner = ref(null);
+const reportSignatories = computed(() => options.value?.report?.signatories || []);
 const canCreate = computed(() => !!options.value?.can_create);
 const canReuse = computed(() => !!options.value?.can_reuse && letters.value.length > 0);
 const coverAvailable = computed(() => canCreate.value || canReuse.value);
@@ -93,9 +88,11 @@ const load = async () => {
       signatory_title: draft.signatory_title || "",
       use_signature: !!draft.use_signature,
     };
-    const match = signatories.value.find((person) => sameName(person.name, form.value.signatory_name));
-    signatoryKey.value = match?.key || "";
-    if (form.value.use_signature && !match) form.value.use_signature = false;
+    if (form.value.use_signature && !onFile(signatories.value, form.value.signatory_name)) form.value.use_signature = false;
+    const report = data.data.report;
+    reportSigner.value = report
+      ? { signatory_name: report.signatory_name || "", signatory_title: report.signatory_title || "", use_signature: !!report.use_signature }
+      : null;
     mode.value = canCreate.value ? "new" : "existing";
     letterId.value = letters.value[0]?.id || "";
   } catch {
@@ -145,6 +142,10 @@ const download = (blob, filename) => {
 const submit = async () => {
   formError.value = "";
   let payload = { cover: "none" };
+  const signer = reportSigner.value;
+  if (signer?.use_signature && !onFile(reportSignatories.value, signer.signatory_name)) {
+    return (formError.value = t("projects.export.signature.pick"));
+  }
   if (withCover.value) {
     if (mode.value === "existing") {
       if (!letterId.value) return (formError.value = t("projects.export.pickLetter"));
@@ -153,13 +154,16 @@ const submit = async () => {
       if (!form.value.division_code_id || !form.value.subject?.trim() || !form.value.body?.trim()) {
         return (formError.value = t("projects.export.fillRequired"));
       }
-      if (form.value.use_signature && !signatoryKey.value) return (formError.value = t("projects.export.signature.pick"));
+      if (form.value.use_signature && !onFile(signatories.value, form.value.signatory_name)) return (formError.value = t("projects.export.signature.pick"));
       payload = { cover: "new", ...form.value };
     }
   }
   exporting.value = true;
   try {
-    const response = await axiosInstance.post(exportEndpoint.value, { ...payload, ...props.extra }, { responseType: "blob" });
+    const reportFields = signer
+      ? { report_signatory_name: signer.signatory_name, report_signatory_title: signer.signatory_title, report_use_signature: signer.use_signature }
+      : {};
+    const response = await axiosInstance.post(exportEndpoint.value, { ...payload, ...reportFields, ...props.extra }, { responseType: "blob" });
     const number = response.headers["x-letter-number"];
     const base = (props.fileBase || `${props.projectName || "project"}-progress-report`).replace(/[\\/]/g, "-");
     download(response.data, withCover.value ? `${base}-surat-pengantar.pdf` : `${base}.pdf`);
@@ -205,6 +209,14 @@ const submit = async () => {
           </div>
         </div>
       </div>
+
+      <!-- UAT documents: who signs the report ("Disiapkan oleh") -->
+      <fieldset v-if="reportSigner" class="rounded-ui-control border border-ui-line p-4 space-y-1">
+        <legend class="px-1 text-ui-small font-medium text-ui-ink">{{ $t("projects.export.reportSigner.title") }}</legend>
+        <p class="text-ui-cap text-ui-muted pb-2">{{ $t("projects.export.reportSigner.hint") }}</p>
+        <SignatoryPicker v-model="reportSigner" :signatories="reportSignatories" :label="$t('projects.export.signature.label')" id-prefix="report" />
+        <p v-if="!reportSignatories.length" class="text-ui-cap text-ui-muted pt-1">{{ $t("projects.export.reportSigner.noSignatures") }}</p>
+      </fieldset>
 
       <template v-if="withCover">
         <!-- New or earlier letter -->
@@ -259,54 +271,7 @@ const submit = async () => {
             <RichTextEditor v-model="form.body" />
           </div>
           <!-- Signature: none (name only), or a scan with the company stamp -->
-          <div>
-            <p class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("projects.export.signature.label") }}</p>
-            <div class="grid grid-cols-2 gap-2" role="radiogroup">
-              <button
-                v-for="opt in [false, true]"
-                :key="String(opt)"
-                type="button"
-                role="radio"
-                :aria-checked="form.use_signature === opt"
-                :disabled="opt && !signatories.length"
-                class="ui-press rounded-ui-control border px-3 py-2.5 text-ui-small font-medium text-center disabled:opacity-50 disabled:cursor-not-allowed"
-                :class="form.use_signature === opt ? 'border-ui-accent bg-ui-accent-soft text-ui-accent' : 'border-ui-line text-ui-text hover:bg-ui-subtle'"
-                @click="setSigned(opt)"
-              >
-                {{ opt ? $t("projects.export.signature.with") : $t("projects.export.signature.without") }}
-              </button>
-            </div>
-          </div>
-
-          <div v-if="form.use_signature">
-            <p class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("projects.export.signature.who") }} <span class="text-ui-bad">*</span></p>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5" role="radiogroup">
-              <label
-                v-for="person in signatories"
-                :key="person.key"
-                class="ui-press cursor-pointer rounded-ui-control border overflow-hidden transition-colors"
-                :class="signatoryKey === person.key ? 'border-ui-accent shadow-ui-focus' : 'border-ui-line hover:border-ui-line-strong'"
-              >
-                <input type="radio" class="sr-only" :checked="signatoryKey === person.key" @change="pickSignatory(person)" />
-                <div class="h-20 bg-white border-b border-ui-line flex items-center justify-center p-1.5">
-                  <img :src="person.preview" alt="" class="max-h-full max-w-full object-contain" />
-                </div>
-                <div class="px-3 py-2 bg-ui-subtle flex items-start justify-between gap-2">
-                  <div class="min-w-0">
-                    <p class="text-ui-small font-medium text-ui-ink truncate">{{ person.name }}</p>
-                    <p class="text-ui-cap text-ui-muted truncate">{{ person.title || "—" }}</p>
-                  </div>
-                  <CheckCircle2 v-if="signatoryKey === person.key" class="w-4 h-4 text-ui-accent shrink-0 mt-0.5" />
-                </div>
-              </label>
-            </div>
-            <p class="text-ui-cap text-ui-muted mt-1.5">{{ $t("projects.export.signature.stampHint") }}</p>
-            <UiInput v-model="form.signatory_title" :label="$t('projects.export.signatoryTitle')" class="mt-3" />
-          </div>
-          <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <UiInput v-model="form.signatory_name" :label="$t('projects.export.signatoryName')" />
-            <UiInput v-model="form.signatory_title" :label="$t('projects.export.signatoryTitle')" />
-          </div>
+          <SignatoryPicker v-model="form" :signatories="signatories" id-prefix="cover" />
           <p class="text-ui-cap text-ui-muted">{{ $t("projects.export.newHint") }}</p>
         </template>
       </template>
