@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import {
   ClipboardCheck,
@@ -30,7 +30,7 @@ import { useProjectUatStore } from "@/stores/projectUat";
 import { useToastStore } from "@/stores/toast";
 import { can } from "@/helpers/permissionHelper";
 import { formatDate, todayLocal } from "@/utils/dateUtils";
-import { UiAlert, UiBadge, UiButton, UiConfirmDialog, UiEmpty, UiInput, UiModal, UiSelect } from "@/components/ui";
+import { UiAlert, UiBadge, UiButton, UiConfirmDialog, UiEmpty, UiInput, UiModal, UiSelect, UiSpinner } from "@/components/ui";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { useI18n } from "vue-i18n";
 
@@ -245,6 +245,58 @@ const exportProps = computed(() => {
     fileBase: `${kind === "revision" ? "Laporan-Revisi-UAT" : "Laporan-UAT"}-${n}-${props.projectName || "proyek"}`,
   };
 });
+
+// ---- Long sessions: the UAT carries each session's first 5 items; the list
+// scrolls inside its box and the next ones are fetched near its end. ----
+const FIRST_PAGE = 5;
+const PAGE = 10;
+const more = ref({}); // location id -> { items, loading }
+const itemsOf = (place) => {
+  const extra = more.value[place.id]?.items || [];
+  const seen = new Set(place.items.map((item) => item.id));
+  return [...place.items, ...extra.filter((item) => !seen.has(item.id))];
+};
+const hasMore = (place) => itemsOf(place).length < (place.items_total ?? place.items.length);
+const fetchItems = (place, offset, limit) =>
+  axiosInstance.get(`/projects/${props.projectId}/uat/locations/${place.id}/items`, { params: { offset, limit } }).then(({ data }) => data.data.items);
+const loadMore = async (place) => {
+  const state = more.value[place.id] || { items: [] };
+  if (state.loading || !hasMore(place)) return;
+  more.value = { ...more.value, [place.id]: { ...state, loading: true } };
+  try {
+    const items = await fetchItems(place, itemsOf(place).length, PAGE);
+    more.value = { ...more.value, [place.id]: { items: [...state.items, ...items], loading: false } };
+  } catch {
+    more.value = { ...more.value, [place.id]: { ...state, loading: false } };
+    toast.error(t("projects.uat.items.loadMoreFailed"));
+  }
+};
+// After any change the UAT comes back with only the first page: reload what
+// was already showing (the old rows stay until the fresh ones arrive).
+watch(
+  () => uat.value,
+  async (value) => {
+    const places = value.sessions.flatMap((session) => session.locations || []);
+    const refreshed = {};
+    await Promise.all(
+      places.map(async (place) => {
+        const count = more.value[place.id]?.items.length;
+        if (!count) return;
+        try {
+          refreshed[place.id] = { items: await fetchItems(place, place.items.length, Math.min(count, 50)), loading: false };
+        } catch {
+          refreshed[place.id] = more.value[place.id];
+        }
+      })
+    );
+    more.value = refreshed;
+  }
+);
+// Scrolling near the end of a session's box fetches the next page.
+const onListScroll = (event, place) => {
+  const el = event.target;
+  if (el.scrollTop + el.clientHeight >= el.scrollHeight - 80) loadMore(place);
+};
 
 // ---- Check-off and proof photo, right from the round's card ----
 const busyItem = ref(null);
@@ -586,11 +638,18 @@ onMounted(async () => {
               <span v-if="placeLine(place)" class="text-ui-cap text-ui-muted tabular-nums">{{ placeLine(place) }}</span>
               <span v-if="place.participants" class="inline-flex items-center gap-1 text-ui-cap text-ui-muted min-w-0" :title="place.participants"><Users class="w-3 h-3 shrink-0" /><span class="truncate">{{ place.participants }}</span></span>
               <span class="sm:ml-auto text-ui-cap text-ui-muted tabular-nums">
-                {{ $t("projects.uat.findingsCount", { n: place.findings_count }, place.findings_count) }} · {{ $t("projects.uat.notesCount", { n: place.notes_count }, place.notes_count) }}<template v-if="place.items.length"> · <span :class="place.resolved_count === place.items.length ? 'text-ui-ok' : ''">{{ $t("projects.uat.items.resolvedCount", { done: place.resolved_count, total: place.items.length }) }}</span></template>
+                {{ $t("projects.uat.findingsCount", { n: place.findings_count }, place.findings_count) }} · {{ $t("projects.uat.notesCount", { n: place.notes_count }, place.notes_count) }}<template v-if="place.items.length"> · <span :class="place.resolved_count === (place.items_total ?? place.items.length) ? 'text-ui-ok' : ''">{{ $t("projects.uat.items.resolvedCount", { done: place.resolved_count, total: place.items_total ?? place.items.length }) }}</span></template>
               </span>
             </header>
-            <ol v-if="place.items.length" class="divide-y divide-ui-line border-t border-ui-line">
-            <li v-for="(item, index) in place.items" :key="item.id" class="flex items-start gap-3 px-3 py-2.5" :class="item.is_resolved ? 'bg-ui-ok-soft/40' : ''">
+            <div
+              v-if="place.items.length"
+              class="border-t border-ui-line"
+              :class="(place.items_total ?? 0) > FIRST_PAGE ? 'max-h-[360px] overflow-y-auto overscroll-contain' : ''"
+              @scroll.passive="onListScroll($event, place)"
+              :aria-label="$t('projects.uat.items.listLabel', { n: place.items_total ?? place.items.length })"
+            >
+            <ol class="divide-y divide-ui-line">
+            <li v-for="(item, index) in itemsOf(place)" :key="item.id" class="flex items-start gap-3 px-3 py-2.5" :class="item.is_resolved ? 'bg-ui-ok-soft/40' : ''">
               <span class="text-ui-cap text-ui-faint tabular-nums w-4 shrink-0 pt-0.5">{{ index + 1 }}</span>
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 flex-wrap">
@@ -662,7 +721,15 @@ onMounted(async () => {
               <span v-else-if="item.is_resolved" class="shrink-0 text-ui-ok" :title="resolvedLabel(item)"><CheckCircle2 class="w-4 h-4" /></span>
             </li>
             </ol>
+            <div v-if="hasMore(place)" class="px-3 py-2.5 border-t border-ui-line flex items-center gap-2 text-ui-cap text-ui-muted">
+              <template v-if="more[place.id]?.loading"><UiSpinner size="14px" :center="false" />{{ $t("projects.uat.items.loadingMore", { shown: itemsOf(place).length, total: place.items_total }) }}</template>
+              <button v-else type="button" class="font-medium text-ui-accent hover:underline" @click="loadMore(place)">{{ $t("projects.uat.items.showMore", { n: place.items_total - itemsOf(place).length }) }}</button>
+            </div>
+            </div>
             <p v-else class="px-3 py-2.5 border-t border-ui-line text-ui-cap text-ui-muted">{{ $t("projects.uat.items.emptySession") }}</p>
+            <p v-if="(place.items_total ?? 0) > FIRST_PAGE" class="px-3 py-1.5 border-t border-ui-line text-ui-cap text-ui-faint tabular-nums">
+              {{ hasMore(place) ? $t("projects.uat.items.showing", { shown: itemsOf(place).length, total: place.items_total }) : $t("projects.uat.items.showingAll", { n: place.items_total }) }}
+            </p>
             <div v-if="canEdit" class="px-2 py-1.5 border-t border-ui-line flex flex-wrap gap-1">
               <UiButton variant="ghost" size="sm" :icon="AlertCircle" @click="openItem(session, place, 'finding')">{{ $t("projects.uat.items.addFinding") }}</UiButton>
               <UiButton variant="ghost" size="sm" :icon="StickyNote" @click="openItem(session, place, 'note')">{{ $t("projects.uat.items.addNote") }}</UiButton>
