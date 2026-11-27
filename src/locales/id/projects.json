@@ -747,6 +747,11 @@
       "who": "Ditandatangani oleh",
       "stampHint": "Tanda tangan digital sudah termasuk stempel PT. Jendela Cakra Digital.",
       "pick": "Pilih siapa yang menandatangani."
+    },
+    "reportSigner": {
+      "title": "Disiapkan oleh (PT. Jendela Cakra Digital)",
+      "hint": "Penanda tangan laporan di bagian pengesahan. Kolom klien di sisi kanan tetap untuk tanda tangan basah.",
+      "noSignatures": "Tanda tangan digital hanya bisa dipakai oleh pengguna yang berhak membuat surat."
     }
   }
 }

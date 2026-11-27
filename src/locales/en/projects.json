@@ -747,6 +747,11 @@
       "who": "Signed by",
       "stampHint": "The digital signature includes the PT. Jendela Cakra Digital stamp.",
       "pick": "Pick who signs the letter."
+    },
+    "reportSigner": {
+      "title": "Prepared by (PT. Jendela Cakra Digital)",
+      "hint": "Who signs the report's sign-off. The client's column on the right stays for a wet signature.",
+      "noSignatures": "Digital signatures are only available to users who may create letters."
     }
   }
 }
