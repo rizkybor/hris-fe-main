@@ -517,7 +517,7 @@
       "setPlanHint": "Atur jumlah UAT sesuai kesepakatan dengan klien."
     },
     "plan": {
-      "label": "Kesepakatan",
+      "label": "Pelaksanaan",
       "value": "{n}x UAT",
       "none": "Belum diatur",
       "edit": "Ubah jumlah UAT",
