@@ -35,6 +35,15 @@ const COLUMNS = [
 
 const PAGE_SIZE = 40;
 
+// Tasks mirrored from UAT findings/notes only read To Do / Done.
+const UAT_STATUSES = ["todo", "done"];
+const emit = defineEmits(["open-uat"]);
+const canDrop = (evt) => {
+  const task = evt.draggedContext?.element;
+  const to = evt.to?.dataset?.status;
+  return !task?.uat_item_id || !to || UAT_STATUSES.includes(to);
+};
+
 // Presentation only: column status dot (the label always sits next to it).
 const COLUMN_DOT = { todo: "bg-ui-faint", in_progress: "bg-ui-accent", review: "bg-ui-warn", done: "bg-ui-ok", cancelled: "bg-ui-line-strong" };
 const PRIORITY_FILTER_OPTIONS = computed(() => [
@@ -222,6 +231,10 @@ const openCreateModal = (status = "todo") => {
 // into another column (placed by the server, put back if it fails).
 const changeStatusFromList = async (task, status) => {
   if (task.status === status) return;
+  if (task.uat_item_id && !UAT_STATUSES.includes(status)) {
+    actionError.value = t("projects.tasks.uat.onlyTodoDone");
+    return;
+  }
   const before = { status: task.status, position: task.position };
   actionError.value = "";
   try {
@@ -514,6 +527,8 @@ onUnmounted(() => sentinelObserver?.disconnect());
         <VueDraggableNext
           v-model="columnVisible[column.status]"
           group="tasks"
+          :data-status="column.status"
+          :move="canDrop"
           class="space-y-2 min-h-[120px] sm:min-h-[420px] max-h-[640px] overflow-y-auto px-2.5 pb-2.5"
           :animation="200"
           @change="(event) => onColumnChange(column.status, event)"
@@ -560,6 +575,7 @@ onUnmounted(() => sentinelObserver?.disconnect());
       :type-suggestions="typeSuggestions"
       @close="closeTaskDetail"
       @deleted="handleDeleteTask"
+      @open-uat="closeTaskDetail(); emit('open-uat')"
     />
 
     <!-- Task panel: new task -->

@@ -144,7 +144,8 @@
     },
     "tasks": {
       "title": "Tasks",
-      "openBoard": "Open board"
+      "openBoard": "Open board",
+      "uatSeparate": "Excludes {open} open and {done} revised UAT findings/notes — tracked separately."
     },
     "team": {
       "profile": "Profile",
@@ -157,7 +158,9 @@
       "memberCount": "{n} Member | {n} Members",
       "teamLeader": "Team Leader",
       "noTeamLeader": "No Leader"
-    }
+    },
+    "uatRevision": "UAT revisions: {done}/{total} done",
+    "uatRevisionHint": "UAT findings & notes are tracked apart from development progress"
   },
   "inspect": {
     "title": "Project Inspect",
@@ -379,6 +382,13 @@
       "sortPriority": "Priority",
       "task": "Task",
       "due": "Due date"
+    },
+    "uat": {
+      "badge": "UAT",
+      "fromUat": "This task was created from a UAT finding/note. Its title and description follow UAT; its status is only To Do or Done (Done = revised).",
+      "openInUat": "Open in the UAT tab",
+      "onlyTodoDone": "UAT tasks can only move to To Do or Done.",
+      "deleteInUat": "Delete the finding/note in the UAT tab."
     }
   },
   "comments": {

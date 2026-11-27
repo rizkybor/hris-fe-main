@@ -29,6 +29,8 @@ const PRIORITY_TONE = { urgent: "bad", high: "warn", medium: "info", low: "neutr
 const PRIORITY_RANK = { urgent: 0, high: 1, medium: 2, low: 3 };
 
 const statusOptions = computed(() => props.columns.map((c) => ({ value: c.status, label: t(c.labelKey), tone: STATUS_TONE[c.status] })));
+// Tasks mirrored from UAT findings/notes only read To Do / Done.
+const uatStatusOptions = computed(() => statusOptions.value.filter((o) => ["todo", "done"].includes(o.value)));
 const sortOptions = computed(() => [
   { value: "position", label: t("projects.tasks.list.sortPosition") },
   { value: "due", label: t("projects.tasks.list.sortDue") },
@@ -138,7 +140,7 @@ const canEditStatus = can("task-edit");
                 <UiStatusSelect
                   v-if="canEditStatus"
                   :model-value="task.status"
-                  :options="statusOptions"
+                  :options="task.uat_item_id ? uatStatusOptions : statusOptions"
                   :label="$t('common.labels.status')"
                   @change="(v) => emit('status', task, v)"
                 />

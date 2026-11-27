@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { axiosInstance } from '@/plugins/axios';
 import { handleError } from "@/helpers/errorHelper";
 import { toRequestBody } from "@/helpers/formDataHelper";
+import { useProjectUatStore } from "@/stores/projectUat";
 
 export const useTaskStore = defineStore("task", {
     state: () => ({
@@ -9,6 +10,9 @@ export const useTaskStore = defineStore("task", {
         // Which project `tasks` belongs to (cleared on switch so another
         // project's board never shows while the new one loads).
         tasksProjectId: null,
+        // Set when UAT changed the project's findings/notes (their board
+        // tasks follow on the server); the board refetches when shown.
+        tasksStale: false,
         myTasks: [],
         myTasksCache: {},
         loading: false,
@@ -51,6 +55,7 @@ export const useTaskStore = defineStore("task", {
                 });
 
                 this.tasks = response.data.data;
+                this.tasksStale = false;
             } catch (error) {
                 this.error = handleError(error);
             } finally {
@@ -101,6 +106,7 @@ export const useTaskStore = defineStore("task", {
                     this.tasks[taskIndex] = fresh;
                 }
                 if (fresh) this.patchMyTasks(id, fresh);
+                this.markUatStale(fresh);
 
                 this.success = response.data.message;
                 return fresh;
@@ -142,6 +148,16 @@ export const useTaskStore = defineStore("task", {
             }
         },
 
+        // A UAT finding/note was added, edited, checked off or removed.
+        markTasksStale(projectId) {
+            if (String(this.tasksProjectId) === String(projectId)) this.tasksStale = true;
+        },
+
+        // A UAT task moved on the board checks its item off (or back).
+        markUatStale(task) {
+            if (task?.uat_item_id) useProjectUatStore().markStale(task.project_id);
+        },
+
         async moveTask(taskId, { status, position } = {}) {
             this.error = null;
 
@@ -167,6 +183,7 @@ export const useTaskStore = defineStore("task", {
                     if (fresh.status !== undefined) task.status = fresh.status;
                     if (fresh.position !== undefined && fresh.position !== null) task.position = fresh.position;
                     this.patchMyTasks(taskId, { status: task.status });
+                    if (status !== undefined) this.markUatStale(fresh);
                 }
 
                 return response.data;
