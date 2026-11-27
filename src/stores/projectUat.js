@@ -56,6 +56,21 @@ export const useProjectUatStore = defineStore("projectUat", {
       return this.write(() => axiosInstance.post(`/projects/${projectId}/uat/sessions/${sessionId}`, payload, { headers: { "Content-Type": "multipart/form-data" } }));
     },
 
+    // Check a finding/note off as revised/updated (or undo).
+    resolveItem(projectId, itemId, resolved) {
+      return this.write(() => axiosInstance.patch(`/projects/${projectId}/uat/items/${itemId}/resolve`, { resolved }));
+    },
+
+    uploadItemPhoto(projectId, itemId, file) {
+      const payload = new FormData();
+      payload.append("photo", file);
+      return this.write(() => axiosInstance.post(`/projects/${projectId}/uat/items/${itemId}/photo`, payload, { headers: { "Content-Type": "multipart/form-data" } }));
+    },
+
+    deleteItemPhoto(projectId, itemId) {
+      return this.write(() => axiosInstance.delete(`/projects/${projectId}/uat/items/${itemId}/photo`));
+    },
+
     deleteSession(projectId, sessionId) {
       return this.write(() => axiosInstance.delete(`/projects/${projectId}/uat/sessions/${sessionId}`));
     },
